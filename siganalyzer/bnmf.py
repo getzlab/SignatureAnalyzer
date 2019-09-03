@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'SignatureAnalyzer-
 from ARD_NMF import ARD_NMF, run_method_engine
 
 # Relative Imports
-from .utils import compute_phi, nmf_normalize, nmf_scale, nmf_markers
+from .utils import compute_phi, transfer_weights, select_signatures, select_markers
 
 # ---------------------------------
 # NMF Wrapper
@@ -78,12 +78,12 @@ def ARD_NMF(X, K0=None, objective='poisson', max_iter=10000, del_=1, \
             max_iter \
         )
 
-        W,H,nsig = nmf_normalize(W, H, active_thresh=active_thresh)
+        W,H,nsig = transfer_weights(W, H, active_thresh=active_thresh)
         sig_names = [str(i) for i in range(1,nsig+1)]
         W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)
         H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
 
-        W,H = nmf_scale(W,H)
-        markers, gene_signatures = nmf_markers(X,W,H,cut_norm=cut_norm,cut_diff=cut_diff)
+        W,H = select_signatures(W,H)
+        markers, gene_signatures = select_markers(X,W,H,cut_norm=cut_norm,cut_diff=cut_diff)
 
         return H,W,markers,gene_signatures

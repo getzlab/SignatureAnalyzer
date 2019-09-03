@@ -11,11 +11,19 @@ def compute_phi(mu, var, beta):
     """
     return var / (mu ** (2-beta))
 
-def nmf_normalize(W, H, active_thresh=1e-5):
+def transfer_weights(W, H, active_thresh=1e-5):
     """
-    Normalize NMF Output.
-    ------------------------
     Transfers weights from output of NMF.
+    ------------------------
+    Args:
+        * W: input W matrix (K x n_features)
+        * H: input H matrix (n_samples x K)
+        * active_thresh: active threshold to consider a factor loading significant
+
+    Returns:
+        * W_final: normalized W matrix (K x n_features)
+        * H_final: normalized H matrix (n_samples x K)
+        * nsig: number of signatures found
     """
     nonzero_idx = (np.sum(H, axis=1) * np.sum(W, axis=0)) > active_thresh
     W_active = W[:, nonzero_idx]
@@ -29,15 +37,17 @@ def nmf_normalize(W, H, active_thresh=1e-5):
 
     return W_final, H_final, nsig
 
-def nmf_scale(W, H):
+def select_signatures(W, H):
     """
-    Scale NMF Output.
+    Scales NMF output by sample and feature totals to select Signatures.
     ------------------------
-    Scales and normalizes NMF output by sample and feature totals.
-    This also selects the signature that contributes the most to the
-    respective sample or feature.
-    Returns scaled W, H with max_id, max, and max_norm values.
-    Code adapted from Jaegil Kim.
+    Args:
+        * W: input W matrix (K x n_features)
+        * H: input H matrix (n_samples x K)
+
+    Returns:
+        * W: output W matrix with max_id, max, and max_norm columns
+        * H: output H matrix with max_id, max, and max_norm columns
     """
     Wnorm = W.copy()
     Hnorm = H.copy()
@@ -73,12 +83,20 @@ def nmf_scale(W, H):
 
     return W,H
 
-def nmf_markers(X, W, H, cut_norm=0.5, cut_diff=1.0):
+def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0):
     """
     Marker selection from NMF.
     ------------------------
-    Selects gene markers for each grouping of cells.
-    Code adapted from Jaegil Kim.
+    Args:
+        * X: Input X matrix (n_samples x n_features)
+        * W: input W matrix (K x n_features) with max_id, max, and max_norm columns
+        * H: input H matrix (n_samples x K) with max_id, max, and max_norm columns
+        * cut_norm: minimum normalized signature strength
+        * cut_diff: minimum difference between selected signature and other signatures
+
+    Returns:
+        * Pandas Dataframe of NMF markers
+        * Pandas Dataframe of full W matrix
     """
     markers = list()
     full = list()

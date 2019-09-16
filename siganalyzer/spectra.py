@@ -1,18 +1,19 @@
 import itertools
 import pandas as pd
 from twobitreader import TwoBitFile
+from typing import Union
 
 _acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 _ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
 
 context96 = dict(zip(map(''.join, itertools.chain(_acontext, _ccontext)), range(1, 97)))
 
-def get_spectra_from_maf(maf: pd.DataFrame, hgfile=None):
+def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
     """
     Attaches context categories to maf and gets counts of contexts for each sample
     Args:
         maf: Pandas DataFrame of maf
-        hgfile: 2bit genome build file for computing reference context
+        hgfile: path to 2bit genome build file for computing reference context
 
     Returns:
         Pandas DataFrame of maf with context category attached

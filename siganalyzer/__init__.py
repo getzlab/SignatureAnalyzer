@@ -1,1 +1,1 @@
-from .bnmf import ARD_NMF
+from .bnmf import ardnmf

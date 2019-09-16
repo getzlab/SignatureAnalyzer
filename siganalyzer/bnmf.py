@@ -5,6 +5,7 @@ import pandas as pd
 import sys
 import os
 import torch
+from typing import Union
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'SignatureAnalyzer-GPU'))
 from ARD_NMF import ARD_NMF, run_method_engine
@@ -15,16 +16,28 @@ from .utils import compute_phi, transfer_weights, select_signatures, select_mark
 # ---------------------------------
 # NMF Wrapper
 # ---------------------------------
-def ARD_NMF(X, K0=None, objective='poisson', max_iter=10000, del_=1, \
-        tolerance=1e-6, phi=1, a=10.0, b=None, prior_on_W='L1', prior_on_H='L1', \
-        report_frequency=100, active_thresh=1e-5, cut_norm=0.5, cut_diff=1.0):
+def ardnmf(X: pd.DataFrame, \
+           K0: Union[int, None] = None, \
+           objective: str = 'poisson', \
+           max_iter: int = 10000, \
+           del_: int = 1, \
+           tolerance: float = 1e-6, \
+           phi: Union[float, None] = None, \
+           a: float = 10.0, \
+           b: Union[float, None] = None , \
+           prior_on_W: str = 'L1', \
+           prior_on_H: str = 'L1', \
+           report_frequency: int = 100, \
+           active_thresh: float = 1e-5, \
+           cut_norm: float = 0.5, \
+           cut_diff: float = 1.0
+       ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
         """
-        AnnData wrapper for ARD-NMF.
-        ------------------------
-        Inputs
-            * X: dataframe
-                (genes x samples)
-
+        Wrapper for ARD-NMF. Wraps core algorithm from:
+        https://github.com/broadinstitute/SignatureAnalyzer-GPU
+        ------------------------------------------------------------------------
+        Args:
+            * X: input matrix (features x samples)
             * K0: starting number of latent components
             * objective: objective function for optimizaiton
             * max_iter: maximum number of iterations for algorithm
@@ -37,27 +50,37 @@ def ARD_NMF(X, K0=None, objective='poisson', max_iter=10000, del_=1, \
             * prior_on_H: L1 or L2
             * report_frequency: how often to print stats
             * parameters: parameters file
-            * cut_norm
+            * cut_norm: min normalized value for mean signature
             * cut_diff: difference between mean signature and rest of signatures
                 for marker selction
-            * active_thresh: threshold for a latent component's impact on signature
-                if the latent factor is less than this, it does not contribute
-            * inplace: whether or not to edit the AnnData object directly
-        Outputs
-            It is highly reccomended to use only highly variable genes for factorization.
-            Default parameters are to use highly variable genes and filter out mitochondrial
-            or ribosomal genes.
+            * active_thresh: threshold for a latent component's impact on
+                signature if the latent factor is less than this, it does not contribute
+
+        Returns:
+            * H: (samples x K)
+            * W: (K x features)
+            * markers
+            * signatures
         """
-        if objective == 'poisson':
-            Beta = 1
-        elif objective == 'gaussian':
-            Beta = 2
-        else:
-            ValueError("Objective should be either 'gaussian' or 'poisson'")
+
+        assert objective in ['poisson','gaussian'], \
+            "Unable to use {}; specify either poisson or gaussian objective.".format(objective)
+
+        if objective == 'poisson': Beta = 1
+        if objective == 'gaussian': Beta = 2
+
+        assert prior_on_W in ['L1','L2'], \
+            "Unable to use {}; use either L1 or L2 prior on W.".format(prior_on_W)
+        assert prior_on_H in ['L1','L2'], \
+            "Unable to use {}; use either L1 or L2 prior on H.".format(prior_on_H)
 
         if phi is None:
             phi = compute_phi(np.mean(X.values), np.var(X.values), Beta)
+            print("Using computed phi of {}".format(phi))
 
+        # ---------------------------------
+        # Load data into tensors
+        # ---------------------------------
         data = ARD_NMF(X, objective)
         channel_names = data.channel_names
         sample_names = data.sample_names
@@ -84,6 +107,6 @@ def ARD_NMF(X, K0=None, objective='poisson', max_iter=10000, del_=1, \
         H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
 
         W,H = select_signatures(W,H)
-        markers, gene_signatures = select_markers(X,W,H,cut_norm=cut_norm,cut_diff=cut_diff)
+        markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff)
 
-        return H,W,markers,gene_signatures
+        return H,W,markers,signatures

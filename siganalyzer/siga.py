@@ -41,6 +41,9 @@ def main():
 
     # TODO: implement wrapper
 
+    for n_iter in args.n_runs:
+
+
 
 
 if __name__ == "__main__":

@@ -114,6 +114,6 @@ def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0):
             markers.append(tmp[(tmp['diff'] > cut_diff) & (tmp['max_norm'] >= cut_norm)])
 
     nmf_markers = X.loc[pd.concat(markers).index,H.max_id.sort_values().index]
-    nmf_markers.index.name = 'gene'
+    nmf_markers.index.name = 'feat'
 
     return nmf_markers, pd.concat(full)

@@ -2,7 +2,7 @@ import sys
 import argparse
 import os
 
-from .bnmf import ARD_NMF
+from .bnmf import ardnmf
 
 def main():
     parser = argparse.ArgumentParser(description='Signature Analyzer Redux.')

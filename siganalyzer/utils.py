@@ -83,7 +83,7 @@ def select_signatures(W, H):
 
     return W,H
 
-def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0):
+def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0, verbose=False):
     """
     Marker selection from NMF.
     ------------------------
@@ -102,7 +102,8 @@ def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0):
     full = list()
 
     pd.options.mode.chained_assignment = None
-    for n in tqdm(np.unique(W['max_id']), desc='Clusters: '):
+
+    for n in tqdm(np.unique(W['max_id']), desc='Clusters: ', disable=not verbose):
         if H[H['max_id']==n].shape[0] > 0:
             tmp = W[W['max_id']==n]
             tmp.loc[:,'mean_on'] = X.loc[np.array(tmp.index), H[H['max_id']==n].index].mean(axis=1)

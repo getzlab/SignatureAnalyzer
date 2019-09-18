@@ -12,6 +12,7 @@ def main():
     parser.add_argument('-c','--cosmic_signatures', help='For use with mutational signature analysis.',
                         default='../ref/cosmic_v2/cosmic_v2.txt')
     parser.add_argument('-n','--n_runs', help='Number of iterations to run ARD-NMF.', default=10)
+    parser.add_argument('--hg', help='Hg build for mapping contexts.', default=None)
 
     # NMF Options
     parser.add_argument('--K0', help='Initial K parameter', required=False, default=None, type=int)
@@ -39,9 +40,33 @@ def main():
 
     args = parser.parse_args()
 
-    # TODO: implement wrapper
+    # -------------------------------------
+    # Load inputs
+    # -------------------------------------
+    if args.expression:
+        assert
+        print("Not yet implemented.")
+        raise Exception()
+    else:
+        if args.hgfile is not None:
+            if args.hgfile == 'hg19':
+                args.hgfile = '../ref/hg19.2bit'
+            elif args.hfile == 'hg38':
+                args.hgfile = './ref/hg38.2bit'
+            else:
+                Exception("Provide either Hg19 or Hg38 for {--hg}.")
 
-    for n_iter in args.n_runs:
+        maf,spectra = get_spectra_from_maf(pd.read_csv(args.input,sep='\t'), hgfile=args.hgfile)
+        cmap = maf[["context96.num","context96.word"]].set_index("context96.num").drop_duplicates()
+
+
+        for n_iter in range(args.n_runs):
+
+
+
+
+            ardnmf()
+
 
 
 

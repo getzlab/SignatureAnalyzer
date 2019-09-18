@@ -2,8 +2,14 @@ import numpy as np
 import pandas as pd
 import sys
 from tqdm import tqdm
+from sklearn.metrics.pairwise import cosine_similarity
 
-def compute_phi(mu, var, beta):
+COMPL = {"A":"T","T":"A","G":"C","C":"G"}
+
+# ---------------------------------
+# NMF Utils
+# ---------------------------------
+def compute_phi(mu: float, var: float, beta: float):
     """
     Compute Phi
     ------------------------
@@ -11,7 +17,7 @@ def compute_phi(mu, var, beta):
     """
     return var / (mu ** (2-beta))
 
-def transfer_weights(W, H, active_thresh=1e-5):
+def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-5):
     """
     Transfers weights from output of NMF.
     ------------------------
@@ -37,7 +43,7 @@ def transfer_weights(W, H, active_thresh=1e-5):
 
     return W_final, H_final, nsig
 
-def select_signatures(W, H):
+def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     """
     Scales NMF output by sample and feature totals to select Signatures.
     ------------------------
@@ -78,12 +84,20 @@ def select_signatures(W, H):
     H['max_norm'] = Hnorm['max_norm']
     W['max_norm'] = Wnorm['max_norm']
 
-    H = H.rename(columns={x:'S'+x for x in list(H)[:-3]})
-    W = W.rename(columns={x:'S'+x for x in list(H)[:-3]})
+    _rename = {x:'S'+x for x in list(H)[:-3]}
+    H = H.rename(columns=_rename)
+    W = W.rename(columns=_rename)
 
     return W,H
 
-def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0, verbose=False):
+def select_markers(
+    X: pd.DataFrame, \
+    W: pd.DataFrame, \
+    H: pd.DataFrame, \
+    cut_norm: float = 0.5, \
+    cut_diff: float = 1.0, \
+    verbose: bool = False \
+    ):
     """
     Marker selection from NMF.
     ------------------------
@@ -118,3 +132,56 @@ def select_markers(X, W, H, cut_norm=0.5, cut_diff=1.0, verbose=False):
     nmf_markers.index.name = 'feat'
 
     return nmf_markers, pd.concat(full)
+
+# ---------------------------------
+# Mutational Signature Utils
+# ---------------------------------
+def compl(seq: str):
+    return ''.join([COMPL[x] if x in COMPL.keys() else x for x in seq])
+
+def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
+    """
+    Map signatures.
+    """
+    def _check_to_flip(x, ref):
+        if x[2:-2] in ref:
+            return x
+        else:
+            return compl(x)
+
+    context_s = W['context96.word'].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
+    return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
+
+def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmic_index: str):
+    """
+    Post process ARD-NMF on mutational signatures.
+    ------------------------
+    Args:
+        * res: results dictionary from ARD-NMF (see ardnmf function)
+        * cmap: pandas dataframe mapping context96.num --> context96.word
+        * cosmic: cosmic signatures dataframe
+        * cosmic_index: feature index column in cosmic
+            ** ex. in cosmic_v2, "Somatic Mutation Type" columns map to
+                A[C>A]A, A[C>A]C, etc.
+
+    Returns:
+        * None, edits res dictionary directly
+    """
+    res["W"]["mut"] = _map_sigs(res["W"].join(cmap), cosmic)
+
+    # Column names of NMF signatures & COSMIC References
+    nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
+    ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
+
+    # Create cosine similarity matrix
+    X = res["W"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+    res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
+
+    # Add assignments
+    s_assign = dict(res["cosine"].idxmax())
+    s_assign = {key:key+"-" + s_assign[key] for key in s_assign}
+
+    # Update column names
+    res["W"] = res["W"].rename(columns=s_assign)
+    res["H"] = res["H"].rename(columns=s_assign)
+    res["cosine"] = res["cosine"].rename(columns=s_assign)

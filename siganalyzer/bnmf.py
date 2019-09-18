@@ -120,4 +120,12 @@ def ardnmf(
     W,H = select_signatures(W,H)
     markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff, verbose=verbose)
 
-    return (H, W, markers, signatures, *results[2:])
+    return {
+        'H': H,
+        'W': W,
+        'markers': markers,
+        'signatures': signatures,
+        'objective': results[2],
+        'log': results[3],
+        'lambda': results[4]
+    }

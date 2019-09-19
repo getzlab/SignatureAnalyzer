@@ -1,6 +1,7 @@
 import sys
 import argparse
 import os
+import pkg_resources
 
 from .bnmf import ardnmf
 
@@ -9,10 +10,11 @@ def main():
     parser.add_argument('-i', '--input', required=True, help='<Required> Input matrix (maf, expression).')
     parser.add_argument('-e','--expression', help='Input is expression matrix.', action='store_true')
     parser.add_argument('-o','--output_dir', help='Output directory.', default=None)
-    parser.add_argument('-c','--cosmic_signatures', help='For use with mutational signature analysis.',
-                        default='../ref/cosmic_v2/cosmic_v2.txt')
+    parser.add_argument('-c','--cosmic_signatures', help='Cosmic signatures to map to.',
+                        default='cosmic2', choices=['cosmic2','cosmic3'])
+    parser.add_argument('--hg', help='Hg build for mapping contexts.', default=None, choices=['hg19', 'hg38', None])
     parser.add_argument('-n','--n_runs', help='Number of iterations to run ARD-NMF.', default=10)
-    parser.add_argument('--hg', help='Hg build for mapping contexts.', default=None)
+    parser.add_argument('-v','--verbose', help='Verbosity.', default=False, action='store_true')
 
     # NMF Options
     parser.add_argument('--K0', help='Initial K parameter', required=False, default=None, type=int)
@@ -45,22 +47,34 @@ def main():
     # -------------------------------------
     if args.expression:
         assert
-        print("Not yet implemented.")
-        raise Exception()
-    else:
-        if args.hgfile is not None:
-            if args.hgfile == 'hg19':
-                args.hgfile = '../ref/hg19.2bit'
-            elif args.hfile == 'hg38':
-                args.hgfile = './ref/hg38.2bit'
-            else:
-                Exception("Provide either Hg19 or Hg38 for {--hg}.")
+        raise Exception("Not yet implemented.")
 
-        maf,spectra = get_spectra_from_maf(pd.read_csv(args.input,sep='\t'), hgfile=args.hgfile)
+    else:
+        os.makedirs(args.output_dir, exist_ok=True)
+
+        if args.hgfile == 'hg19':
+            args.hgfile = pkg_resources.resource_filename('siganalyzer', './ref/hg19.2bit')
+        else:
+            args.hgfile = pkg_resources.resource_filename('siganalyzer', './ref/hg38.2bit')
+
+        if args.cosmic_signatures == 'cosmic2':
+            cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', './ref/cosmic_v2/cosmic_v2.txt'), sep='\t').dropna(1)
+        elif args.cosmic_signatures == 'cosmic3':
+            raise Exception("Not yet implemented. Provides support for only cosmic2.")
+        else:
+            raise Exception("Not yet implemented. Provides support for only cosmic2.")
+
+        maf,spectra = get_spectra_from_maf(pd.read_csv(args.input, sep='\t'), hgfile=args.hgfile)
         cmap = maf[["context96.num","context96.word"]].set_index("context96.num").drop_duplicates()
 
 
+
+
         for n_iter in range(args.n_runs):
+
+
+
+
 
 
 

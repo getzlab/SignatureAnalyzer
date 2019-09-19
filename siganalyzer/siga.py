@@ -2,6 +2,8 @@ import sys
 import argparse
 import os
 import pkg_resources
+import pandas as pd
+from .spectra import get_spectra_from_maf
 
 from .bnmf import ardnmf
 
@@ -46,7 +48,6 @@ def main():
     # Load inputs
     # -------------------------------------
     if args.expression:
-        assert
         raise Exception("Not yet implemented.")
 
     else:

@@ -31,6 +31,9 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-
         * H_final: normalized H matrix (n_samples x K)
         * nsig: number of signatures found
     """
+    W = W.copy()
+    H = H.copy()
+
     nonzero_idx = (np.sum(H, axis=1) * np.sum(W, axis=0)) > active_thresh
     W_active = W[:, nonzero_idx]
     H_active = H[nonzero_idx, :]

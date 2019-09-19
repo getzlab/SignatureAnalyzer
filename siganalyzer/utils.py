@@ -167,14 +167,14 @@ def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmi
     Returns:
         * None, edits res dictionary directly
     """
-    res["W"]["mut"] = _map_sigs(res["W"].join(cmap), cosmic)
+    res["Wraw"]["mut"] = _map_sigs(res["Wraw"].join(cmap), cosmic)
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
 
     # Create cosine similarity matrix
-    X = res["W"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+    X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # Add assignments
@@ -184,4 +184,7 @@ def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmi
     # Update column names
     res["W"] = res["W"].rename(columns=s_assign)
     res["H"] = res["H"].rename(columns=s_assign)
+    res["Wraw"] = res["Wraw"].rename(columns=s_assign)
+    res["Hraw"] = res["Hraw"].rename(columns=s_assign)
+
     res["cosine"] = res["cosine"].rename(columns=s_assign)

@@ -113,7 +113,7 @@ def ardnmf(
         verbose=verbose \
     )
 
-    W,H,nsig,k_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
+    W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
     sig_names = [str(i) for i in range(1,nsig+1)]
 
     W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)

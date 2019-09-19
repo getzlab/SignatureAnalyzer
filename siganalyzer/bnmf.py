@@ -34,7 +34,8 @@ def ardnmf(
     cut_norm: float = 0.5,
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,
-    verbose: bool = True
+    verbose: bool = True,
+    tag: str = ""
     ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Wrapper for ARD-NMF. Wraps GPU implementaiton from:
@@ -81,11 +82,6 @@ def ardnmf(
     assert prior_on_H in ('L1','L2'), \
         "Unable to use {}; use either L1 or L2 prior on H.".format(prior_on_H)
 
-    # TODO: remove
-    # if phi is None:
-    #     phi = compute_phi(np.mean(X.values), np.var(X.values), Beta)
-    #     print("Using computed phi of {}".format(phi))
-
     # ---------------------------------
     # Load data into tensors
     # ---------------------------------
@@ -110,7 +106,8 @@ def ardnmf(
         report_freq=report_freq, \
         active_thresh=active_thresh, \
         cuda_int=cuda_int, \
-        verbose=verbose \
+        verbose=verbose, \
+        tag=tag
     )
 
     W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
@@ -118,11 +115,14 @@ def ardnmf(
 
     W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)
     H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
-    Wraw = pd.DataFrame(data=results[0][:,nonzero_idx], index=channel_names, columns=sig_names)
-    Hraw = pd.DataFrame(data=results[1][nonzero_idx,:], index=sig_names, columns=sample_names)
 
     W,H = select_signatures(W,H)
     markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff, verbose=verbose)
+
+    Wraw = pd.DataFrame(data=results[0][:,nonzero_idx], index=channel_names, columns=sig_names)
+    Wraw = Wraw.rename(columns={x:'S'+x for x in Wraw.columns})
+    Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
+    Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
 
     return {
         'H': H,

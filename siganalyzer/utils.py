@@ -41,7 +41,7 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-
     W_final = W_active / W_weight
     H_final = W_weight[:, np.newaxis] * H_active
 
-    return W_final, H_final, nsig
+    return W_final, H_final, nsig, nonzero_idx
 
 def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     """

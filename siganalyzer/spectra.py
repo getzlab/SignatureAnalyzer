@@ -66,7 +66,7 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
     complements = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
 
     contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
-                        else complements[r] + complements[a] + complements[c[m - 1]] + complements[c[m + 1]] \
+                        else complements[r] + complements[a] + complements[c[m + 1]] + complements[c[m - 1]] \
                         for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
     try:
         maf['context96.num'] = contig.apply(context96.__getitem__)

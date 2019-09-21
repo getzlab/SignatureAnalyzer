@@ -1,10 +1,12 @@
 import itertools
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import seaborn as sns
 import pandas as pd
 from typing import Union
+import numpy as np
 
-def plot_bar(H: pd.DataFrame, figsize: tuple(int,int) = (12,12)):
+def plot_bar(H: pd.DataFrame, figsize: tuple = (12,12)):
     """
     Plot stacked barchart & normalized version.
 
@@ -25,7 +27,8 @@ def plot_bar(H: pd.DataFrame, figsize: tuple(int,int) = (12,12)):
         kind='bar',
         stacked=True,
         ax=axes[0],
-        width=1.0
+        width=1.0,
+        rasterized=True
     )
 
     axes[0].set_xticklabels([])
@@ -37,7 +40,8 @@ def plot_bar(H: pd.DataFrame, figsize: tuple(int,int) = (12,12)):
         kind='bar',
         stacked=True,
         ax=axes[1],
-        width=1.0
+        width=1.0,
+        rasterized=True
     )
 
     axes[1].set_xticklabels([])
@@ -48,7 +52,7 @@ def plot_bar(H: pd.DataFrame, figsize: tuple(int,int) = (12,12)):
 
     return fig
 
-def plot_k_dist(X: np.ndarray, figsize: tuple(int,int) = (8,8)):
+def plot_k_dist(X: np.ndarray, figsize: tuple = (8,8)):
     """
     Selected signatures plot.
     Args:
@@ -70,7 +74,7 @@ def plot_k_dist(X: np.ndarray, figsize: tuple(int,int) = (8,8)):
     ax.set_ylabel("Number of Iterations", fontsize=18)
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=18)
 
-    return ax
+    return fig
 
 def plot_signatures(W: pd.DataFrame, cohort: str, contributions: Union[int, pd.Series] = 1):
     """
@@ -91,14 +95,14 @@ def plot_signatures(W: pd.DataFrame, cohort: str, contributions: Union[int, pd.S
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
     context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]
     x_coords = range(16)
-    fig = plt.figure(figsize=(20, 2 * n_sigs))
+    fig = plt.figure(figsize=(20, 2.5 * n_sigs))
     for row, sig in enumerate(sig_columns):
         ymax = 0
         ax_row = []
         for col, chg in enumerate(['CA', 'CG', 'CT', 'TA', 'TC', 'TG']):
             ax = fig.add_subplot(n_sigs, 6, row * 6 + col + 1)
             bar_heights = W[sig].loc[change_map[chg]]
-            ax.bar(x_coords, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[chg])
+            ax.bar(x_coords, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[chg], rasterized=True)
             ax.set_xlim(-.55, 15.55)
             ymax = max(ymax, ax.get_ylim()[1])
             if row == 0:
@@ -113,15 +117,14 @@ def plot_signatures(W: pd.DataFrame, cohort: str, contributions: Union[int, pd.S
                 ax.set_yticks([])
             if col == 5:
                 ax.yaxis.set_label_position('right')
-                ax.set_ylabel(sig, fontsize=18, rotation=270, labelpad=20)
+                ax.set_ylabel(sig, fontsize=14, rotation=270, labelpad=20)
             ax_row.append(ax)
         for a in ax_row:
             a.set_ylim(0, ymax)
+
     plt.subplots_adjust(wspace=.08, hspace=.15)
     plt.suptitle('Mutational Signatures in ' + cohort, fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
     fig.text(.51, .03, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
-    with PdfPages('{}.signatures.pdf'.format(cohort)) as pdf:
-        pdf.savefig(bbox_inches='tight')
-    plt.savefig('{}.signatures.png'.format(cohort), bbox_inches='tight')
-    plt.close()
+
+    return fig

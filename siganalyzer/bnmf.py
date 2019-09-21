@@ -124,6 +124,14 @@ def ardnmf(
     Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
     Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
 
+    results[3]['K'] = results[3]['K'].astype(int)
+    results[3]['obj'] = results[3]['obj'].astype('float')
+    results[3]['b_div'] = results[3]['b_div'].astype('float')
+    results[3]['lam'] = results[3]['lam'].astype('float')
+    results[3]['del'] = results[3]['del'].astype('float')
+    results[3]['W_sum'] = results[3]['W_sum'].astype('float')
+    results[3]['H_sum'] = results[3]['H_sum'].astype('float')
+
     return {
         'H': H,
         'W': W,

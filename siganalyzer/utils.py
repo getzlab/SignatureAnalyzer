@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import sys
 from tqdm import tqdm
+import h5py
 from sklearn.metrics.pairwise import cosine_similarity
 
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
@@ -155,7 +156,7 @@ def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substituti
     context_s = W['context96.word'].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
     return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
 
-def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmic_index: str):
+def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
     """
     Post process ARD-NMF on mutational signatures.
     ------------------------
@@ -170,7 +171,7 @@ def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmi
     Returns:
         * None, edits res dictionary directly
     """
-    res["Wraw"]["mut"] = _map_sigs(res["Wraw"].join(cmap), cosmic)
+    res["Wraw"]["mut"] = _map_sigs(res["Wraw"].reset_index(), cosmic).values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
@@ -188,6 +189,34 @@ def postprocess_msigs(res: dict, cmap: pd.DataFrame, cosmic: pd.DataFrame, cosmi
     res["W"] = res["W"].rename(columns=s_assign)
     res["H"] = res["H"].rename(columns=s_assign)
     res["Wraw"] = res["Wraw"].rename(columns=s_assign)
-    res["Hraw"] = res["Hraw"].rename(columns=s_assign)
-
+    res["Hraw"] = res["Hraw"].T.rename(columns=s_assign)
     res["cosine"] = res["cosine"].rename(columns=s_assign)
+
+# ---------------------------------
+# Parsing Output H5 Utils
+# ---------------------------------
+def get_nruns_from_output(file: str) -> int:
+    """
+    Get number of NMF runs from an .h5 output file.
+    ------------------------
+    Args:
+        * output file from NMF (.h5)
+    Returns:
+        * number of NMF runs (int)
+    """
+    with h5py.File(file) as f:
+        return(max([int(x.split('run')[1]) for x in list(f.keys()) if 'run' in x])+1)
+
+def get_nlogs_from_output(file: str) -> pd.DataFrame:
+    """
+    Returns a dataframe of the final output log from each run.
+    ------------------------
+    Args:
+        * output file from NMF (.h5)
+    Returns:
+        * pd.DataFrame of reporting statistics for each run
+    """
+    n_runs = get_nruns_from_output(file)
+    df = pd.concat([pd.read_hdf(file,"run{}/log".format(i)).reset_index().iloc[-1] for i in range(n_runs)],1).T
+    df.index = np.arange(n_runs)
+    return df

@@ -175,15 +175,16 @@ def main():
             **vars(args)
         )
     elif args.type == 'spectra':
-        run_maf(
+        run_spectra(
             args.input,
             **vars(args)
         )
-    else:
+    elif args.type == 'rna':
         pass
 
-
-
+    else:
+        # TODO: bare-bones decomposition
+        pass
 
 if __name__ == "__main__":
     main()

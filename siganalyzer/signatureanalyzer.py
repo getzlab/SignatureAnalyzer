@@ -4,9 +4,10 @@ import os
 import pkg_resources
 import pandas as pd
 from typing import Union
+import numpy as np
 
-from .utils import postprocess_msigs
-from .utils import get_nlogs_from_output
+from .utils import postprocess_msigs, get_nlogs_from_output
+from .plot import plot_bar, plot_k_dist, plot_signatures
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
 
@@ -57,7 +58,7 @@ def run_maf(
 
         res = ardnmf(
             spectra,
-            tag="\t{}: ".format(n_iter),
+            tag="\t{}/{}: ".format(n_iter,nruns),
             verbose=verbose,
             **nmf_kwargs
         )
@@ -75,10 +76,10 @@ def run_maf(
 
     store.close()
 
-    df = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
-    best_run = int(df.obj.idxmin())
+    aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
+    best_run = int(aggr.obj.idxmin())
 
-    print("   * Run {} had the best objective function with K = {}.".format(best_run, df.loc[best_run]['K']))
+    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
@@ -89,8 +90,20 @@ def run_maf(
     store["signatures"] = store["run{}/signatures".format(best_run)]
     store["log"] = store["run{}/log".format(best_run)]
     store["cosine"] = store["run{}/cosine".format(best_run)]
-    store["aggr"] = df
+    store["aggr"] = aggr
     store.close()
+
+    # Plots
+    print("   * Saving report plots.")
+    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+    W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+
+    _ = plot_signatures(W, contributions=np.sum(H))
+    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
+    _ = plot_bar(H)
+    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
+    _ = plot_k_dist(np.array(aggr.K))
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
 def run_spectra(
     spectra: Union[str, pd.DataFrame],
@@ -98,12 +111,12 @@ def run_spectra(
     cosmic: str = 'cosmic2',
     nruns: int = 250,
     verbose: bool = False,
-    **nmfkwargs
+    **nmf_kwargs
     ):
     """
     Run spectra.
     """
-    [nmf_kwargs.pop(key) for key in ['input', 'type']]
+    [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build']]
 
     # Load spectra
     spectra = pd.read_csv(spectra, sep="\t", index_col=0)
@@ -129,7 +142,7 @@ def run_spectra(
 
         res = ardnmf(
             spectra,
-            tag="\t{}: ".format(n_iter),
+            tag="\t{}/{}: ".format(n_iter,nruns),
             verbose=verbose,
             **nmf_kwargs
         )
@@ -150,7 +163,7 @@ def run_spectra(
     df = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
     best_run = int(df.obj.idxmin())
 
-    print("   * Run {} had the best objective function with K = {}.".format(best_run, df.loc[best_run]['K']))
+    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, df.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
@@ -164,12 +177,24 @@ def run_spectra(
     store["aggr"] = df
     store.close()
 
+    # Plots
+    print("   * Saving report plots.")
+    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+    W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+
+    _ = plot_signatures(W, contributions=np.sum(H))
+    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
+    _ = plot_bar(H)
+    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
+    _ = plot_k_dist(np.array(aggr.K))
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
+
 def run_rna(
     rna: Union[str, pd.DataFrame],
     outdir: str = '.',
     nruns: int = 20,
     verbose: bool = False,
-    **nmfkwargs
+    **nmf_kwargs
     ):
     """
     Run rna.

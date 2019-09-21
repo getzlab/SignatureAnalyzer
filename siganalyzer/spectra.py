@@ -74,6 +74,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
         raise KeyError('Unusual context: ' + str(e))
 
     maf['context96.word'] = contig
-    spectra = maf.groupby(['context96.num', 'sample']).size().unstack().fillna(0).astype(int)
+    spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
 
     return maf, spectra

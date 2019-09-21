@@ -7,6 +7,8 @@ from .spectra import get_spectra_from_maf
 
 from .bnmf import ardnmf
 
+def cmd(**nmf):
+
 def main():
     parser = argparse.ArgumentParser(description='Signature Analyzer Redux.')
     parser.add_argument('-i', '--input', required=True, help='<Required> Input matrix (maf, expression).')

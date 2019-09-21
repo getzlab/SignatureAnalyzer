@@ -165,17 +165,20 @@ def main():
 
 
     args = parser.parse_args()
+    print("---------------------------------------------------------")
+    print("---------- S I G N A T U R E  A N A L Y Z E R  ----------")
+    print("---------------------------------------------------------")
 
-    # -------------------------------------
-    # Run method
-    # -------------------------------------
     if args.type == 'maf':
         run_maf(
             args.input,
             **vars(args)
         )
     elif args.type == 'spectra':
-        pass
+        run_maf(
+            args.input,
+            **vars(args)
+        )
     else:
         pass
 

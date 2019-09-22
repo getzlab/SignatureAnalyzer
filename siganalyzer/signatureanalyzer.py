@@ -87,7 +87,7 @@ def run_maf(
 
         res = ardnmf(
             spectra,
-            tag="\t{}/{}: ".format(n_iter,nruns),
+            tag="\t{}/{}: ".format(n_iter,nruns-1),
             verbose=verbose,
             **nmf_kwargs
         )
@@ -108,10 +108,12 @@ def run_maf(
 
     store.close()
 
+    # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
-    best_run = int(aggr.obj.idxmin())
-
-    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
+    max_k = aggr.groupby("K").size().idxmax()
+    max_k_iter = aggr[aggr['K']==max_k].shape[0]
+    best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
+    print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
@@ -127,7 +129,7 @@ def run_maf(
     store.close()
 
     # Plots
-    print("   * Saving report plots.")
+    print("   * Saving report plots to {}".format(outdir))
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
@@ -135,7 +137,7 @@ def run_maf(
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
     _ = plot_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_k_dist(np.array(aggr.K))
+    _ = plot_k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
 def run_spectra(
@@ -204,7 +206,7 @@ def run_spectra(
 
         res = ardnmf(
             spectra,
-            tag="\t{}/{}: ".format(n_iter,nruns),
+            tag="\t{}/{}: ".format(n_iter,nruns-1),
             verbose=verbose,
             **nmf_kwargs
         )
@@ -225,10 +227,12 @@ def run_spectra(
 
     store.close()
 
+    # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
-    best_run = int(df.obj.idxmin())
-
-    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
+    max_k = aggr.groupby("K").size().idxmax()
+    max_k_iter = aggr[aggr['K']==max_k].shape[0]
+    best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
+    print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
@@ -244,7 +248,7 @@ def run_spectra(
     store.close()
 
     # Plots
-    print("   * Saving report plots.")
+    print("   * Saving report plots to {}".format(outdir))
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
@@ -252,7 +256,7 @@ def run_spectra(
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
     _ = plot_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_k_dist(np.array(aggr.K))
+    _ = plot_k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
 def run_matrix(
@@ -324,7 +328,7 @@ def run_matrix(
 
         res = ardnmf(
             matrix,
-            tag="\t{}/{}: ".format(n_iter,nruns),
+            tag="\t{}/{}: ".format(n_iter,nruns-1),
             verbose=verbose,
             **nmf_kwargs
         )
@@ -340,14 +344,15 @@ def run_matrix(
         store["run{}/markers".format(n_iter)] = res["markers"]
         store["run{}/signatures".format(n_iter)] = res["signatures"]
         store["run{}/log".format(n_iter)] = res["log"]
-        store["run{}/cosine".format(n_iter)] = res["cosine"]
 
     store.close()
 
+    # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
-    best_run = int(df.obj.idxmin())
-
-    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
+    max_k = aggr.groupby("K").size().idxmax()
+    max_k_iter = aggr[aggr['K']==max_k].shape[0]
+    best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
+    print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
@@ -358,6 +363,10 @@ def run_matrix(
     store["markers"] = store["run{}/markers".format(best_run)]
     store["signatures"] = store["run{}/signatures".format(best_run)]
     store["log"] = store["run{}/log".format(best_run)]
-    store["cosine"] = store["run{}/cosine".format(best_run)]
     store["aggr"] = aggr
     store.close()
+
+    # Plots
+    print("   * Saving report plots to {}".format(outdir))
+    _ = plot_k_dist(np.array(aggr.K, dtype=int))
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')

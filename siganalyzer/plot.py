@@ -6,16 +6,19 @@ import pandas as pd
 from typing import Union
 import numpy as np
 
-def plot_bar(H: pd.DataFrame, figsize: tuple = (12,12)):
+def plot_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
-    Plot stacked barchart & normalized version.
-
+    Plot stacked barchart & normalized stacked barchart.
+    --------------------------------------
     Args:
         * H: matrix output from NMF
         * figsize: size of figure (int,int)
 
     Returns:
         * figure
+
+    Example usage:
+        plot_bar(H)
     """
     H = H.iloc[:,:-3].copy()
     H['sum'] = H.sum(1)
@@ -55,14 +58,16 @@ def plot_bar(H: pd.DataFrame, figsize: tuple = (12,12)):
 def plot_k_dist(X: np.ndarray, figsize: tuple = (8,8)):
     """
     Selected signatures plot.
+    --------------------------------------
     Args:
-        X: numbers to plot
-        figsize: size of figure (int,int)
-    Returns:
-        axis
+        * X: numbers to plot
+        * figsize: size of figure (int,int)
 
-    This may be called with:
-        plot_k_dist(np.array([pd.read_hdf("output.h5","run{}/log".format(i)).K.iloc[-1] for i in range(250)]))
+    Returns:
+        * fig
+
+    Example usage:
+        plot_k_dist(np.array(pd.read_hdf("output_nmf.h5","aggr").K))
 
     """
     fig,ax = plt.subplots(figsize=figsize)
@@ -76,22 +81,39 @@ def plot_k_dist(X: np.ndarray, figsize: tuple = (8,8)):
 
     return fig
 
-def plot_signatures(W: pd.DataFrame, cohort: str, contributions: Union[int, pd.Series] = 1):
+def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
     Plots signatures from W-matrix
+    --------------------------------------
     Args:
-        W: W-matrix
-        cohort: cohort name
-        contributions: Series of total contributions from each signature if W is normalized, else 1
+        * W: W-matrix
+        * contributions: Series of total contributions, np.sum(H), from each
+            signature if W is normalized; else, 1
+
+    Returns:
+        * fig
+
+    Example usage:
+        plot_signatures(W, np.sum(H))
     """
+    W = W.copy()
     sig_columns = [c for c in W if c.startswith('S')]
+
     if isinstance(contributions, pd.Series):
         W = W[sig_columns] * contributions[sig_columns]
     else:
         W = W[sig_columns] * contributions
+
     n_sigs = len(sig_columns)
-    change_map = {'CA': range(49, 65), 'CG': range(65, 81), 'CT': range(81, 97),
-                  'TA': range(48, 32, -1), 'TC': range(32, 16, -1), 'TG': range(16, 0, -1)}
+    change_map = {
+        'CA': [x for x in W.index if x.startswith("CA")], \
+        'CG': [x for x in W.index if x.startswith("CG")], \
+        'CT': [x for x in W.index if x.startswith("CT")], \
+        'TA': [x for x in W.index if x.startswith("AT")], \
+        'TC': [x for x in W.index if x.startswith("AG")], \
+        'TG': [x for x in W.index if x.startswith("AC")] \
+    }
+
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
     context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]
     x_coords = range(16)
@@ -123,7 +145,7 @@ def plot_signatures(W: pd.DataFrame, cohort: str, contributions: Union[int, pd.S
             a.set_ylim(0, ymax)
 
     plt.subplots_adjust(wspace=.08, hspace=.15)
-    plt.suptitle('Mutational Signatures in ' + cohort, fontsize=24, horizontalalignment='right')
+    plt.suptitle('Mutational Signatures', fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
     fig.text(.51, .03, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
 

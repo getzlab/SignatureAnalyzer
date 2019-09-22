@@ -124,6 +124,7 @@ def ardnmf(
     Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
     Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
 
+    # Fix log typing
     results[3]['K'] = results[3]['K'].astype(int)
     results[3]['obj'] = results[3]['obj'].astype('float')
     results[3]['b_div'] = results[3]['b_div'].astype('float')
@@ -141,5 +142,5 @@ def ardnmf(
         'signatures': signatures,
         'objective': results[2],
         'log': results[3],
-        'lambda': results[4]
+        'lam': results[4]
     }

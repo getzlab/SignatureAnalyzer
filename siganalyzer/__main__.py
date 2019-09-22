@@ -9,7 +9,7 @@ from argparse import RawTextHelpFormatter
 
 from .signatureanalyzer import run_maf
 from .signatureanalyzer import run_spectra
-from .signatureanalyzer import run_rna
+from .signatureanalyzer import run_matrix
 
 def main():
     parser = argparse.ArgumentParser(description='Signature Analyzer GPU.', formatter_class=RawTextHelpFormatter)
@@ -25,7 +25,7 @@ def main():
         default='maf',
         help="Input type. Specify whether input is a .maf, a 96 base context spectra, or an RNA expression matrix (default: 'maf')\n"
              "  * NOTE: for expression is is reccomended to use log-transformed & gaussian {--objective} function",
-        choices=['maf','spectra','rna']
+        choices=['maf','spectra','matrix']
     )
     parser.add_argument(
         '-n','--nruns',
@@ -152,13 +152,13 @@ def main():
     # -----------------------------------------
     parser.add_argument(
         '--cut_norm',
-        help="Min normalized value for mean signature. Used in marker selection during post-processing (rna). (default: 0.5)",
+        help="Min normalized value for mean signature. Used in marker selection during post-processing (matrix). (default: 0.5)",
         default=0.5,
         type=float
     )
     parser.add_argument(
         '--cut_diff',
-        help="Difference between mean selected signature and mean unselected signatures for marker selection (rna). (default: 1.0)",
+        help="Difference between mean selected signature and mean unselected signatures for marker selection (matrix). (default: 1.0)",
         default=1.0,
         type=float
     )
@@ -179,12 +179,11 @@ def main():
             args.input,
             **vars(args)
         )
-    elif args.type == 'rna':
-        pass
-
-    else:
-        # TODO: bare-bones decomposition
-        pass
+    elif args.type == 'matrix':
+        run_matrix(
+            args.input,
+            **vars(args)
+        )
 
 if __name__ == "__main__":
     main()

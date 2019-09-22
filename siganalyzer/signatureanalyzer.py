@@ -5,8 +5,9 @@ import pkg_resources
 import pandas as pd
 from typing import Union
 import numpy as np
+import matplotlib.pyplot as plt
 
-from .utils import postprocess_msigs, get_nlogs_from_output
+from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
 from .plot import plot_bar, plot_k_dist, plot_signatures
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
@@ -21,7 +22,35 @@ def run_maf(
     **nmf_kwargs
     ):
     """
-    Run maf.
+    Args:
+        * maf: input .maf file format
+        * outdir: output directory to save files
+        * cosmic: cosmic signature set to use
+        * hg_build: human genome build for generating reference context
+        * nruns: number of iterations for ARD-NMF
+        * verbose: bool
+
+    NMF_kwargs:
+        * K0: starting number of latent components
+        * objective: objective function for optimizaiton
+        * max_iter: maximum number of iterations for algorithm
+        * del_: n/a
+        * tolerance: stop point for optimization
+        * phi: dispersion parameter
+        * a: shape parameter
+        * b: shape parameter
+        * prior_on_W: L1 or L2
+        * prior_on_H: L1 or L2
+        * report_freq: how often to print stats
+        * active_thresh: threshold for a latent component's impact on
+            signature if the latent factor is less than this, it does not contribute
+        * cut_norm: min normalized value for mean signature
+            (used in post-processing)
+        * cut_diff: difference between mean signature and rest of signatures
+            for marker selction
+            (used in post-processing)
+        * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
+            will perform decomposition using CPU.
     """
     [nmf_kwargs.pop(key) for key in ['input', 'type']]
 
@@ -64,9 +93,12 @@ def run_maf(
         )
 
         postprocess_msigs(res, cosmic, cosmic_index)
-        res["W"]["lambda"] = res["lambda"]
+        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+        lam.index.name = "K0"
+
         store["run{}/H".format(n_iter)] = res["H"]
         store["run{}/W".format(n_iter)] = res["W"]
+        store["run{}/lam".format(n_iter)] = lam
         store["run{}/Hraw".format(n_iter)] = res["Hraw"]
         store["run{}/Wraw".format(n_iter)] = res["Wraw"]
         store["run{}/markers".format(n_iter)] = res["markers"]
@@ -84,6 +116,7 @@ def run_maf(
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
     store["W"] = store["run{}/W".format(best_run)]
+    store["lam"] = store["run{}/lam".format(best_run)]
     store["Hraw"] = store["run{}/Hraw".format(best_run)]
     store["Wraw"] = store["run{}/Wraw".format(best_run)]
     store["markers"] = store["run{}/markers".format(best_run)]
@@ -114,12 +147,41 @@ def run_spectra(
     **nmf_kwargs
     ):
     """
-    Run spectra.
+    Args:
+        * spectra: filepath or pd.DataFrame of input spectra file (context x samples)
+            NOTE: index should be context in the following format (1234): 3[1>2]4
+        * outdir: output directory to save files
+        * cosmic: cosmic signature set to use
+        * nruns: number of iterations for ARD-NMF
+        * verbose: bool
+
+    NMF_kwargs:
+        * K0: starting number of latent components
+        * objective: objective function for optimizaiton
+        * max_iter: maximum number of iterations for algorithm
+        * del_: n/a
+        * tolerance: stop point for optimization
+        * phi: dispersion parameter
+        * a: shape parameter
+        * b: shape parameter
+        * prior_on_W: L1 or L2
+        * prior_on_H: L1 or L2
+        * report_freq: how often to print stats
+        * active_thresh: threshold for a latent component's impact on
+            signature if the latent factor is less than this, it does not contribute
+        * cut_norm: min normalized value for mean signature
+            (used in post-processing)
+        * cut_diff: difference between mean signature and rest of signatures
+            for marker selction
+            (used in post-processing)
+        * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
+            will perform decomposition using CPU.
     """
     [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build']]
 
     # Load spectra
-    spectra = pd.read_csv(spectra, sep="\t", index_col=0)
+    if isinstance(spectra, str):
+        spectra = file_loader(spectra)
 
     if outdir is not ".":
         print("   * Creating output dir at {}".format(outdir))
@@ -148,9 +210,12 @@ def run_spectra(
         )
 
         postprocess_msigs(res, cosmic, cosmic_index)
-        res["W"]["lambda"] = res["lambda"]
+        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+        lam.index.name = "K0"
+
         store["run{}/H".format(n_iter)] = res["H"]
         store["run{}/W".format(n_iter)] = res["W"]
+        store["run{}/lam".format(n_iter)] = lam
         store["run{}/Hraw".format(n_iter)] = res["Hraw"]
         store["run{}/Wraw".format(n_iter)] = res["Wraw"]
         store["run{}/markers".format(n_iter)] = res["markers"]
@@ -160,21 +225,22 @@ def run_spectra(
 
     store.close()
 
-    df = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
+    aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
     best_run = int(df.obj.idxmin())
 
-    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, df.loc[best_run]['K']))
+    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store["H"] = store["run{}/H".format(best_run)]
     store["W"] = store["run{}/W".format(best_run)]
+    store["lam"] = store["run{}/lam".format(best_run)]
     store["Hraw"] = store["run{}/Hraw".format(best_run)]
     store["Wraw"] = store["run{}/Wraw".format(best_run)]
     store["markers"] = store["run{}/markers".format(best_run)]
     store["signatures"] = store["run{}/signatures".format(best_run)]
     store["log"] = store["run{}/log".format(best_run)]
     store["cosine"] = store["run{}/cosine".format(best_run)]
-    store["aggr"] = df
+    store["aggr"] = aggr
     store.close()
 
     # Plots
@@ -189,15 +255,109 @@ def run_spectra(
     _ = plot_k_dist(np.array(aggr.K))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
-def run_rna(
-    rna: Union[str, pd.DataFrame],
+def run_matrix(
+    matrix: Union[str, pd.DataFrame],
     outdir: str = '.',
     nruns: int = 20,
     verbose: bool = False,
     **nmf_kwargs
     ):
     """
-    Run rna.
+    Args:
+        * matrix: expression matrix; this should be normalized to accomodate
+            Gaussian noise assumption (log2-norm) (n_features x n_samples)
+
+            NOTE: recommended to filter out lowly expressed genes for RNA:
+            *************** example filtering ***************
+            tpm = tpm[
+                (np.sum(tpm >= 0.1, 1) > tpm.shape[1]*0.2) &
+                (np.sum(counts.iloc[:,1:] >= 6, 1) > tpm.shape[1]*0.2)
+            ]
+            *************************************************
+
+            NOTE: reccomended to select a set of highly variable genes following
+                this (~ 2000 - 7500 genes)
+
+        * outdir: output directory to save files
+        * cosmic: cosmic signature set to use
+        * nruns: number of iterations for ARD-NMF
+        * verbose: bool
+
+    NMF_kwargs:
+        * K0: starting number of latent components
+        * objective: objective function for optimizaiton
+        * max_iter: maximum number of iterations for algorithm
+        * del_: n/a
+        * tolerance: stop point for optimization
+        * phi: dispersion parameter
+        * a: shape parameter
+        * b: shape parameter
+        * prior_on_W: L1 or L2
+        * prior_on_H: L1 or L2
+        * report_freq: how often to print stats
+        * active_thresh: threshold for a latent component's impact on
+            signature if the latent factor is less than this, it does not contribute
+        * cut_norm: min normalized value for mean signature
+            (used in post-processing)
+        * cut_diff: difference between mean signature and rest of signatures
+            for marker selction
+            (used in post-processing)
+        * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
+            will perform decomposition using CPU.
     """
-    if outdir is not ".": os.makedirs(outdir, exist_ok=True)
-    pass
+    [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'cosmic']]
+
+    # Load matrix
+    if isinstance(matrix, str):
+        matrix = file_loader(matrix)
+
+    if outdir is not ".":
+        print("   * Creating output dir at {}".format(outdir))
+        os.makedirs(outdir, exist_ok=True)
+
+    print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
+    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
+
+    print("   * Running ARD-NMF...")
+    for n_iter in range(nruns):
+        store['X'] = matrix
+
+        res = ardnmf(
+            matrix,
+            tag="\t{}/{}: ".format(n_iter,nruns),
+            verbose=verbose,
+            **nmf_kwargs
+        )
+
+        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+        lam.index.name = "K0"
+
+        store["run{}/H".format(n_iter)] = res["H"]
+        store["run{}/W".format(n_iter)] = res["W"]
+        store["run{}/lam".format(n_iter)] = lam
+        store["run{}/Hraw".format(n_iter)] = res["Hraw"]
+        store["run{}/Wraw".format(n_iter)] = res["Wraw"]
+        store["run{}/markers".format(n_iter)] = res["markers"]
+        store["run{}/signatures".format(n_iter)] = res["signatures"]
+        store["run{}/log".format(n_iter)] = res["log"]
+        store["run{}/cosine".format(n_iter)] = res["cosine"]
+
+    store.close()
+
+    aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
+    best_run = int(df.obj.idxmin())
+
+    print("   * Run {} had the best objective function with K = {:g}.".format(best_run, aggr.loc[best_run]['K']))
+
+    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
+    store["H"] = store["run{}/H".format(best_run)]
+    store["W"] = store["run{}/W".format(best_run)]
+    store["lam"] = store["run{}/lam".format(best_run)]
+    store["Hraw"] = store["run{}/Hraw".format(best_run)]
+    store["Wraw"] = store["run{}/Wraw".format(best_run)]
+    store["markers"] = store["run{}/markers".format(best_run)]
+    store["signatures"] = store["run{}/signatures".format(best_run)]
+    store["log"] = store["run{}/log".format(best_run)]
+    store["cosine"] = store["run{}/cosine".format(best_run)]
+    store["aggr"] = aggr
+    store.close()

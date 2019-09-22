@@ -8,6 +8,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
 
 # ---------------------------------
+# IOUtils
+# ---------------------------------
+def file_loader(x):
+    if x.endswith('.tsv') or x.endswith('.txt'):
+        return pd.read_csv(x, sep='\t', index_col=0)
+    elif x.endswith('.parquet'):
+        return pd.read_parquet(x)
+    else:
+        return pd.read_csv(x, index_col=0)
+
+# ---------------------------------
 # NMF Utils
 # ---------------------------------
 def compute_phi(mu: float, var: float, beta: float):

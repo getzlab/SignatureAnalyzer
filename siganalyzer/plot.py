@@ -150,3 +150,28 @@ def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     fig.text(.51, .03, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
 
     return fig
+
+def plot_marker_heatmap(markers, H, figsize=(16,12)):
+    """
+    Plots signatures from W-matrix
+    --------------------------------------
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    cbar_ax = fig.add_axes([.91, 0.5, .025, .3])
+
+    sns.heatmap(markers, ax=ax, cmap="YlGnBu", rasterized=True, cbar_ax=cbar_ax)
+    v,c = np.unique(H['max_id'],return_counts=True)
+
+    ax.vlines(np.cumsum(c), *ax.get_ylim())
+    ax.set_xticks(np.cumsum(c)-c/2)
+    ax.set_xticklabels(v, rotation=360,fontsize=14)
+
+    ax.set_yticks(np.arange(markers.index.values.shape[0]))
+    ax.set_yticklabels(markers.index.values, fontsize=5)
+
+    ax.set_title('')
+    ax.set_xlabel('NMF Signatures', fontsize=14)
+    ax.set_ylabel('Genes', fontsize=14)
+    cbar_ax.set_ylabel('Normalized Expression', fontsize=12)
+
+    return fig

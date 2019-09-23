@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
-from .plot import plot_bar, plot_k_dist, plot_signatures
+from .plot import plot_bar, plot_k_dist, plot_signatures, plot_marker_heatmap
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
 
@@ -368,5 +368,10 @@ def run_matrix(
 
     # Plots
     print("   * Saving report plots to {}".format(outdir))
+    markers = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "markers")
+    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+
     _ = plot_k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
+    _ = plot_marker_heatmap(markers, H)
+    plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=300, bbox_inches='tight')

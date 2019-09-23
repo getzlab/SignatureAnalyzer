@@ -1,6 +1,5 @@
 import itertools
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import seaborn as sns
 import pandas as pd
 from typing import Union
@@ -117,33 +116,24 @@ def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
     context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]
     x_coords = range(16)
-    fig = plt.figure(figsize=(20, 2.5 * n_sigs))
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2 * n_sigs), sharex='col', sharey='row')
     for row, sig in enumerate(sig_columns):
-        ymax = 0
-        ax_row = []
         for col, chg in enumerate(['CA', 'CG', 'CT', 'TA', 'TC', 'TG']):
-            ax = fig.add_subplot(n_sigs, 6, row * 6 + col + 1)
+            ax = axes[row, col]
             bar_heights = W[sig].loc[change_map[chg]]
             ax.bar(x_coords, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[chg], rasterized=True)
             ax.set_xlim(-.55, 15.55)
-            ymax = max(ymax, ax.get_ylim()[1])
             if row == 0:
                 ax.set_title('>'.join(chg), fontsize=18)
             if row < n_sigs - 1:
-                ax.set_xticks([])
+                ax.tick_params(axis='x', length=0)
             else:
                 ax.set_xticks(x_coords)
-                ax.set_xticklabels(context_label, fontfamily='monospace')
-                plt.xticks(rotation='vertical')
+                ax.set_xticklabels(context_label, fontfamily='monospace', rotation='vertical')
             if col > 0:
-                ax.set_yticks([])
+                ax.tick_params(axis='y', length=0)
             if col == 5:
-                ax.yaxis.set_label_position('right')
-                ax.set_ylabel(sig, fontsize=14, rotation=270, labelpad=20)
-            ax_row.append(ax)
-        for a in ax_row:
-            a.set_ylim(0, ymax)
-
+                ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
     plt.subplots_adjust(wspace=.08, hspace=.15)
     plt.suptitle('Mutational Signatures', fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')

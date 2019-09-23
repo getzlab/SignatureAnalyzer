@@ -22,7 +22,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
         Pandas DataFrame of counts with samples as columns and context as rows
     """
     maf = maf.copy()
-    maf_size = maf.shape[0]
 
     if 'Start_Position' in list(maf):
         maf = maf.rename(columns={'Start_Position':'Start_position'})
@@ -44,13 +43,11 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
         assert hgfile is not None, 'Please provide genome build file.'
         hg = TwoBitFile(hgfile)
 
-        def compute_context(row):
-            """
-            Row.
-            """
-            stdout.write("\r      * Mapping contexts: {} / {}".format(row.name, maf_size))
-            pos = int(row['Start_position'])
-            chromosome = str(row['Chromosome'])
+        # Map contexts
+        _contexts = list()
+        maf_size = maf.shape[0]
+        for idx,(pos,chromosome) in enumerate(zip(maf["Start_position"].astype(int), maf["Chromosome"].astype(str))):
+            stdout.write("\r      * Mapping contexts: {} / {}".format(idx, maf_size))
 
             # Double check version
             if chromosome == '23':
@@ -60,9 +57,9 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None):
             elif chromosome == 'MT':
                 chromosome = 'M'
 
-            return hg['chr'+chromosome][pos-2:pos+1].lower()
+            _contexts.append(hg['chr'+chromosome][pos-2:pos+1].lower())
 
-        maf['ref_context'] = maf.loc[:,["Start_position","Chromosome"]].apply(compute_context,1)
+        maf['ref_context'] = _contexts
         stdout.write("\n")
         context = maf['ref_context'].str.upper()
 

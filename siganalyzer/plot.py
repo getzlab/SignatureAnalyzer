@@ -5,6 +5,7 @@ import seaborn as sns
 import pandas as pd
 from typing import Union
 import numpy as np
+from .utils import compl
 
 def plot_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
@@ -105,14 +106,13 @@ def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
         W = W[sig_columns] * contributions
 
     n_sigs = len(sig_columns)
-    change_map = {
-        'CA': [x for x in W.index if x.startswith("CA")], \
-        'CG': [x for x in W.index if x.startswith("CG")], \
-        'CT': [x for x in W.index if x.startswith("CT")], \
-        'TA': [x for x in W.index if x.startswith("AT")], \
-        'TC': [x for x in W.index if x.startswith("AG")], \
-        'TG': [x for x in W.index if x.startswith("AC")] \
-    }
+
+    change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}
+    for x in W.index:
+        if x.startswith('A'):
+            change_map[compl(x[:2])].insert(0, x)
+        else:
+            change_map[x[:2]].append(x)
 
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
     context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]

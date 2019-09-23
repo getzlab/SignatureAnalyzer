@@ -163,8 +163,10 @@ def main():
         type=float
     )
 
-
     args = parser.parse_args()
+    if args.cuda_int == 'None':
+        args.cuda_int = None
+
     print("---------------------------------------------------------")
     print("---------- S I G N A T U R E  A N A L Y Z E R  ----------")
     print("---------------------------------------------------------")

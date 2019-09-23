@@ -29,7 +29,7 @@ def compute_phi(mu: float, var: float, beta: float):
     """
     return var / (mu ** (2-beta))
 
-def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-5):
+def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-2):
     """
     Transfers weights from output of NMF.
     ------------------------

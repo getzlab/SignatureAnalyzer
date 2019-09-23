@@ -151,8 +151,17 @@ def select_markers(
 # ---------------------------------
 # Mutational Signature Utils
 # ---------------------------------
-def compl(seq: str):
-    return ''.join([COMPL[x] if x in COMPL.keys() else x for x in seq])
+def compl(seq: str, reverse: bool = False):
+    """
+    Gets the complement of a string
+    Args:
+        * seq: string (does not have to be base pair)
+        * reverse: set to true to reverse seq
+
+    Returns:
+        * complement of seq
+    """
+    return ''.join([COMPL[x] if x in COMPL.keys() else x for x in (reversed(seq) if reverse else seq)])
 
 def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
     """

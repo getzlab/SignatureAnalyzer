@@ -139,10 +139,14 @@ def _get_dnps_from_maf(maf: pd.DataFrame):
         df = df.sort_values('Start_position')
         start_pos = np.array(df['Start_position'])
         pos_diff = np.diff(start_pos)
-        idx = np.flatnonzero((pos_diff[:-1] == 1) & (pos_diff[1:] != 1))
+        idx = []
+        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] != 1:
+            idx.append(0)
+        idx.extend(np.flatnonzero((pos_diff[:-2] != 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] != 1)) + 1)
         if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] != 1:
-            idx = np.append(idx, len(pos_diff) - 1)
-        if len(idx):
+            idx.append(len(pos_diff) - 1)
+        if idx:
+            idx = np.array(idx)
             rows = df.iloc[idx][['Hugo_Symbol', 'Tumor_Sample_Barcode', 'sample', 'Chromosome',
                                  'Start_position', 'Reference_Allele', 'Tumor_Seq_Allele2']].reset_index(drop=True)
             rows_plus_one = df.iloc[idx + 1].reset_index()

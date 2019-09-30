@@ -8,8 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
-
-#from .plot import X, X, X, X
+from .utils import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
 from .plotting import signature_barplot, stacked_bar
@@ -23,7 +22,7 @@ def run_maf(
     outdir: str = '.',
     cosmic: str = 'cosmic2',
     hg_build: Union[str, None] = 'hg19',
-    nruns: int = 250,
+    nruns: int = 10,
     verbose: bool = False,
     **nmf_kwargs
     ):
@@ -150,7 +149,7 @@ def run_spectra(
     spectra: Union[str, pd.DataFrame],
     outdir: str = '.',
     cosmic: str = 'cosmic2',
-    nruns: int = 250,
+    nruns: int = 10,
     verbose: bool = False,
     **nmf_kwargs
     ):
@@ -381,3 +380,12 @@ def run_matrix(
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
     _ = marker_heatmap(markers, H)
     plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=300, bbox_inches='tight')
+
+    print("   * Computing consensus matrix")
+    _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
+    f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter)
+    plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
+
+    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
+    store['consensus'] = d
+    store.close()

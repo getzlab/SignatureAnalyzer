@@ -30,7 +30,7 @@ def ardnmf(
     prior_on_W: str = 'L1',
     prior_on_H: str = 'L1',
     report_freq: int = 100,
-    active_thresh: float = 1e-5,
+    active_thresh: float = 1e-2,
     cut_norm: float = 0.5,
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,

@@ -4,9 +4,10 @@ import seaborn as sns
 import pandas as pd
 from typing import Union
 import numpy as np
-from .utils import compl
 
-def plot_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
+from ..utils import compl
+
+def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
     Plot stacked barchart & normalized stacked barchart.
     --------------------------------------
@@ -55,33 +56,7 @@ def plot_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
 
     return fig
 
-def plot_k_dist(X: np.ndarray, figsize: tuple = (8,8)):
-    """
-    Selected signatures plot.
-    --------------------------------------
-    Args:
-        * X: numbers to plot
-        * figsize: size of figure (int,int)
-
-    Returns:
-        * fig
-
-    Example usage:
-        plot_k_dist(np.array(pd.read_hdf("output_nmf.h5","aggr").K))
-
-    """
-    fig,ax = plt.subplots(figsize=figsize)
-
-    sns.countplot(X, ax=ax, linewidth=2, edgecolor='k', rasterized=True)
-    ax.set_ylim(0,ax.get_ylim()[1]+int(ax.get_ylim()[1]*0.1))
-
-    ax.set_title("Aggregate of ARD-NMF (n={})".format(len(X)), fontsize=20)
-    ax.set_ylabel("Number of Iterations", fontsize=18)
-    ax.set_xticklabels(ax.get_xticklabels(), fontsize=18)
-
-    return fig
-
-def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
+def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
     Plots signatures from W-matrix
     --------------------------------------
@@ -115,8 +90,9 @@ def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
 
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
     context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]
+
     x_coords = range(16)
-    fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2 * n_sigs), sharex='col', sharey='row')
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2.5 * n_sigs), sharex='col', sharey='row')
     for row, sig in enumerate(sig_columns):
         for col, chg in enumerate(['CA', 'CG', 'CT', 'TA', 'TC', 'TG']):
             ax = axes[row, col]
@@ -134,34 +110,10 @@ def plot_signatures(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
                 ax.tick_params(axis='y', length=0)
             if col == 5:
                 ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
+
     plt.subplots_adjust(wspace=.08, hspace=.15)
     plt.suptitle('Mutational Signatures', fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
     fig.text(.51, .03, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
-
-    return fig
-
-def plot_marker_heatmap(markers, H, figsize=(16,12)):
-    """
-    Plots signatures from W-matrix
-    --------------------------------------
-    """
-    fig, ax = plt.subplots(figsize=figsize)
-    cbar_ax = fig.add_axes([.91, 0.5, .025, .3])
-
-    sns.heatmap(markers, ax=ax, cmap="YlGnBu", rasterized=True, cbar_ax=cbar_ax)
-    v,c = np.unique(H['max_id'],return_counts=True)
-
-    ax.vlines(np.cumsum(c), *ax.get_ylim())
-    ax.set_xticks(np.cumsum(c)-c/2)
-    ax.set_xticklabels(v, rotation=360,fontsize=14)
-
-    ax.set_yticks(np.arange(markers.index.values.shape[0]))
-    ax.set_yticklabels(markers.index.values, fontsize=5)
-
-    ax.set_title('')
-    ax.set_xlabel('NMF Signatures', fontsize=14)
-    ax.set_ylabel('Genes', fontsize=14)
-    cbar_ax.set_ylabel('Normalized Expression', fontsize=12)
 
     return fig

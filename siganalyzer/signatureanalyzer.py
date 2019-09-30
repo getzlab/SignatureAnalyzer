@@ -8,7 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
-from .plot import plot_bar, plot_k_dist, plot_signatures, plot_marker_heatmap
+
+#from .plot import X, X, X, X
+
+from .plotting import k_dist, consensus_matrix
+from .plotting import signature_barplot, stacked_bar
+from .plotting import marker_heatmap
+
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
 
@@ -133,11 +139,11 @@ def run_maf(
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
-    _ = plot_signatures(W, contributions=np.sum(H))
+    _ = signature_barplot(W, contributions=np.sum(H))
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_bar(H)
+    _ = stacked_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_k_dist(np.array(aggr.K, dtype=int))
+    _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
 def run_spectra(
@@ -252,11 +258,11 @@ def run_spectra(
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
-    _ = plot_signatures(W, contributions=np.sum(H))
+    _ = signature_barplot(W, contributions=np.sum(H))
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_bar(H)
+    _ = stacked_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_k_dist(np.array(aggr.K, dtype=int))
+    _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
 
 def run_matrix(
@@ -371,7 +377,7 @@ def run_matrix(
     markers = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "markers")
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
 
-    _ = plot_k_dist(np.array(aggr.K, dtype=int))
+    _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
-    _ = plot_marker_heatmap(markers, H)
+    _ = marker_heatmap(markers, H)
     plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=300, bbox_inches='tight')

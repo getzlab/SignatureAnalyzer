@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
-from .utils import consensus_cluster
+from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
 from .plotting import signature_barplot, stacked_bar
@@ -139,11 +139,11 @@ def run_maf(
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
     _ = signature_barplot(W, contributions=np.sum(H))
-    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
     _ = stacked_bar(H)
-    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
     _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
 
 def run_spectra(
     spectra: Union[str, pd.DataFrame],
@@ -258,11 +258,11 @@ def run_spectra(
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
 
     _ = signature_barplot(W, contributions=np.sum(H))
-    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
     _ = stacked_bar(H)
-    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
     _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
 
 def run_matrix(
     matrix: Union[str, pd.DataFrame],
@@ -377,9 +377,9 @@ def run_matrix(
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
 
     _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
     _ = marker_heatmap(markers, H)
-    plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=100, bbox_inches='tight')
 
     print("   * Computing consensus matrix")
     _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))

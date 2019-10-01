@@ -146,6 +146,12 @@ def main():
         default=250,
         type=int
     )
+    parser.add_argument(
+        '--active_thresh',
+        help="Active threshold for consdiering a threshold relevant (default: 0.01)",
+        default=0.01,
+        type=float
+    )
 
     # -----------------------------------------
     # NMF Post-processing Arguments

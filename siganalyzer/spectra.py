@@ -84,6 +84,10 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
 
         maf['context96.word'] = contig
         spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context96:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra.sort_index(inplace=True)
 
     elif cosmic == 'cosmic3_DBS':
 
@@ -126,6 +130,10 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
 
         maf['context78.word'] = contig
         spectra = maf.groupby(['context78.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context78:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra.sort_index(inplace=True)
 
     else:
 

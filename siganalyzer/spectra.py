@@ -5,8 +5,8 @@ from twobitreader import TwoBitFile
 from typing import Union
 from tqdm import tqdm
 from sys import stdout
-from .utils import compl
 
+from .utils import compl
 
 def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosmic: str = 'cosmic2'):
     """

@@ -140,10 +140,10 @@ def _get_dnps_from_maf(maf: pd.DataFrame):
         start_pos = np.array(df['Start_position'])
         pos_diff = np.diff(start_pos)
         idx = []
-        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] != 1:
+        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] > 1:
             idx.append(0)
-        idx.extend(np.flatnonzero((pos_diff[:-2] != 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] != 1)) + 1)
-        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] != 1:
+        idx.extend(np.flatnonzero((pos_diff[:-2] > 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] > 1)) + 1)
+        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] > 1:
             idx.append(len(pos_diff) - 1)
         if idx:
             idx = np.array(idx)

@@ -5,8 +5,22 @@ from twobitreader import TwoBitFile
 from typing import Union
 from tqdm import tqdm
 from sys import stdout
-
 from .utils import compl
+
+acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
+ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
+
+context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
+context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
+                      'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
+                      'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',
+                      'CT>AA', 'CT>AC', 'CT>AG', 'CT>GA', 'CT>GC', 'CT>GG', 'CT>TA', 'CT>TC', 'CT>TG', 'GC>AA',
+                      'GC>AG', 'GC>AT', 'GC>CA', 'GC>CG', 'GC>TA', 'TA>AT', 'TA>CG', 'TA>CT', 'TA>GC', 'TA>GG',
+                      'TA>GT', 'TC>AA', 'TC>AG', 'TC>AT', 'TC>CA', 'TC>CG', 'TC>CT', 'TC>GA', 'TC>GG', 'TC>GT',
+                      'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
+                      'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
+
+
 
 def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosmic: str = 'cosmic2'):
     """
@@ -72,11 +86,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
                             else compl(r + a + c[m + 1] + c[m - 1]) \
                             for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
 
-        acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
-        ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
-
-        context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
-
         try:
             maf['context96.num'] = contig.apply(context96.__getitem__)
         except KeyError as e:
@@ -84,6 +93,10 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
 
         maf['context96.word'] = contig
         spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context96:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra.sort_index(inplace=True)
 
     elif cosmic == 'cosmic3_DBS':
 
@@ -103,15 +116,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
         else:
             maf = _get_dnps_from_maf(maf)
 
-        context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
-                              'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
-                              'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',
-                              'CT>AA', 'CT>AC', 'CT>AG', 'CT>GA', 'CT>GC', 'CT>GG', 'CT>TA', 'CT>TC', 'CT>TG', 'GC>AA',
-                              'GC>AG', 'GC>AT', 'GC>CA', 'GC>CG', 'GC>TA', 'TA>AT', 'TA>CG', 'TA>CT', 'TA>GC', 'TA>GG',
-                              'TA>GT', 'TC>AA', 'TC>AG', 'TC>AT', 'TC>CA', 'TC>CG', 'TC>CT', 'TC>GA', 'TC>GG', 'TC>GT',
-                              'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
-                              'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
-
         ref = maf['Reference_Allele']
         alt = maf['Tumor_Seq_Allele2']
 
@@ -126,6 +130,10 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
 
         maf['context78.word'] = contig
         spectra = maf.groupby(['context78.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context78:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra.sort_index(inplace=True)
 
     else:
 
@@ -140,10 +148,10 @@ def _get_dnps_from_maf(maf: pd.DataFrame):
         start_pos = np.array(df['Start_position'])
         pos_diff = np.diff(start_pos)
         idx = []
-        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] != 1:
+        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] > 1:
             idx.append(0)
-        idx.extend(np.flatnonzero((pos_diff[:-2] != 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] != 1)) + 1)
-        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] != 1:
+        idx.extend(np.flatnonzero((pos_diff[:-2] > 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] > 1)) + 1)
+        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] > 1:
             idx.append(len(pos_diff) - 1)
         if idx:
             idx = np.array(idx)

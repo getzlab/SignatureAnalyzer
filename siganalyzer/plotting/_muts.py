@@ -6,6 +6,7 @@ from typing import Union
 import numpy as np
 
 from ..utils import compl
+from ..spectra import context96, context78
 
 def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
@@ -72,6 +73,10 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
         plot_signatures(W, np.sum(H))
     """
     W = W.copy()
+    for c in context96:
+        if c not in W.index:
+            W.loc[c] = 0
+    W.sort_index(inplace=True)
     sig_columns = [c for c in W if c.startswith('S')]
 
     if isinstance(contributions, pd.Series):

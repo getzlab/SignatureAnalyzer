@@ -53,6 +53,7 @@ def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     axes[1].set_xlabel('Samples', fontsize=16)
     axes[1].set_ylabel('Fractions', fontsize=20)
     axes[1].get_legend().remove()
+    axes[1].set_ylim([0,1])
 
     return fig
 

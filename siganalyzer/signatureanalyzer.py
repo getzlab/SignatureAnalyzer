@@ -59,7 +59,10 @@ def run_maf(
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
     """
-    [nmf_kwargs.pop(key) for key in ['input', 'type']]
+    try:
+        [nmf_kwargs.pop(key) for key in ['input', 'type']]
+    except:
+        pass
 
     if outdir is not ".":
         print("   * Creating output dir at {}".format(outdir))
@@ -186,7 +189,10 @@ def run_spectra(
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
     """
-    [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build']]
+    try:
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build']]
+    except:
+        pass
 
     # Load spectra
     if isinstance(spectra, str):
@@ -316,7 +322,10 @@ def run_matrix(
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
     """
-    [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'cosmic']]
+    try:
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'cosmic']]
+    except:
+        pass
 
     # Load matrix
     if isinstance(matrix, str):

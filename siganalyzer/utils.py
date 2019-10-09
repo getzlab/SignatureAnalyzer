@@ -4,6 +4,7 @@ import sys
 from tqdm import tqdm
 import h5py
 from sklearn.metrics.pairwise import cosine_similarity
+import pkg_resources
 
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
 
@@ -152,6 +153,29 @@ def select_markers(
 # ---------------------------------
 # Mutational Signature Utils
 # ---------------------------------
+def load_cosmic_signatures(cosmic: str):
+    """
+    Load cosmic signatures.
+    -------------------------
+    Pre-processed Cosmic Mutational Signatures.
+    """
+    if cosmic == 'cosmic2':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
+        cosmic_index = "Somatic Mutation Type"
+    elif cosmic == 'cosmic3':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
+        cosmic_index = "Somatic Mutation Type"
+    elif cosmic == 'cosmic3_exome':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
+        cosmic_index = "Somatic Mutation Type"
+    else:
+        raise Exception("Not yet implemented for {}".format(cosmic))
+
+    return cosmic, cosmic_index
+
 def compl(seq: str, reverse: bool = False):
     """
     Gets the complement of a string

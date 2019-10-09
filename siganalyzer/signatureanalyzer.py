@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
+from .utils import load_cosmic_signatures
 from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
@@ -74,12 +75,7 @@ def run_maf(
         hg_build = pkg_resources.resource_filename('siganalyzer', 'ref/{}.2bit'.format(hg_build))
 
     # Cosmic Signatures
-    if cosmic == 'cosmic2':
-        print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v2/cosmic_v2.txt'), sep='\t').dropna(1)
-        cosmic_index = "Somatic Mutation Type"
-    else:
-        raise Exception("Not yet implemented for {}".format(cosmic))
+    cosmic, cosmic_index = load_cosmic_signatures(cosmic)
 
     # Generate Spectra from Maf
     print("   * Loading spectra from {}".format(maf))
@@ -203,12 +199,7 @@ def run_spectra(
         os.makedirs(outdir, exist_ok=True)
 
     # Cosmic Signatures
-    if cosmic == 'cosmic2':
-        print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v2/cosmic_v2.txt'), sep='\t').dropna(1)
-        cosmic_index = "Somatic Mutation Type"
-    else:
-        raise Exception("Not yet implemented for {}".format(cosmic))
+    cosmic, cosmic_index = load_cosmic_signatures(cosmic)
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')

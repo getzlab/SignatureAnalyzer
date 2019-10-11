@@ -265,3 +265,43 @@ def get_nlogs_from_output(file: str) -> pd.DataFrame:
     df = pd.concat([pd.read_hdf(file,"run{}/log".format(i)).reset_index().iloc[-1] for i in range(n_runs)],1).T
     df.index = np.arange(n_runs)
     return df
+
+def get_dnps_from_maf(maf: pd.DataFrame):
+    sub_mafs = []
+    for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
+        df = df.sort_values('Start_position')
+        start_pos = np.array(df['Start_position'])
+        pos_diff = np.diff(start_pos)
+        idx = []
+        if len(pos_diff) == 1 and pos_diff[0] == 1:
+            idx.append(0)
+        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] > 1:
+            idx.append(0)
+        idx.extend(np.flatnonzero((pos_diff[:-2] > 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] > 1)) + 1)
+        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] > 1:
+            idx.append(len(pos_diff) - 1)
+        if idx:
+            idx = np.array(idx)
+            rows = df.iloc[idx][['Hugo_Symbol', 'Tumor_Sample_Barcode', 'sample',
+                'Chromosome', 'Start_position', 'Reference_Allele', 'Tumor_Seq_Allele2']].reset_index(drop=True)
+            rows_plus_one = df.iloc[idx + 1].reset_index()
+            rows['Variant_Type'] = 'DNP'
+            rows['End_position'] = rows['Start_position'] + 1
+            rows['Reference_Allele'] = rows['Reference_Allele'] + rows_plus_one['Reference_Allele']
+            rows['Tumor_Seq_Allele2'] = rows['Tumor_Seq_Allele2'] + rows_plus_one['Tumor_Seq_Allele2']
+            sub_mafs.append(rows)
+    return pd.concat(sub_mafs).reset_index(drop=True)
+
+def get_true_snps_from_maf(maf: pd.DataFrame):
+    sub_mafs = []
+    for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
+        df = df.sort_values('Start_position')
+        start_pos = np.array(df['Start_position'])
+        pos_diff = np.diff(start_pos)
+        rem_idx = np.flatnonzero(pos_diff <= 1)
+        rem_idx = np.concatenate([rem_idx, rem_idx + 1])
+        idx = np.delete(np.arange(len(start_pos)), rem_idx)
+        if len(idx):
+            rows = df.iloc[idx]
+            sub_mafs.append(rows)
+    return pd.concat(sub_mafs).reset_index(drop=True)

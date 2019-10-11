@@ -198,7 +198,8 @@ def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substituti
         else:
             return compl(x)
 
-    context_s = W['context96.word'].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
+    W_index = W.index.name
+    context_s = W.reset_index()[W_index].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
     return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
 
 def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
@@ -207,8 +208,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
     ------------------------
     Args:
         * res: results dictionary from ARD-NMF (see ardnmf function)
-        * cmap: pandas dataframe mapping context96.num --> context96.word
-        * cosmic: cosmic signatures dataframe
+        * cosmic: cosmic pd.DataFrmae
         * cosmic_index: feature index column in cosmic
             ** ex. in cosmic_v2, "Somatic Mutation Type" columns map to
                 A[C>A]A, A[C>A]C, etc.
@@ -216,7 +216,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
     Returns:
         * None, edits res dictionary directly
     """
-    res["Wraw"]["mut"] = _map_sigs(res["Wraw"].reset_index(), cosmic).values
+    res["Wraw"]["mut"] = _map_sigs(res["Wraw"], cosmic).values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]

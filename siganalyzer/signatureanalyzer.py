@@ -375,17 +375,23 @@ def run_matrix(
 
     # Plots
     print("   * Saving report plots to {}".format(outdir))
-    markers = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "markers")
+
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+    X = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "X")
+    signatures = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "signatures")
 
     _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
-    _ = marker_heatmap(markers, H)
+
+    _ = marker_heatmap(X, signatures, H.sort_values('max_id').max_id)
     plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=100, bbox_inches='tight')
 
     print("   * Computing consensus matrix")
-    _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
+    cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
     f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter)
+
+    cmatrix.to_csv(os.path.join(outdir, 'consensus_matrix.tsv'), sep='\t')
+    d.to_csv(os.path.join(outdir, 'consensus_assign.tsv'), sep='\t')
     plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')

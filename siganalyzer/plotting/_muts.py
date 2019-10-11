@@ -143,6 +143,10 @@ def signature_barplot_DBS(W, contributions):
         signature_barplot_DBS(W, np.sum(H))
     """
     W = W.copy()
+    for c in context78:
+        if c not in W.index:
+            W.loc[c] = 0
+    W.sort_index(inplace=True)
     sig_columns = [c for c in W if c.startswith('S')]
     if isinstance(contributions, pd.Series):
         W = W[sig_columns] * contributions[sig_columns]

@@ -20,19 +20,23 @@ context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>
                       'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
                       'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
 
-
-
-def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosmic: str = 'cosmic2', real_snps: bool = False):
+def get_spectra_from_maf(
+    maf: pd.DataFrame,
+    hgfile: Union[str,None] = None,
+    cosmic: str = 'cosmic2',
+    real_snps: bool = False
+    ):
     """
     Attaches context categories to maf and gets counts of contexts for each sample
+    ---------------------------
     Args:
-        maf: Pandas DataFrame of maf
-        hgfile: path to 2bit genome build file for computing reference context
-        cosmic: cosmic signatures to decompose to
+        * maf: Pandas DataFrame of maf
+        * hgfile: path to 2bit genome build file for computing reference context
+        * cosmic: cosmic signatures to decompose to
 
     Returns:
-        Pandas DataFrame of maf with context category attached
-        Pandas DataFrame of counts with samples as columns and context as rows
+        * Pandas DataFrame of maf with context category attached
+        * Pandas DataFrame of counts with samples as columns and context as rows
     """
     maf = maf.copy()
 
@@ -42,7 +46,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
     maf['sample'] = maf['Tumor_Sample_Barcode']
 
     if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome']:
-
         # Subset to SNPs
         if 'Variant_Type' in maf.columns:
             maf = maf.loc[maf['Variant_Type'] == 'SNP']
@@ -101,7 +104,6 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
         spectra.sort_index(inplace=True)
 
     elif cosmic == 'cosmic3_DBS':
-
         # Subset to DNPs
         if 'Variant_Type' not in maf.columns:
             ref_alt = maf['Reference_Allele'] + '>' + maf['Tumor_Seq_Allele2']

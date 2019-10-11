@@ -5,7 +5,7 @@ from twobitreader import TwoBitFile
 from typing import Union
 from tqdm import tqdm
 from sys import stdout
-from .utils import compl
+from .utils import compl, get_true_snps_from_maf, get_dnps_from_maf
 
 acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
@@ -22,7 +22,7 @@ context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>
 
 
 
-def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosmic: str = 'cosmic2'):
+def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosmic: str = 'cosmic2', real_snps: bool = False):
     """
     Attaches context categories to maf and gets counts of contexts for each sample
     Args:
@@ -49,6 +49,8 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
         else:
             maf = maf.loc[maf['Reference_Allele'].apply(lambda k: len(k) == 1 and k != '-') & \
             maf['Tumor_Seq_Allele2'].apply(lambda k: len(k) == 1 and k != '-')]
+        if not real_snps:
+            maf = get_true_snps_from_maf(maf)
 
         ref = maf['Reference_Allele'].str.upper()
         alt = maf['Tumor_Seq_Allele2'].str.upper()
@@ -114,7 +116,7 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
         if 'DNP' in maf['Variant_Type']:
             maf = maf.loc[maf['Variant_Type'] == 'DNP']
         else:
-            maf = _get_dnps_from_maf(maf)
+            maf = get_dnps_from_maf(maf)
 
         ref = maf['Reference_Allele']
         alt = maf['Tumor_Seq_Allele2']
@@ -140,27 +142,3 @@ def get_spectra_from_maf(maf: pd.DataFrame, hgfile: Union[str,None] = None, cosm
         raise NotImplementedError()
 
     return maf, spectra
-
-def _get_dnps_from_maf(maf: pd.DataFrame):
-    sub_mafs = []
-    for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
-        df = df.sort_values('Start_position')
-        start_pos = np.array(df['Start_position'])
-        pos_diff = np.diff(start_pos)
-        idx = []
-        if len(pos_diff) >= 2 and pos_diff[0] == 1 and pos_diff[1] > 1:
-            idx.append(0)
-        idx.extend(np.flatnonzero((pos_diff[:-2] > 1) & (pos_diff[1:-1] == 1) & (pos_diff[2:] > 1)) + 1)
-        if len(pos_diff) >= 2 and pos_diff[-1] == 1 and pos_diff[-2] > 1:
-            idx.append(len(pos_diff) - 1)
-        if idx:
-            idx = np.array(idx)
-            rows = df.iloc[idx][['Hugo_Symbol', 'Tumor_Sample_Barcode', 'sample', 'Chromosome',
-                                 'Start_position', 'Reference_Allele', 'Tumor_Seq_Allele2']].reset_index(drop=True)
-            rows_plus_one = df.iloc[idx + 1].reset_index()
-            rows['Variant_Type'] = 'DNP'
-            rows['End_position'] = rows['Start_position'] + 1
-            rows['Reference_Allele'] = rows['Reference_Allele'] + rows_plus_one['Reference_Allele']
-            rows['Tumor_Seq_Allele2'] = rows['Tumor_Seq_Allele2'] + rows_plus_one['Tumor_Seq_Allele2']
-            sub_mafs.append(rows)
-    return pd.concat(sub_mafs).reset_index(drop=True)

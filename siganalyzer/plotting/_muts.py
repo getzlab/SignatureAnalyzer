@@ -71,7 +71,7 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
         * fig
 
     Example usage:
-        plot_signatures(W, np.sum(H))
+        signature_barplot(W, np.sum(H))
     """
     W = W.copy()
     for c in context96:
@@ -101,7 +101,10 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
     fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2.5 * n_sigs), sharex='col', sharey='row')
     for row, sig in enumerate(sig_columns):
         for col, chg in enumerate(['CA', 'CG', 'CT', 'TA', 'TC', 'TG']):
-            ax = axes[row, col]
+            if n_sigs == 1:
+                ax = axes[col]
+            else:
+                ax = axes[row, col]
             bar_heights = W[sig].loc[change_map[chg]]
             ax.bar(x_coords, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[chg], rasterized=True)
             ax.set_xlim(-.55, 15.55)
@@ -118,8 +121,71 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
                 ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
 
     plt.subplots_adjust(wspace=.08, hspace=.15)
-    plt.suptitle('Mutational Signatures', fontsize=24, horizontalalignment='right')
+    plt.suptitle('Mutational Signatures', y=1.18 - n_sigs * .06, fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
-    fig.text(.51, .03, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
+    fig.text(.51, -.15 + n_sigs * .05, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
+
+    return fig
+
+def signature_barplot_DBS(W, contributions):
+    """
+    Plots signatures from W-matrix
+    --------------------------------------
+    Args:
+        * W: W-matrix
+        * contributions: Series of total contributions, np.sum(H), from each
+            signature if W is normalized; else, 1
+
+    Returns:
+        * fig
+
+    Example usage:
+        signature_barplot_DBS(W, np.sum(H))
+    """
+    W = W.copy()
+    sig_columns = [c for c in W if c.startswith('S')]
+    if isinstance(contributions, pd.Series):
+        W = W[sig_columns] * contributions[sig_columns]
+    else:
+        W = W[sig_columns] * contributions
+
+    n_sigs = len(sig_columns)
+
+    ref_map = {'AC': [], 'AT': [], 'CC': [], 'CG': [], 'CT': [], 'GC': [], 'TA': [], 'TC': [], 'TG': [], 'TT': []}
+    for x in W.index:
+        ref_map[x[:2]].append(x)
+    x_coords = {ref: range(len(sigs)) for ref, sigs in ref_map.items()}
+
+    color_map = {'AC': '#99CCFF', 'AT': '#0000FF', 'CC': '#CCFF99', 'CG': '#00FF00', 'CT': '#FF99CC',
+                 'GC': '#FF0000', 'TA': '#FFCC99', 'TC': '#FF8000', 'TG': '#CC99FF', 'TT': '#8000FF'}
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=10, figsize=(20, 2.5 * n_sigs), sharex='col',
+                             sharey='row', gridspec_kw={'width_ratios': (3, 2, 3, 2, 3, 2, 2, 3, 3, 3)})
+    for row, sig in enumerate(sig_columns):
+        for col, ref in enumerate(ref_map):
+            if n_sigs == 1:
+                ax = axes[col]
+            else:
+                ax = axes[row, col]
+            bar_heights = W[sig].loc[ref_map[ref]]
+            ax.bar(x_coords[ref], bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[ref],
+                   rasterized=True)
+            ax.set_xlim(-.55, x_coords[ref][-1] + .55)
+            if row == 0:
+                ax.set_title(ref)
+            if row < n_sigs - 1:
+                ax.tick_params(axis='x', length=0)
+            else:
+                xlabels = [x[3:] for x in ref_map[ref]]
+                ax.set_xticks(x_coords[ref])
+                ax.set_xticklabels(xlabels, fontfamily='monospace', rotation='vertical')
+            if col > 0:
+                ax.tick_params(axis='y', length=0)
+            if col == 9:
+                ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
+
+    plt.subplots_adjust(wspace=.08, hspace=.15)
+    plt.suptitle('Mutational Signatures', y=1.18 - n_sigs * .06, fontsize=24, horizontalalignment='right')
+    fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
+    fig.text(.51, -.15 + n_sigs * .05, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
 
     return fig

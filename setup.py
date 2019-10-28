@@ -18,7 +18,6 @@ setup(
     version = version,
     author = 'Shankara Anand & Justin Cha - Broad Institute - Cancer Genome Computational Analysis',
     author_email = 'sanand@broadinstitute.org',
-    version = '0.0.0',
     url = 'https://github.com/broadinstitute/getzlab-SignatureAnalyzer',
     long_description = long_description,
     long_description_content_type = 'text/markdown',
@@ -38,7 +37,7 @@ setup(
         'console_scripts': [
             'siganalyzer = siganalyzer.__main__:main'
         ]
-    }
+    },
     classifiers = [
         "Development Status :: Alpha",
         "Programming Language :: Python :: 3",

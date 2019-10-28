@@ -75,13 +75,14 @@ def run_maf(
         hg_build = pkg_resources.resource_filename('siganalyzer', 'ref/{}.2bit'.format(hg_build))
 
     # Cosmic Signatures
-    cosmic, cosmic_index = load_cosmic_signatures(cosmic)
+    cosmic_df, cosmic_index = load_cosmic_signatures(cosmic)
 
     # Generate Spectra from Maf
     print("   * Loading spectra from {}".format(maf))
     maf, spectra = get_spectra_from_maf(
         pd.read_csv(maf, sep='\t'),
-        hgfile=hg_build
+        hgfile=hg_build,
+        cosmic=cosmic
     )
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
@@ -98,7 +99,7 @@ def run_maf(
             **nmf_kwargs
         )
 
-        postprocess_msigs(res, cosmic, cosmic_index)
+        postprocess_msigs(res, cosmic_df, cosmic_index)
         lam = pd.DataFrame(data=res["lam"], columns=["lam"])
         lam.index.name = "K0"
 
@@ -199,7 +200,7 @@ def run_spectra(
         os.makedirs(outdir, exist_ok=True)
 
     # Cosmic Signatures
-    cosmic, cosmic_index = load_cosmic_signatures(cosmic)
+    cosmic_df, cosmic_index = load_cosmic_signatures(cosmic)
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
@@ -215,7 +216,7 @@ def run_spectra(
             **nmf_kwargs
         )
 
-        postprocess_msigs(res, cosmic, cosmic_index)
+        postprocess_msigs(res, cosmic_df, cosmic_index)
         lam = pd.DataFrame(data=res["lam"], columns=["lam"])
         lam.index.name = "K0"
 

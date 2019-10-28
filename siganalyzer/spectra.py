@@ -1,9 +1,7 @@
 import itertools
-import numpy as np
 import pandas as pd
 from twobitreader import TwoBitFile
 from typing import Union
-from tqdm import tqdm
 from sys import stdout
 from .utils import compl, get_true_snps_from_maf, get_dnps_from_maf
 
@@ -19,6 +17,20 @@ context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>
                       'TA>GT', 'TC>AA', 'TC>AG', 'TC>AT', 'TC>CA', 'TC>CG', 'TC>CT', 'TC>GA', 'TC>GG', 'TC>GT',
                       'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
                       'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
+context83 = dict(zip(['Cdel1', 'Cdel2', 'Cdel3', 'Cdel4', 'Cdel5', 'Cdel6+',
+                       'Tdel1', 'Tdel2', 'Tdel3', 'Tdel4', 'Tdel5', 'Tdel6+',
+                       'Cins0', 'Cins1', 'Cins2', 'Cins3', 'Cins4', 'Cins5+',
+                       'Tins0', 'Tins1', 'Tins2', 'Tins3', 'Tins4', 'Tins5+',
+                       '2del1', '2del2', '2del3', '2del4', '2del5', '2del6+',
+                       '3del1', '3del2', '3del3', '3del4', '3del5', '3del6+',
+                       '4del1', '4del2', '4del3', '4del4', '4del5', '4del6+',
+                       '5+del1', '5+del2', '5+del3', '5+del4', '5+del5', '5+del6+',
+                       '2ins0', '2ins1', '2ins2', '2ins3', '2ins4', '2ins5+',
+                       '3ins0', '3ins1', '3ins2', '3ins3', '3ins4', '3ins5+',
+                       '4ins0', '4ins1', '4ins2', '4ins3', '4ins4', '4ins5+',
+                       '5+ins0', '5+ins1', '5+ins2', '5+ins3', '5+ins4', '5+ins5+',
+                       '2delm1', '3delm1', '3delm2', '4delm1', '4delm2', '4delm3',
+                       '5+delm1', '5+delm2', '5+delm3', '5+delm4', '5+delm5+'], range(1, 84)))
 
 def get_spectra_from_maf(
     maf: pd.DataFrame,
@@ -77,8 +89,10 @@ def get_spectra_from_maf(
                     chromosome = 'Y'
                 elif chromosome == 'MT':
                     chromosome = 'M'
+                if not chromosome.startswith('chr'):
+                    chromosome = 'chr' + chromosome
 
-                _contexts.append(hg['chr'+chromosome][pos-2:pos+1].lower())
+                _contexts.append(hg[chromosome][pos-2:pos+1].lower())
 
             maf['ref_context'] = _contexts
             stdout.write("\n")
@@ -101,7 +115,7 @@ def get_spectra_from_maf(
         for c in context96:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra.sort_index(inplace=True)
+        spectra = spectra.loc[context96]
 
     elif cosmic == 'cosmic3_DBS':
         # Subset to DNPs
@@ -120,8 +134,8 @@ def get_spectra_from_maf(
         else:
             maf = get_dnps_from_maf(maf)
 
-        ref = maf['Reference_Allele']
-        alt = maf['Tumor_Seq_Allele2']
+        ref = maf['Reference_Allele'].str.upper()
+        alt = maf['Tumor_Seq_Allele2'].str.upper()
 
         contig = pd.Series([r + '>' + a if r + '>' + a in context78
                             else compl(r, reverse=True) + '>' + compl(a, reverse=True)
@@ -137,7 +151,110 @@ def get_spectra_from_maf(
         for c in context78:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra.sort_index(inplace=True)
+        spectra = spectra.loc[context78]
+
+    elif cosmic == 'cosmic3_ID':
+
+        maf = maf.loc[(maf['Reference_Allele'] == '-') ^ (maf['Tumor_Seq_Allele2'] == '-')]
+
+        ref = maf['Reference_Allele'].str.upper()
+        alt = maf['Tumor_Seq_Allele2'].str.upper()
+
+        assert hgfile is not None, 'Please provide genome build file.'
+        hg = TwoBitFile(hgfile)
+
+        # Map contexts
+        contig = list()
+        maf_size = maf.shape[0]
+        for idx,(pos,chromosome,r,a) in enumerate(zip(maf["Start_position"].astype(int),
+            maf["Chromosome"].astype(str), ref, alt)):
+            stdout.write("\r      * Mapping contexts: {} / {}".format(idx, maf_size))
+
+            # Double check version
+            if chromosome == '23':
+                chromosome = 'X'
+            elif chromosome == '24':
+                chromosome = 'Y'
+            elif chromosome == 'MT':
+                chromosome = 'M'
+            if not chromosome.startswith('chr'):
+                chromosome = 'chr' + chromosome
+
+            if a == '-':
+                del_len = len(r)
+                _context = hg[chromosome][pos - 1 + del_len:pos - 1 + del_len * 6].upper()
+                _context_list = [_context[n: n + del_len] for n in range(0, 5 * del_len, del_len)]
+                n_repeats = 1
+                for c in _context_list:
+                    if c == r:
+                        n_repeats += 1
+                    else:
+                        break
+                microhomology = 0
+                if n_repeats == 1:
+                    for b1, b2 in zip(r, _context_list[0]):
+                        if b1 == b2:
+                            microhomology += 1
+                        else:
+                            break
+                    prev_context = hg[chromosome][pos - 1 - del_len: pos - 1].upper()
+                    for b1, b2 in zip(reversed(r), reversed(prev_context)):
+                        if b1 == b2:
+                            microhomology += 1
+                        else:
+                            break
+                if del_len == 1:
+                    pre = 'C' if r in 'CG' else 'T'
+                elif del_len >= 5:
+                    pre = '5+'
+                else:
+                    pre = str(del_len)
+                if microhomology >= 5:
+                    post = 'm5+'
+                elif microhomology:
+                    post = 'm' + str(microhomology)
+                elif n_repeats == 6:
+                    post = '6+'
+                else:
+                    post = str(n_repeats)
+                contig.append(pre + 'del' + post)
+
+            elif r == '-':
+                ins_len = len(a)
+                _context = hg[chromosome][pos:pos + ins_len * 5].upper()
+                _context_list = [_context[n: n + ins_len] for n in range(0, 5 * ins_len, ins_len)]
+                n_repeats = 0
+                for c in _context_list:
+                    if c == a:
+                        n_repeats += 1
+                    else:
+                        break
+                if ins_len == 1:
+                    pre = 'C' if a in 'CG' else 'T'
+                elif ins_len >= 5:
+                    pre = '5+'
+                else:
+                    pre = str(ins_len)
+                if n_repeats == 5:
+                    post = '5+'
+                else:
+                    post = str(n_repeats)
+                contig.append(pre + 'ins' + post)
+
+        maf['context83.word'] = contig
+        try:
+            maf['context83.num'] = maf['context83.word'].apply(context83.__getitem__)
+        except KeyError as e:
+            raise KeyError('Unusual context: ' + str(e))
+
+        spectra = maf.groupby(['context83.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context83:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra = spectra.loc[context83]
+
+
+        stdout.write("\n")
 
     else:
 

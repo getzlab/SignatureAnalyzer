@@ -40,9 +40,16 @@ def marker_heatmap(
     Returns:
         * plt.Figure
     """
+    # Filter for marker genes
     signatures_filt = signatures[(signatures['diff'] > diff) & (signatures['max_norm'] > max_norm)]
+
+    # Remove signatures with no marker genes associated
+    order_series = order_series[order_series.isin(set(signatures_filt['max_id'].astype(int)))]
+
+    # Filter X matrix
     sample_markers = X.loc[signatures_filt.index, order_series.sort_values().index]
 
+    # Set horizontal lines
     hz_lines = np.unique(sample_markers.join(signatures_filt).loc[:,'max_id'].values, return_index=True)[1]
 
     fig, ax = plt.subplots(figsize=figsize)

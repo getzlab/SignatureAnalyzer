@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
 from .utils import load_cosmic_signatures
+from .utils import split_negatives
+
 from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
@@ -322,6 +324,11 @@ def run_matrix(
     # Load matrix
     if isinstance(matrix, str):
         matrix = file_loader(matrix)
+
+    # Check for negativity
+    if min(matrix.min()) < 0:
+        print("   * Negative values detecting, splitting vars m={} --> m={}".format(matrix.shape[0], matrix.shape[0]*2))
+        matrix = split_negatives(matrix, axis=0)
 
     if outdir is not ".":
         print("   * Creating output dir at {}".format(outdir))

@@ -22,6 +22,31 @@ def file_loader(x):
 # ---------------------------------
 # NMF Utils
 # ---------------------------------
+def split_negatives(x: pd.DataFrame, tag: str = '_n', axis: int = 0):
+    """
+    Split dataframe into positive and negative components.
+    --------------------
+    Args:
+        * x: pd.DataFrame input matrix
+        * tag: string that will be added to the end of the negative variable names
+        * axis: which axis to create a positive dimension for
+            NOTE: this is for 2D numpy arrays
+
+    Returns:
+        * pd.DataFrame with new positive transformed matrix.
+    """
+    x_neg = -1 * x.copy()
+    x_neg = x_neg.where(x_neg > 0, 0)
+
+    if axis:
+        x.columns = x.columns.astype(str)
+        x_neg.columns = [x+'_n' for x in x.columns]
+    else:
+        x.index = x.index.astype(str)
+        x_neg.index = [x+'_n' for x in x.index]
+
+    return pd.concat([x.where(x > 0, 0), x_neg], axis=axis)
+
 def compute_phi(mu: float, var: float, beta: float):
     """
     Compute Phi

@@ -4,9 +4,10 @@ import seaborn as sns
 import pandas as pd
 from typing import Union
 import numpy as np
+import re
 
 from ..utils import compl
-from ..spectra import context96, context78
+from ..spectra import context96, context78, context83
 
 def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
@@ -110,20 +111,24 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
             ax.set_xlim(-.55, 15.55)
             if row == 0:
                 ax.set_title('>'.join(chg), fontsize=18)
+                if col == 0:
+                    ax.text(51.2 / 16, 1.3, 'Mutational Signatures', transform=ax.transAxes,
+                            horizontalalignment='center', fontsize=24)
             if row < n_sigs - 1:
                 ax.tick_params(axis='x', length=0)
             else:
                 ax.set_xticks(x_coords)
                 ax.set_xticklabels(context_label, fontfamily='monospace', rotation='vertical')
+                if col == 0:
+                    ax.text(51.2 / 16, -.4, 'Motifs', transform=ax.transAxes, horizontalalignment='center', fontsize=20,
+                            fontweight='bold')
             if col > 0:
                 ax.tick_params(axis='y', length=0)
             if col == 5:
                 ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
 
     plt.subplots_adjust(wspace=.08, hspace=.15)
-    plt.suptitle('Mutational Signatures', y=1.18 - n_sigs * .06, fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
-    fig.text(.51, -.15 + n_sigs * .05, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
 
     return fig
 
@@ -176,20 +181,102 @@ def signature_barplot_DBS(W, contributions):
             ax.set_xlim(-.55, x_coords[ref][-1] + .55)
             if row == 0:
                 ax.set_title(ref)
+                if col == 0:
+                    ax.text(44.5 / 6, 1.2, 'Mutational Signatures', transform=ax.transAxes,
+                            horizontalalignment='center', fontsize=24)
             if row < n_sigs - 1:
                 ax.tick_params(axis='x', length=0)
             else:
                 xlabels = [x[3:] for x in ref_map[ref]]
                 ax.set_xticks(x_coords[ref])
                 ax.set_xticklabels(xlabels, fontfamily='monospace', rotation='vertical')
+                if col == 0:
+                    ax.text(44.5 / 6, -.3, 'Motifs', transform=ax.transAxes, horizontalalignment='center', fontsize=20,
+                            fontweight='bold')
             if col > 0:
                 ax.tick_params(axis='y', length=0)
             if col == 9:
                 ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
 
     plt.subplots_adjust(wspace=.08, hspace=.15)
-    plt.suptitle('Mutational Signatures', y=1.18 - n_sigs * .06, fontsize=24, horizontalalignment='right')
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
-    fig.text(.51, -.15 + n_sigs * .05, 'Motifs', horizontalalignment='center', fontsize=20, fontweight='bold')
+
+    return fig
+
+
+def plot_signatures_ID(W, contributions):
+    W = W.copy()
+    for c in context83:
+        if c not in W.index:
+            W.loc[c] = 0
+    W = W.loc[context83]
+    sig_columns = [c for c in W if c.startswith('S')]
+    if isinstance(contributions, pd.Series):
+        W = W[sig_columns] * contributions[sig_columns]
+    else:
+        W = W[sig_columns] * contributions
+
+    n_sigs = len(sig_columns)
+    group_map = {'Cdel': [], 'Tdel': [], 'Cins': [], 'Tins': [],
+                 '2del': [], '3del': [], '4del': [], '5+del': [],
+                 '2ins': [], '3ins': [], '4ins': [], '5+ins': [],
+                 '2delm': [], '3delm': [], '4delm': [], '5+delm': []}
+    for x in W.index:
+        group = re.search('.+?(?=[\d])', x).group(0)
+        group_map[group].append(x)
+    x_coords = {group: range(len(sigs)) for group, sigs in group_map.items()}
+
+    color_map = {'Cdel': '#FFCC99', 'Tdel': '#FF8000', 'Cins': '#00FF00', 'Tins': '#00BB00',
+                 '2del': '#FF99CC', '3del': '#FF3377', '4del': '#FF0000', '5+del': '#880000',
+                 '2ins': '#99CCFF', '3ins': '#3377FF', '4ins': '#0000FF', '5+ins': '#000088',
+                 '2delm': '#CC99FF', '3delm': '#9966FF', '4delm': '#8000FF', '5+delm': '#6000AA'}
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=16, figsize=(20, 2.5 * n_sigs), sharex='col',
+                             sharey='row', gridspec_kw={'width_ratios': (6,) * 12 + (1, 2, 3, 5)})
+    for row, sig in enumerate(sig_columns):
+        for col, group in enumerate(group_map):
+            if n_sigs == 1:
+                ax = axes[col]
+            else:
+                ax = axes[row, col]
+            bar_heights = W[sig].loc[group_map[group]]
+            ax.bar(x_coords[group], bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map[group],
+                   rasterized=True)
+            ax.set_xlim(-.55, x_coords[group][-1] + .55)
+            if row == 0:
+                ax.set_title(re.search('[\d+CT]+', group).group(0), color=color_map[group])
+                if col == 0:
+                    ax.text(44.5 / 6, 1.3, 'Mutational Signatures', transform=ax.transAxes,
+                            horizontalalignment='center', fontsize=24)
+                if group == 'Tdel':
+                    ax.text(-.02, 1.16, '1bp deletions at repeats', fontsize=10, transform=ax.transAxes,
+                            horizontalalignment='center', color=color_map[group])
+                if group == 'Tins':
+                    ax.text(-.02, 1.16, '1bp insertions at repeats', fontsize=10, transform=ax.transAxes,
+                            horizontalalignment='center', color=color_map[group])
+                if group == '4del':
+                    ax.text(-.02, 1.16, '>1bp deletions at repeats', fontsize=10, transform=ax.transAxes,
+                            horizontalalignment='center', color=color_map[group])
+                if group == '4ins':
+                    ax.text(-.02, 1.16, '>1bp insertions at repeats', fontsize=10, transform=ax.transAxes,
+                            horizontalalignment='center', color=color_map[group])
+                if group == '4delm':
+                    ax.text(.8, 1.16, '>1bp deletions with microhomology', fontsize=10, transform=ax.transAxes,
+                            horizontalalignment='center', color=color_map[group])
+            if row < n_sigs - 1:
+                ax.tick_params(axis='x', length=0)
+            else:
+                xlabels = [re.search('[\d+]+$', x).group(0) for x in group_map[group]]
+                ax.set_xticks(x_coords[group])
+                ax.set_xticklabels(xlabels, fontfamily='monospace')
+                if col == 0:
+                    ax.text(44.5 / 6, -.3, 'Motifs', transform=ax.transAxes, horizontalalignment='center', fontsize=20,
+                            fontweight='bold')
+            if col > 0:
+                ax.tick_params(axis='y', length=0)
+            if col == 15:
+                ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
+
+    plt.subplots_adjust(wspace=.08, hspace=.15)
+    fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
 
     return fig

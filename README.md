@@ -113,13 +113,3 @@ sa.pl.k_dist(...)
 sa.pl.consensus_matrix(...)
 
 ```
-
----
-
-### In progress
-
-- [x] Updated `setup.py`
-- [ ] Mapping to Cosmic3 SBS
-- [ ] Mapping to Cosmic3 DBS
-- [ ] DBS plotting
-- [ ] Indels

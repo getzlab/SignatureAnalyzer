@@ -32,7 +32,8 @@ setup(
         "scikit-image>=0.15.0",
         "tqdm>=4.33.0",
         "h5py>=2.9.0",
-        "tables>=3.6.1"
+        "tables>=3.6.1",
+        "missingpy"
     ],
     entry_points = {
         'console_scripts': [

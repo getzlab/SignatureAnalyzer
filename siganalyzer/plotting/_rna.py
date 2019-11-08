@@ -17,7 +17,12 @@ def marker_heatmap(
     max_norm: float = 0.5,
     figsize: tuple = (16,12),
     cmap: str ="YlGnBu",
-    display_y: bool = False
+    display_y: bool = False,
+    vmax: float = None,
+    vmin: float = None,
+    cohort_s: Union[pd.Series,None] = None,
+    y_hm_label: str = 'Genes',
+    cbar_hm_label: str = 'Normalized Expression'
     ):
     """
     Plot marker map.
@@ -36,6 +41,12 @@ def marker_heatmap(
         * max_norm: strength of loading for called signature
         * figsize: size of figure
         * cmap: colormap for plot
+        * display_y: whether or not to display feature names
+        * vmax: colorbar max
+        * vmin: colorbar min
+        * cohort_s: cohort_series dataframe (added on top of plot)
+        * y_hm_label: label of y-axis on heatmap (ex. Genes, Protein LFC, etc.)
+        * cbar_hm_label: label of heatmap colorbar
 
     Returns:
         * plt.Figure
@@ -62,7 +73,7 @@ def marker_heatmap(
 
     cbar_ax = fig.add_axes([.91, 0.5, .025, .3])
 
-    sns.heatmap(sample_markers, ax=ax, cmap=cmap, rasterized=True, cbar_ax=cbar_ax)
+    sns.heatmap(sample_markers, ax=ax, cmap=cmap, rasterized=True, cbar_ax=cbar_ax, vmax=vmax, vmin=vmin)
     v,c = np.unique(order_series, return_counts=True)
 
     # plot horizontal lines
@@ -83,12 +94,10 @@ def marker_heatmap(
     ax.set_xticklabels(v, rotation=360,fontsize=14)
     ax.set_yticks(np.arange(sample_markers.index.values.shape[0]))
 
-
     # add gene markings
     if subset_genes is not None:
         ax.set_yticks([])
         ax.set_yticklabels([], rasterized=True)
-
 
         lax = fig.add_axes([x0-3*buf, y0, 2*buf, y1-y0])
         lax.set_xticks([])
@@ -137,7 +146,7 @@ def marker_heatmap(
 
         for _, spine in lax.spines.items():
             spine.set_visible(True)
-
+    # --------------subset genes-------------------
     else:
         if display_y:
             ax.set_yticklabels(sample_markers.index.values, fontsize=5, rasterized=True)
@@ -145,12 +154,63 @@ def marker_heatmap(
             ax.set_yticks([])
             ax.set_yticklabels([], rasterized=True)
 
-        ax.set_ylabel('Genes', fontsize=14)
+        ax.set_ylabel(y_hm_label, fontsize=14)
+
+    # Add sample anont
+    if cohort_s is not None:
+        # Get ordering and samples
+        cohort_s = cohort_s.loc[sample_markers.columns]
+
+        # Create axis
+        cs_ax = fig.add_axes([x0, y1+2*buf, x1*.86, 2*buf])
+        cs_ax.set_xticks([])
+        cs_ax.set_yticks([])
+
+        cbar_cs_ax = fig.add_axes([x0, y1+6*buf, x1*.25, 2*buf])
+
+        colors_conversion, meta_colormap = series_to_colors(cohort_s)
+        meta_colormap_inv = dict([[v,k] for k,v in meta_colormap.items()])
+        meta_colormap_inv = {(k[0],k[1],k[2]):v for k,v in meta_colormap_inv.items()}
+        mat,cmap = color_list_to_matrix_and_cmap(colors_conversion)
+
+        sns.heatmap(
+            mat,
+            cmap=cmap,
+            ax=cs_ax,
+            yticklabels=False,
+            xticklabels=False,
+            cbar=True,
+            cbar_ax=cbar_cs_ax,
+            cbar_kws={"orientation": "horizontal"}
+        )
+
+        cb_ticks = [float(t.get_text().replace('−','-')) for t in cbar_cs_ax.get_yticklabels()]
+
+        color_value_mapping = dict()
+        for v in np.unique(mat):
+            color_code = list(cmap.__call__(v))
+            color_code = tuple(color_code[:3])
+            color_value_mapping[v] = meta_colormap_inv[color_code]
+
+        cbar_cs_ax.get_xaxis().set_ticks([])
+
+        n_labels = len(list(color_value_mapping.keys()))
+        vals = [x * ((n_labels)/(n_labels+1)) + 0.5 * ((n_labels)/(n_labels+1)) for x in list(color_value_mapping.keys())]
+
+        cbar_cs_ax.get_xaxis().set_ticks(vals)
+        cbar_cs_ax.get_xaxis().set_ticklabels(list(color_value_mapping.values()))
+        cbar_cs_ax.xaxis.set_ticks_position('top')
+
+        cbar_cs_ax.set_frame_on(True)
+
+        for _, spine in cbar_cs_ax.spines.items():
+            spine.set_visible(True)
+    # --------------sample annot-------------------
 
     ax.set_title('')
     ax.set_xlabel('NMF Signatures', fontsize=14)
 
-    cbar_ax.set_ylabel('Normalized Expression', fontsize=12)
+    cbar_ax.set_ylabel(cbar_hm_label, fontsize=12)
 
     [spine.set_visible(True) for _, spine in ax.spines.items()]
 

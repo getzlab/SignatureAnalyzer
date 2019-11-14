@@ -33,7 +33,8 @@ setup(
         "tqdm>=4.33.0",
         "h5py>=2.9.0",
         "tables>=3.6.1",
-        "missingpy"
+        "missingpy",
+        "gprofiler"
     ],
     entry_points = {
         'console_scripts': [

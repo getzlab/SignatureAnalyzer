@@ -88,15 +88,18 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
 
     n_sigs = len(sig_columns)
 
+    context_label = []
     change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}
-    for x in W.index:
-        if x.startswith('A'):
-            change_map[compl(x[:2])].insert(0, x)
-        else:
-            change_map[x[:2]].append(x)
-
+    for p in itertools.product('ACGT', 'ACGT'):
+        context = ''.join(p)
+        compl_context = compl(context, reverse=True)
+        context_label.append('-'.join(context))
+        for key in change_map:
+            if key.startswith('C'):
+                change_map[key].append(key + context)
+            else:
+                change_map[key].append(compl(key) + compl_context)
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
-    context_label = ['-'.join(p) for p in itertools.product('ACGT', 'ACGT')]
 
     x_coords = range(16)
     fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2.5 * n_sigs), sharex='col', sharey='row')

@@ -50,7 +50,6 @@ def split_negatives(x: pd.DataFrame, tag: str = '_n', axis: int = 0):
 
     return pd.concat([x.where(x > 0, 0), x_neg], axis=axis)
 
-
 def impute_values(df: pd.DataFrame, method: str = 'mean', **kwargs):
     """
     Impute missing values in DataFrame (np.nan or None).
@@ -63,7 +62,7 @@ def impute_values(df: pd.DataFrame, method: str = 'mean', **kwargs):
             ** 'rf': random forest imputation (see missingpy.MissForest)
 
     Returns:
-        * pd.dataFrame: pd.DataFrame of imputed values (samples x features)
+        * pd.DataFrame: imputed values (samples x features)
     """
     assert method in ('mean','knn','rf'), '{} not yet implemented.'.format(method)
 
@@ -79,6 +78,32 @@ def impute_values(df: pd.DataFrame, method: str = 'mean', **kwargs):
         imputer = MissForest(**kwargs)
         X_impute = imputer.fit_transform(X)
         return pd.DataFrame(X_impute, index=df.index, columns=df.columns)
+
+def l2fc(df: pd.DataFrame, center: str = 'median', axis: int = 1):
+    """
+    Log2 Fold-Change Input Dataframe
+    -------------------------
+    Args:
+        * df: pd.DataFrame
+        * center: center-metrix to compute log-fold change over
+            ** 'median'
+            ** 'mean'
+        * axis: int axis to compute median and LFC across (i.e. samples)
+
+    Returns:
+        * pd.Dataframe: log2FC-transformed pandas dataframe
+    """
+    X = df.values
+
+    if center == 'median':
+        X_mid = np.median(X, axis)
+    elif center == 'mean':
+        X_mid = np.mean(X, axis)
+
+    if axis==1:
+        return pd.DataFrame(np.log2(X) - np.log2(X_mid)[:,np.newaxis], index=df.index, columns=df.columns)
+    else:
+        return pd.DataFrame(np.log2(X) - np.log2(X_mid)[np.newaxis], index=df.index, columns=df.columns)
 
 def compute_phi(mu: float, var: float, beta: float):
     """

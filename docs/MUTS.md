@@ -2,6 +2,8 @@
 
 Decomposition of mutational signatures using  `siganalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures). The following document is a reference for important considerations when running this method.
 
+---
+
 #### Objective Function
 For mutational signatures, we assume a poisson distribution of counts and use Fevotte & Tan's derivation of a poisson objective function for ARD-NMF. Thus, it is important to use the default value for the objective function (`poisson`).
 
@@ -9,6 +11,7 @@ Use:
 ```{bash}
 --objective poisson
 ```
+---
 
 #### Human Genome (Hg) Build
 Select which human genome build to use for mapping. We build base contexts using a 2-bit representation of the genome build. These may be downloaded here:
@@ -23,6 +26,8 @@ Use:
 --hg_build {hg19,hg38,None}
 ```
 
+---
+
 #### COSMIC Signatures
 Signature Analyzer supports encoding of:
 * Single Base Substitution (SBS) Signatures (WGS: `cosmic3`, WES: `cosmic3_exome`)
@@ -34,6 +39,8 @@ Use:
 --cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}
 ```
 
+---
+
 #### Prior on H & W
 We generally impose an exponential (`L1`) prior on the W & H matrices for non-negative matrix factorization.
 
@@ -41,6 +48,8 @@ Use:
 ```{bash}
 --prior_on_H L1 --prior_on_W L1
 ```
+
+---
 
 #### Running the method
 This method may be run in two ways, from a `.maf` file or a spectra file (`.txt`, `.parquet`, `.txt.gz`, `.csv`).

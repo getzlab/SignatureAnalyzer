@@ -16,6 +16,7 @@ from .consensus import consensus_cluster
 from .plotting import k_dist, consensus_matrix
 from .plotting import signature_barplot, stacked_bar
 from .plotting import marker_heatmap
+from .plotting import cosine_similarity_plot
 
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
@@ -141,6 +142,7 @@ def run_maf(
     print("   * Saving report plots to {}".format(outdir))
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+    cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
     _ = signature_barplot(W, contributions=np.sum(H))
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
@@ -148,6 +150,8 @@ def run_maf(
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
     _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+    _ = cosine_similarity_plot(cosine)
+    plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
 
 def run_spectra(
     spectra: Union[str, pd.DataFrame],
@@ -258,6 +262,7 @@ def run_spectra(
     print("   * Saving report plots to {}".format(outdir))
     H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+    cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
     _ = signature_barplot(W, contributions=np.sum(H))
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
@@ -265,6 +270,8 @@ def run_spectra(
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
     _ = k_dist(np.array(aggr.K, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+    _ = cosine_similarity_plot(cosine)
+    plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
 
 def run_matrix(
     matrix: Union[str, pd.DataFrame],

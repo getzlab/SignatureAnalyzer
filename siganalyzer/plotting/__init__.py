@@ -8,3 +8,5 @@ from ._muts import stacked_bar
 
 from ._nmf import k_dist
 from ._nmf import consensus_matrix
+
+from ._cosine import cosine_similarity_plot

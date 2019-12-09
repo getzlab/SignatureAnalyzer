@@ -5,8 +5,10 @@ import os
 import torch
 from typing import Union
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'SignatureAnalyzer-GPU'))
-from ARD_NMF import ARD_NMF, run_method_engine
+# sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'SignatureAnalyzer-GPU'))
+# from ARD_NMF import ARD_NMF, run_method_engine
+
+from .signatureanalyzer_gpu.ARD_NMF import ARD_NMF, run_method_engine
 
 # Relative Imports
 from .utils import compute_phi, transfer_weights, select_signatures, select_markers

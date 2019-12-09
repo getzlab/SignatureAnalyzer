@@ -244,19 +244,20 @@ def load_cosmic_signatures(cosmic: str):
     """
     if cosmic == 'cosmic2':
         print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3':
         print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_exome':
         print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_DBS':
+        raise Exception("Not yet implemented for {}".format(cosmic))
         print("   * Using {} signatures".format(cosmic))
-        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
@@ -330,7 +331,6 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
 
     # Create cosine similarity matrix
     X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
-    print(X.head())
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # Add assignments

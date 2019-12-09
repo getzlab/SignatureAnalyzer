@@ -73,7 +73,7 @@ def run_maf(
     # Human Genome Build
     if hg_build is not None:
         print("   * Using {} build".format(hg_build))
-        hg_build = pkg_resources.resource_filename('siganalyzer', 'ref/{}.2bit'.format(hg_build))
+        hg_build = pkg_resources.resource_filename('signatureanalyzer', 'ref/{}.2bit'.format(hg_build))
 
     # Cosmic Signatures
     cosmic_df, cosmic_index = load_cosmic_signatures(cosmic)
@@ -100,7 +100,7 @@ def run_maf(
             **nmf_kwargs
         )
 
-        postprocess_msigs(res, cosmic_df, cosmic_index)
+        postprocess_msigs(res, cosmic_df, cosmic_index, cosmic)
         lam = pd.DataFrame(data=res["lam"], columns=["lam"])
         lam.index.name = "K0"
 
@@ -220,7 +220,7 @@ def run_spectra(
             **nmf_kwargs
         )
 
-        postprocess_msigs(res, cosmic_df, cosmic_index)
+        postprocess_msigs(res, cosmic_df, cosmic_index, cosmic)
         lam = pd.DataFrame(data=res["lam"], columns=["lam"])
         lam.index.name = "K0"
 

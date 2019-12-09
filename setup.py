@@ -7,8 +7,8 @@ ver_info = sys.version_info
 if ver_info < (3,6,0):
     raise RuntimeError("siganalyzer requires at least python 3.6.0")
 
-with open(os.path.join(os.path.dirname(__file__), 'siganalyzer', '_init_.py')) as r:
-    version = re.search(r'version = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)
+with open(os.path.join(os.path.dirname(__file__), 'signatureanalyzer', '__init__.py')) as r:
+    version = re.search(r'__version__ = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)
 
 with open("README.md") as r:
     long_description = r.read()
@@ -25,8 +25,9 @@ setup(
     packages = [
         'signatureanalyzer',
         'signatureanalyzer.plotting',
-        'signatureanalyzer.pathways'
-    ]
+        'signatureanalyzer.pathways',
+        'signatureanalyzer.signatureanalyzer_gpu'
+    ],
     install_requires = [
         "twobitreader>=3.1.7",
         "torch>=1.2.0",
@@ -44,9 +45,15 @@ setup(
         "matplotlib",
         "scipy"
     ],
+    package_data = {
+    "":[
+        "ref/cosmic_v2/sa*",
+        "ref/cosmic_v3/sa*"
+    ]
+    },
     entry_points = {
         'console_scripts': [
-            'siganalyzer = signatureanalyzer.__main__:main'
+            'signatureanalyzer = signatureanalyzer.__main__:main'
         ]
     },
     classifiers = [

@@ -10,3 +10,5 @@ from .consensus import consensus_cluster
 from .signatureanalyzer import run_maf
 from .signatureanalyzer import run_spectra
 from .signatureanalyzer import run_matrix
+
+__version__ = '0.0.1'

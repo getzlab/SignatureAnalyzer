@@ -7,21 +7,26 @@ ver_info = sys.version_info
 if ver_info < (3,6,0):
     raise RuntimeError("siganalyzer requires at least python 3.6.0")
 
-with open(os.path.join(os.path.dirname(__file__), 'siganalyzer', 'signatureanalyzer.py')) as r:
+with open(os.path.join(os.path.dirname(__file__), 'siganalyzer', '_init_.py')) as r:
     version = re.search(r'version = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)
 
 with open("README.md") as r:
     long_description = r.read()
 
 setup(
-    name = 'siganalyzer',
+    name = 'signatureanalyzer',
     version = version,
     author = 'Shankara Anand & Justin Cha - Broad Institute - Cancer Genome Computational Analysis',
     author_email = 'sanand@broadinstitute.org',
     url = 'https://github.com/broadinstitute/getzlab-SignatureAnalyzer',
     long_description = long_description,
     long_description_content_type = 'text/markdown',
-    description = 'Bayesian NMF methods for mutational signature analysis on GPUs (Getz Lab).',
+    description = 'Bayesian NMF methods for mutational signature analysis & transcriptomic profiling on GPUs (Getz Lab).',
+    packages = [
+        'signatureanalyzer',
+        'signatureanalyzer.plotting',
+        'signatureanalyzer.pathways'
+    ]
     install_requires = [
         "twobitreader>=3.1.7",
         "torch>=1.2.0",
@@ -34,11 +39,14 @@ setup(
         "h5py>=2.9.0",
         "tables>=3.6.1",
         "missingpy",
-        "gprofiler"
+        "gprofiler",
+        "numpy",
+        "matplotlib",
+        "scipy"
     ],
     entry_points = {
         'console_scripts': [
-            'siganalyzer = siganalyzer.__main__:main'
+            'siganalyzer = signatureanalyzer.__main__:main'
         ]
     },
     classifiers = [

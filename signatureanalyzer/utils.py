@@ -254,6 +254,10 @@ def load_cosmic_signatures(cosmic: str):
         print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
+    elif cosmic == 'cosmic3_DBS':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('siganalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
+        cosmic_index = "Somatic Mutation Type"
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
 
@@ -271,9 +275,9 @@ def compl(seq: str, reverse: bool = False):
     """
     return ''.join([COMPL[x] if x in COMPL.keys() else x for x in (reversed(seq) if reverse else seq)])
 
-def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
+def _map_dbs_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
     """
-    Map signatures.
+    Map SBS signatures.
     """
     def _check_to_flip(x, ref):
         if x[2:-2] in ref:
@@ -285,7 +289,21 @@ def _map_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substituti
     context_s = W.reset_index()[W_index].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
     return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
 
-def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
+def _map_sbs_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
+    """
+    Map DBS sigantures.
+    """
+    def _check_to_flip(x, ref):
+        if x[2:-2] in ref:
+            return x
+        else:
+            return compl(x)
+
+    W_index = W.index.name
+    context_s = W.reset_index()[W_index].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
+    return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
+
+def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic_type: str):
     """
     Post process ARD-NMF on mutational signatures.
     ------------------------
@@ -299,7 +317,12 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
     Returns:
         * None, edits res dictionary directly
     """
-    res["Wraw"]["mut"] = _map_sigs(res["Wraw"], cosmic).values
+    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
+    elif cosmic_type == 'cosmic3_DBS':
+        res["Wraw"].to_parquet("W_test.parquet")
+        cosmic.to_parquet("cosmic_test.parquet")
+        res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
@@ -307,6 +330,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str):
 
     # Create cosine similarity matrix
     X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+    print(X.head())
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # Add assignments

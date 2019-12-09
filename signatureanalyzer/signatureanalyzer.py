@@ -21,8 +21,6 @@ from .plotting import cosine_similarity_plot
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
 
-version = '0.0.1'
-
 def run_maf(
     maf: Union[str, pd.DataFrame],
     outdir: str = '.',

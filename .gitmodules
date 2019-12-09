@@ -1,3 +1,0 @@
-[submodule "siganalyzer/SignatureAnalyzer-GPU"]
-	path = siganalyzer/SignatureAnalyzer-GPU
-	url = https://github.com/broadinstitute/SignatureAnalyzer-GPU.git

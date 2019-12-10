@@ -54,7 +54,7 @@ def main():
     parser.add_argument(
         '--hg_build',
         help="Path to 2bit, human genome build for mapping mutational contexts. Required if mutational context is not provided (default: None)",
-        default='None'
+        default=None
     )
     parser.add_argument(
         '--cuda_int',

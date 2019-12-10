@@ -47,8 +47,7 @@ _Coming soon._
 ## Command Line Interface
 
 ```
-usage: signatureanalyzer [-h] --input INPUT [-t {maf,spectra,matrix}]
-                         [-n NRUNS] [-o OUTDIR]
+usage: signatureanalyzer [-h] [-t {maf,spectra,matrix}] [-n NRUNS] [-o OUTDIR]
                          [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
                          [--hg_build HG_BUILD] [--cuda_int CUDA_INT]
                          [--verbose] [--K0 K0] [--max_iter MAX_ITER]
@@ -58,6 +57,7 @@ usage: signatureanalyzer [-h] --input INPUT [-t {maf,spectra,matrix}]
                          [--report_freq REPORT_FREQ]
                          [--active_thresh ACTIVE_THRESH] [--cut_norm CUT_NORM]
                          [--cut_diff CUT_DIFF]
+                         input
 ```
 
 #### Example:

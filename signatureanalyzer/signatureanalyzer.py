@@ -25,7 +25,7 @@ def run_maf(
     maf: Union[str, pd.DataFrame],
     outdir: str = '.',
     cosmic: str = 'cosmic2',
-    hg_build: Union[str, None] = 'hg19',
+    hg_build: Union[str, None] = None,
     nruns: int = 10,
     verbose: bool = False,
     **nmf_kwargs
@@ -72,8 +72,7 @@ def run_maf(
 
     # Human Genome Build
     if hg_build is not None:
-        print("   * Using {} build".format(hg_build))
-        hg_build = pkg_resources.resource_filename('signatureanalyzer', 'ref/{}.2bit'.format(hg_build))
+        print("   * Using {} build".format(hg_build.split("/")[-1].split('.2bit')[0]))
 
     # Cosmic Signatures
     cosmic_df, cosmic_index = load_cosmic_signatures(cosmic)

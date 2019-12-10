@@ -5,7 +5,7 @@ import sys
 
 ver_info = sys.version_info
 if ver_info < (3,6,0):
-    raise RuntimeError("siganalyzer requires at least python 3.6.0")
+    raise RuntimeError("signatureanalyzer requires at least python 3.6.0")
 
 with open(os.path.join(os.path.dirname(__file__), 'signatureanalyzer', '__init__.py')) as r:
     version = re.search(r'__version__ = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)

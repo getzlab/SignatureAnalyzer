@@ -18,12 +18,9 @@ Select which human genome build to use for mapping. We build base contexts using
 * hg19: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit`
 * hg38: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit`
 
-And moved to:
-`<PATH>/getzlab-SignatureAnalyzer/signatureanalyzer/ref/`
-
 Use:
 ```{bash}
---hg_build {hg19,hg38,None}
+--hg_build <PATH>/hg19.2bit
 ```
 
 ---
@@ -62,6 +59,7 @@ Use:
 signatureanalyzer -i input.maf \
                   -n 10 \
                   --cosmic cosmic3_exome \
+                  --hg_build hg38.2bit \
                   --objective poisson \
                   --hg_build hg38 \
                   --max_iter 30000 \

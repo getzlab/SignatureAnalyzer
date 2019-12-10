@@ -3,19 +3,27 @@
 Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expression data. Designed for scalability using Pytorch to run using GPUs if available.
 * See `docs` for a more in-depth description of how to use method.
 
+_Requires Python 3.6.0 or higher._
+
 ## Installation
 
 ##### PIP
 
 `pip3 install signatureanalyzer`
 
+or
+
 ##### Git Clone
 
 * `git clone --recursive https://github.com/broadinstitute/getzlab-SignatureAnalyzer.git`
 * `cd getzlab-SignatureAnalyzer`
-* `pip install -e .`
+* `pip3 install -e .`
 
 Note `--recurisve` flag is required to clone submodules.
+
+##### Docker
+
+_Coming soon._
 
 ---
 
@@ -42,7 +50,7 @@ Note `--recurisve` flag is required to clone submodules.
 usage: signatureanalyzer [-h] -i INPUT [-t {maf,spectra,matrix}] [-n NRUNS]
                          [-o OUTDIR]
                          [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
-                         [--hg_build {hg19,hg38,None}] [--cuda_int CUDA_INT]
+                         [--hg_build HG_BUILD] [--cuda_int CUDA_INT]
                          [--verbose] [--K0 K0] [--max_iter MAX_ITER]
                          [--del_ DEL_] [--tolerance TOLERANCE] [--phi PHI]
                          [--a A] [--b B] [--objective {poisson,gaussian}]

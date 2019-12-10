@@ -17,6 +17,7 @@ context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>
                       'TA>GT', 'TC>AA', 'TC>AG', 'TC>AT', 'TC>CA', 'TC>CG', 'TC>CT', 'TC>GA', 'TC>GG', 'TC>GT',
                       'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
                       'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
+
 context83 = dict(zip(['Cdel1', 'Cdel2', 'Cdel3', 'Cdel4', 'Cdel5', 'Cdel6+',
                        'Tdel1', 'Tdel2', 'Tdel3', 'Tdel4', 'Tdel5', 'Tdel6+',
                        'Cins0', 'Cins1', 'Cins2', 'Cins3', 'Cins4', 'Cins5+',
@@ -74,7 +75,11 @@ def get_spectra_from_maf(
             context = maf['ref_context'].str.upper()
         else:
             assert hgfile is not None, 'Please provide genome build file.'
-            hg = TwoBitFile(hgfile)
+
+            try:
+                hg = TwoBitFile(hgfile)
+            except:
+                raise Exception("{} not a valid 2bit file.".format(hgfile))
 
             # Map contexts
             _contexts = list()
@@ -161,7 +166,11 @@ def get_spectra_from_maf(
         alt = maf['Tumor_Seq_Allele2'].str.upper()
 
         assert hgfile is not None, 'Please provide genome build file.'
-        hg = TwoBitFile(hgfile)
+
+        try:
+            hg = TwoBitFile(hgfile)
+        except:
+            raise Exception("{} not a valid 2bit file.".format(hgfile))
 
         # Map contexts
         contig = list()

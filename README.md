@@ -1,9 +1,13 @@
 # SignatureAnalyzer
 
-Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expression data.
+Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expression data. Designed for scalability using Pytorch to run using GPUs if available.
 * See `docs` for a more in-depth description of how to use method.
 
 ## Installation
+
+##### PIP
+
+`pip3 install signatureanalyzer`
 
 ##### Git Clone
 
@@ -12,12 +16,6 @@ Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expr
 * `pip install -e .`
 
 Note `--recurisve` flag is required to clone submodules.
-
-
-##### PIP
-
-_Support for PIP coming soon._
-
 
 ---
 
@@ -41,29 +39,30 @@ _Support for PIP coming soon._
 ## Command Line Interface
 
 ```
-usage: siganalyzer [-h] -i INPUT [-t {maf,spectra,matrix}] [-n NRUNS]
-                   [-o OUTDIR]
-                   [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
-                   [--hg_build {hg19,hg38,None}] [--cuda_int CUDA_INT]
-                   [--verbose] [--K0 K0] [--max_iter MAX_ITER] [--del_ DEL_]
-                   [--tolerance TOLERANCE] [--phi PHI] [--a A] [--b B]
-                   [--objective {poisson,gaussian}] [--prior_on_W {L1,L2}]
-                   [--prior_on_H {L1,L2}] [--report_freq REPORT_FREQ]
-                   [--active_thresh ACTIVE_THRESH] [--cut_norm CUT_NORM]
-                   [--cut_diff CUT_DIFF]
+usage: signatureanalyzer [-h] -i INPUT [-t {maf,spectra,matrix}] [-n NRUNS]
+                         [-o OUTDIR]
+                         [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
+                         [--hg_build {hg19,hg38,None}] [--cuda_int CUDA_INT]
+                         [--verbose] [--K0 K0] [--max_iter MAX_ITER]
+                         [--del_ DEL_] [--tolerance TOLERANCE] [--phi PHI]
+                         [--a A] [--b B] [--objective {poisson,gaussian}]
+                         [--prior_on_W {L1,L2}] [--prior_on_H {L1,L2}]
+                         [--report_freq REPORT_FREQ]
+                         [--active_thresh ACTIVE_THRESH] [--cut_norm CUT_NORM]
+                         [--cut_diff CUT_DIFF]
 ```
 
 #### Example:
 
 ```
-siganalyzer input.maf -n 10 --cosmic cosmic2 --objective poisson
+signatureanalyzer input.maf -n 10 --cosmic cosmic2 --objective poisson
 ```
 
 
 ## Python API
 
 ```python
-import siganalyzer as sa
+import signatureanalyzer as sa
 
 # ---------------------
 # RUN SIGNATURE ANALYZER

@@ -1,6 +1,6 @@
 ## Mutational Signatures
 
-Decomposition of mutational signatures using  `siganalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures). The following document is a reference for important considerations when running this method.
+Decomposition of mutational signatures using  `signatureanalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures). The following document is a reference for important considerations when running this method.
 
 ---
 
@@ -19,7 +19,7 @@ Select which human genome build to use for mapping. We build base contexts using
 * hg38: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit`
 
 And moved to:
-`<PATH>/getzlab-SignatureAnalyzer/siganalyzer/ref/`
+`<PATH>/getzlab-SignatureAnalyzer/signatureanalyzer/ref/`
 
 Use:
 ```{bash}
@@ -54,17 +54,17 @@ Use:
 #### Running the method
 This method may be run in two ways, from a `.maf` file or a spectra file (`.txt`, `.parquet`, `.txt.gz`, `.csv`).
 * _Mutation Annotation Format_ :for details on this format (`.maf`), please see (this)[https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/] reference from NCI's Genomic Data Commons website
-  * If this option is used, `siganalyzer` will generate a spectra using the `.maf` based on what `--cosmic` option is selected
+  * If this option is used, `signatureanalyzer` will generate a spectra using the `.maf` based on what `--cosmic` option is selected
 * _Spectra_: this option is provided if the user wants to provide a pre-computed mutational spectra (ex. 96-base context; see COSMIC site)
 
 Use:
 ```
-siganalyzer -i input.maf \
-            -n 10 \
-            --cosmic cosmic3_exome \
-            --objective poisson \
-            --hg_build hg38 \
-            --max_iter 30000 \
-            --prior_on_H L1 \
-            --prior_on_W L1
+signatureanalyzer -i input.maf \
+                  -n 10 \
+                  --cosmic cosmic3_exome \
+                  --objective poisson \
+                  --hg_build hg38 \
+                  --max_iter 30000 \
+                  --prior_on_H L1 \
+                  --prior_on_W L1
 ```

@@ -1,6 +1,6 @@
 ## Expression Matrices
 
-Decomposition of expression signatures using  `siganalyzer`. For identifying _de novo_ signatures in expression matrices (ex. single-cell RNA-seq, bulk RNA-seq, etc.). The following document is a reference for important considerations when running this method for these data-types.
+Decomposition of expression signatures using  `signatureanalyzer`. For identifying _de novo_ signatures in expression matrices (ex. single-cell RNA-seq, bulk RNA-seq, etc.). The following document is a reference for important considerations when running this method for these data-types.
 
 ---
 
@@ -35,10 +35,10 @@ This method may be run using an input of (n x m), with n: samples, m: variables.
 
 Use:
 ```
-siganalyzer -i input.tsv \
-            -n 10 \
-            --objective gaussian \
-            --max_iter 30000 \
-            --prior_on_H L1 \
-            --prior_on_W L1
+signatureanalyzer -i input.tsv \
+                  -n 10 \
+                  --objective gaussian \
+                  --max_iter 30000 \
+                  --prior_on_H L1 \
+                  --prior_on_W L1
 ```

@@ -14,8 +14,8 @@ from .signatureanalyzer import run_matrix
 def main():
     parser = argparse.ArgumentParser(description='Signature Analyzer GPU.', formatter_class=RawTextHelpFormatter)
     parser.add_argument(
-        '-i', '--input',
-        help="<Required> Input matrix for decomposition. Signature Analyzer uses the format of (samples x features)\n"
+        '--input',
+        help="Input matrix for decomposition. Signature Analyzer uses the format of (samples x features)\n"
              "Assumes input is a .maf by default and will compute the 96-base context spectra if not provided\n"
              "  * Use {-type} to specific different input types",
          required=True

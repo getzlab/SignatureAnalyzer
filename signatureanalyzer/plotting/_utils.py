@@ -6,17 +6,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib as mpl
 
-def series_to_colors(s: pd.Series):
+def series_to_colors(s: pd.Series, color_palette_map: str = 'husl'):
     """
     Convert a pandas series to a color_map.
     -----------------------
     Args:
         * s: pd.Series
+        * color_palette_map: str for color map
     Returns:
         * pd.Series: series mapped to RGB values
     """
     color_labels = s.unique()
-    rgb_values = sns.color_palette("husl", len(color_labels))
+    rgb_values = sns.color_palette(color_palette_map, len(color_labels))
     color_map = dict(zip(color_labels, rgb_values))
 
     for key in color_map:

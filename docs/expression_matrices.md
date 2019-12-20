@@ -1,11 +1,13 @@
 ## Expression Matrices
 
-Decomposition of expression signatures using  `signatureanalyzer`. For identifying _de novo_ signatures in expression matrices (ex. single-cell RNA-seq, bulk RNA-seq, etc.). The following document is a reference for important considerations when running this method for these data-types.
+Decomposition of expression signatures using  `signatureanalyzer`. For identifying _de novo_ signatures in expression matrices (ex. single-cell RNA-Seq, bulk RNA-Seq, etc.). The following document is a reference of important considerations when running this method for these data-types.
 
 ---
+#### Feature Selection
+With most clustering methods on transcriptional data, we recommend a highly variable gene selection step. These are well documented for single-cell and bulk RNA-Seq data and may reduce the input feature space to a few thousand genes of interest.
 
 #### Objective Function
-For mutational signatures, we assume a gaussian distribution of normalized and use Fevotte & Tan's derivation of a gaussian objective function for ARD-NMF. Thus, it is important to use the default value for the objective function (`gaussian`).
+For mutational signatures, we assume a gaussian distribution of normalized counts and use Fevotte & Tan's derivation of a gaussian objective function for ARD-NMF. Thus, it is important to use the `gaussian` objective function. We recommend the following normalization methods:
 * Bulk RNA-seq: `log2(TPM+1)`; normalize TPMs with DESeq2 size factors
 * Single-cell RNA-seq: `ln(CP10K+1)`; normalize CP10K w/ scran size factors
 
@@ -31,7 +33,7 @@ Use:
 ---
 
 #### Running the method
-This method may be run using an input of (n x m), with n: samples, m: variables.
+This method may be run using an input of (n samples x m features).
 
 Use:
 ```

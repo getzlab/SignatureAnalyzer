@@ -202,9 +202,7 @@ def marker_heatmap(
         cbar_cs_ax.xaxis.set_ticks_position('top')
 
         cbar_cs_ax.set_frame_on(True)
-
-        for _, spine in cbar_cs_ax.spines.items():
-            spine.set_visible(True)
+        [spine.set_visible(True) for _, spine in cs_ax.spines.items()]
     # --------------sample annot-------------------
 
     ax.set_title('')

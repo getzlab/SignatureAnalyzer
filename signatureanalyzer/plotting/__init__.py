@@ -1,6 +1,9 @@
 """
 Signature Analyzer plotting API.
 """
+from ._utils import series_to_colors
+from ._utils import color_list_to_matrix_and_cmap
+
 from ._rna import marker_heatmap
 
 from ._muts import signature_barplot

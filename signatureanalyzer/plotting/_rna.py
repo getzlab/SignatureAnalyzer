@@ -85,9 +85,9 @@ def marker_heatmap(
 
     # plot vertical lines
     _h = list(hz_lines)
-    _h.append(ax.get_ylim()[0])
+    _h.append(sample_markers.shape[0])
     ax.vlines(np.cumsum(c)[:-1], _h[:-2], _h[2:], rasterized=True)
-    ax.vlines(np.cumsum(c)[:-1], *ax.get_ylim(), alpha=0.4, rasterized=True)
+    ax.vlines(np.cumsum(c)[:-1], 0, sample_markers.shape[0], alpha=0.4, rasterized=True)
 
     # set ticks
     ax.set_xticks(np.cumsum(c)-c/2)

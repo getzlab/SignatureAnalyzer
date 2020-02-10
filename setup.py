@@ -10,16 +10,13 @@ if ver_info < (3,6,0):
 with open(os.path.join(os.path.dirname(__file__), 'signatureanalyzer', '__init__.py')) as r:
     version = re.search(r'__version__ = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)
 
-with open("README.md") as r:
-    long_description = r.read()
-
 setup(
     name = 'signatureanalyzer',
     version = version,
     author = 'Shankara Anand & Justin Cha - Broad Institute - Cancer Genome Computational Analysis',
     author_email = 'sanand@broadinstitute.org',
     url = 'https://github.com/broadinstitute/getzlab-SignatureAnalyzer',
-    long_description = long_description,
+    long_description = open("README.md", encoding="utf-8").read(),
     long_description_content_type = 'text/markdown',
     description = 'Bayesian NMF methods for mutational signature analysis & transcriptomic profiling on GPUs (Getz Lab).',
     packages = [

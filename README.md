@@ -23,7 +23,10 @@ Note `--recurisve` flag is required to clone submodules.
 
 ##### Docker
 
-_Coming soon._
+`http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
+
+`docker pull gcr.io/broad-cga-sanand-gtex/signatureanalyzer:latest`
+`docker run -it --rm gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
 
 ---
 

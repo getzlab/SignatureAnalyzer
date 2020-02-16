@@ -37,10 +37,10 @@ This method may be run using an input of (n samples x m features).
 
 Use:
 ```
-signatureanalyzer -i input.tsv \
-                  -n 10 \
+signatureanalyzer -n 10 \
                   --objective gaussian \
                   --max_iter 30000 \
                   --prior_on_H L1 \
-                  --prior_on_W L1
+                  --prior_on_W L1 \
+                  input.tsv
 ```

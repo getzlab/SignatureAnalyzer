@@ -8,7 +8,6 @@ import pkg_resources
 
 from missingpy import KNNImputer, MissForest
 
-
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
 
 # ---------------------------------
@@ -353,6 +352,7 @@ def get_nruns_from_output(file: str) -> int:
     ------------------------
     Args:
         * output file from NMF (.h5)
+
     Returns:
         * number of NMF runs (int)
     """
@@ -365,6 +365,7 @@ def get_nlogs_from_output(file: str) -> pd.DataFrame:
     ------------------------
     Args:
         * output file from NMF (.h5)
+        
     Returns:
         * pd.DataFrame of reporting statistics for each run
     """

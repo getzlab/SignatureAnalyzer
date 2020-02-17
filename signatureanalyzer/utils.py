@@ -254,7 +254,6 @@ def load_cosmic_signatures(cosmic: str):
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_DBS':
-        raise Exception("Not yet implemented for {}".format(cosmic))
         print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
@@ -275,9 +274,79 @@ def compl(seq: str, reverse: bool = False):
     """
     return ''.join([COMPL[x] if x in COMPL.keys() else x for x in (reversed(seq) if reverse else seq)])
 
-def _map_dbs_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
+def sbs_annotation_converter(x: str) -> str:
     """
-    Map SBS signatures.
+    Eithers swaps from word -> arrow format for SBS or vice versa.
+        word: (REF)(ALT)(LEFT)(RIGHT)
+        arrow: (LEFT)[(REF)>(ALT)](RIGHT)
+    """
+    if '>' in x:
+        return x[2]+x[4]+x[0]+x[6]
+    else:
+        return x[2]+'['+x[0]+'>'+x[1]+']'+x[3]
+
+def _map_id_sigs(
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
+    sub_index: str = 'Substitution Type'
+    ) -> pd.Series:
+    """
+    Map Insertion-Deletion Substitution Signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+        * cosmic_df: dataframe with Cosmic indices to map to
+        * sub_index: substitution index - the column to map to in the cosmic dataframe
+
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
+    """
+    # TODO @ Justin
+    pass
+
+def _map_dbs_sigs(
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
+    sub_index: str = 'Substitution Type'
+    ) -> pd.Series:
+    """
+    Map Doublet-Base Substitution Signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+        * cosmic_df: dataframe with Cosmic indices to map to
+        * sub_index: substitution index - the column to map to in the cosmic dataframe
+
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
+    """
+    def _check_to_flip(x, ref):
+        if x in ref:
+            return x
+        else:
+            return compl(x)
+
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
+
+    context_s = df.reset_index()[df_idx]
+    return context_s.apply(lambda x: _check_to_flip(x, set(cosmic_df[sub_index])))
+
+def _map_sbs_sigs(
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
+    sub_index: str = 'Substitution Type'
+    ) -> pd.Series:
+    """
+    Map Single-Base Substitution Signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+        * cosmic_df: dataframe with Cosmic indices to map to
+        * sub_index: substitution index - the column to map to in the cosmic dataframe
+
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
     """
     def _check_to_flip(x, ref):
         if x[2:-2] in ref:
@@ -285,23 +354,17 @@ def _map_dbs_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substi
         else:
             return compl(x)
 
-    W_index = W.index.name
-    context_s = W.reset_index()[W_index].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
-    return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
 
-def _map_sbs_sigs(W: pd.DataFrame, cosmic: pd.DataFrame, sub_index:str = 'Substitution Type'):
-    """
-    Map DBS sigantures.
-    """
-    def _check_to_flip(x, ref):
-        if x[2:-2] in ref:
-            return x
-        else:
-            return compl(x)
+    if ">" not in df.index[0]:
+        # Already in word format
+        context_s = df.reset_index()[df_idx].apply(sbs_annotation_converter)
+    else:
+        # Already in arrow format
+        context_s = df.reset_index()[df_idx]
 
-    W_index = W.index.name
-    context_s = W.reset_index()[W_index].apply(lambda x: x[2]+'['+x[0]+'>'+x[1]+']'+x[3])
-    return context_s.apply(lambda x: _check_to_flip(x,set(cosmic[sub_index])))
+    return context_s.apply(lambda x: _check_to_flip(x, set(cosmic_df[sub_index])))
 
 def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic_type: str):
     """
@@ -365,7 +428,7 @@ def get_nlogs_from_output(file: str) -> pd.DataFrame:
     ------------------------
     Args:
         * output file from NMF (.h5)
-        
+
     Returns:
         * pd.DataFrame of reporting statistics for each run
     """

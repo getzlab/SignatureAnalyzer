@@ -14,7 +14,7 @@ from .utils import split_negatives
 from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
-from .plotting import signature_barplot, stacked_bar
+from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS
 from .plotting import marker_heatmap
 from .plotting import cosine_similarity_plot
 
@@ -141,7 +141,11 @@ def run_maf(
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
     cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
-    _ = signature_barplot(W, contributions=np.sum(H))
+    if cosmic == 'cosmic3_DBS':
+        _ = signature_barplot_DBS(W, contributions=np.sum(H))
+    else:
+        _ = signature_barplot(W, contributions=np.sum(H))
+
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
     _ = stacked_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
@@ -261,7 +265,11 @@ def run_spectra(
     W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
     cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
-    _ = signature_barplot(W, contributions=np.sum(H))
+    if cosmic == 'cosmic3_DBS':
+        _ = signature_barplot_DBS(W, contributions=np.sum(H))
+    else:
+        _ = signature_barplot(W, contributions=np.sum(H))
+
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
     _ = stacked_bar(H)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')

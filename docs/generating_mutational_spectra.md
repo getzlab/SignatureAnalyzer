@@ -47,6 +47,9 @@ print(maf_df.head())
 
 #### Single-base-substitution (SBS) spectra
 * This encodes the 96-base context
+* **note**: two forms of this exist - either input should work
+  * word: ACAG --> (REF)(MUT)(LEFT NT)(RIGHT NT)
+  * arrow: A[A>C]G --> (LEFT NT)(REF)>(MUT)(RIGHT NT)
 * REQUIRES a 2-bit human genome build
 
 ```

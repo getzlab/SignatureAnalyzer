@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 import re
 
-from ..utils import compl
+from ..utils import compl, sbs_annotation_converter
 from ..spectra import context96, context78, context83
 
 def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
@@ -59,9 +59,37 @@ def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
 
     return fig
 
+def _map_sbs_sigs_back(df: pd.DataFrame) -> pd.Series:
+    """
+    Map Back Single-Base Substitution Signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+
+    Returns:
+        * pandas.core.series.Series with matching indices to context96
+    """
+    def _check_to_flip(x, ref):
+        if x in ref:
+            return x
+        else:
+            return compl(x)
+
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
+
+    if ">" in df.index[0]:
+        # Already in word format
+        context_s = df.reset_index()[df_idx].apply(sbs_annotation_converter)
+    else:
+        # Already in arrow format
+        context_s = df.reset_index()[df_idx]
+
+    return context_s.apply(lambda x: _check_to_flip(x, context96.keys()))
+
 def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
-    Plots signatures from W-matrix
+    Plots signatures from W-matrix for Single-Base Substitutions
     --------------------------------------
     Args:
         * W: W-matrix
@@ -75,10 +103,14 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
         signature_barplot(W, np.sum(H))
     """
     W = W.copy()
+    W.index = _map_sbs_sigs_back(W)
+
     for c in context96:
         if c not in W.index:
             W.loc[c] = 0
+
     W.sort_index(inplace=True)
+
     sig_columns = [c for c in W if c.startswith('S')]
 
     if isinstance(contributions, pd.Series):
@@ -137,7 +169,7 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
 
 def signature_barplot_DBS(W, contributions):
     """
-    Plots signatures from W-matrix
+    Plots signatures from W-matrix for Doublet-Base Substitutions
     --------------------------------------
     Args:
         * W: W-matrix
@@ -206,8 +238,21 @@ def signature_barplot_DBS(W, contributions):
 
     return fig
 
-
 def plot_signatures_ID(W, contributions):
+    """
+    Plots signatures from W-matrix for Insertions-Deletions
+    --------------------------------------
+    Args:
+        * W: W-matrix
+        * contributions: Series of total contributions, np.sum(H), from each
+            signature if W is normalized; else, 1
+
+    Returns:
+        * fig
+
+    Example usage:
+        signature_barplot_ID(W, np.sum(H))
+    """
     W = W.copy()
     for c in context83:
         if c not in W.index:
@@ -233,6 +278,7 @@ def plot_signatures_ID(W, contributions):
                  '2del': '#FF99CC', '3del': '#FF3377', '4del': '#FF0000', '5+del': '#880000',
                  '2ins': '#99CCFF', '3ins': '#3377FF', '4ins': '#0000FF', '5+ins': '#000088',
                  '2delm': '#CC99FF', '3delm': '#9966FF', '4delm': '#8000FF', '5+delm': '#6000AA'}
+
     fig, axes = plt.subplots(nrows=n_sigs, ncols=16, figsize=(20, 2.5 * n_sigs), sharex='col',
                              sharey='row', gridspec_kw={'width_ratios': (6,) * 12 + (1, 2, 3, 5)})
     for row, sig in enumerate(sig_columns):

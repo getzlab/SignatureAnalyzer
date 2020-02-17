@@ -262,11 +262,8 @@ def get_spectra_from_maf(
                 spectra.loc[c] = 0
         spectra = spectra.loc[context83]
 
-
         stdout.write("\n")
-
     else:
-
         raise NotImplementedError()
 
     return maf, spectra

@@ -30,18 +30,19 @@ maf_df = pd.read_csv(<PATH_TO_MAF>, sep='\t').loc[:,[
   'Chromosome',
   'Start_Position',
   'Reference_Allele',
-  'Tumor_Seq_Allele2'
+  'Tumor_Seq_Allele2',
+  'Variant_Type'
   ]]
 
 print(maf_df.head())
 ```
-|    | Hugo_Symbol   | Tumor_Sample_Barcode   |   Chromosome |   Start_Position | Reference_Allele   | Tumor_Seq_Allele2   |
-|---:|:--------------|:-----------------------|-------------:|-----------------:|:-------------------|:--------------------|
-|  0 | CPN1          | sample_0               |           10 |        101814119 | G                  | C                   |
-|  1 | MKI67         | sample_1               |           10 |        129902901 | G                  | A                   |
-|  2 | NEBL          | sample_2               |           10 |         21104601 | TTACAC             | -                   |
-|  3 | RP11-445N18.7 | sample_3               |           10 |         45652518 | G                  | A                   |
-|  4 | ...         | sample_4               |           10 |         50667200 | G                  | A                   |
+|    | Hugo_Symbol   | Tumor_Sample_Barcode   |   Chromosome |   Start_Position | Reference_Allele   | Tumor_Seq_Allele2   | Variant_Type   |
+|---:|:--------------|:-----------------------|-------------:|-----------------:|:-------------------|:--------------------|:---------------|
+|  0 | URGCP         | sample_192             |            7 |         43916856 | C                  | A                   | SNP            |
+|  1 | CLCN1         | sample_127             |            7 |        143048832 | C                  | A                   | SNP            |
+|  2 | NAV2          | sample_354             |           11 |         20113762 | A                  | G                   | SNP            |
+|  3 | TUBB8P7       | sample_32              |           16 |         90162224 | G                  | T                   | SNP            |
+|  ... | CHFR          | sample_35              |           12 |        133438086 | C                  | A                   | SNP            |
 
 ---
 
@@ -57,15 +58,25 @@ _,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_exome', 
 
 print(spectra_sbs.head().iloc[:,:5])
 ```
-| context96.word   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
-|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
-| ACAA             |          0 |          2 |          1 |          2 |          0 |
-| ACAC             |          0 |          0 |          0 |          0 |          0 |
-| ACAG             |          0 |          0 |          2 |          6 |          0 |
-| ACAT             |          0 |          0 |          0 |          0 |          2 |
-| ...             |          2 |          1 |          2 |          5 |          1 |
+**Arrow**
+|         |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:--------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| A[A>C]A |            1 |            2 |            0 |            1 |            2 |
+| A[A>C]C |            0 |            2 |            0 |            0 |            0 |
+| A[A>C]G |            0 |            6 |            2 |            2 |            0 |
+| A[A>C]T |            0 |            4 |            0 |            0 |            2 |
+| ... |            1 |            2 |            0 |            1 |            0 |
 
+_or_
 
+**Word**
+| context96.word   |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:-----------------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| ACAA             |            1 |            2 |            0 |            1 |            2 |
+| ACAC             |            0 |            2 |            0 |            0 |            0 |
+| ACAG             |            0 |            6 |            2 |            2 |            0 |
+| ACAT             |            0 |            4 |            0 |            0 |            2 |
+| ...             |            1 |            2 |            0 |            1 |            0 |
 ---
 
 #### Doublet-base-substitution (DBS) spectra

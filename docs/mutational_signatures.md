@@ -50,7 +50,7 @@ Use:
 
 #### Running the method
 This method may be run in two ways, from a `.maf` file or a spectra file (`.txt`, `.parquet`, `.txt.gz`, `.csv`).
-* _Mutation Annotation Format_ :for details on this format (`.maf`), please see [this](https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/) reference from NCI's Genomic Data Commons website
+* _Mutation Annotation Format_: for details on this format (`.maf`), please see [this](https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/) reference from NCI's Genomic Data Commons website
   * If this option is used, `signatureanalyzer` will generate a spectra using the `.maf` based on what `--cosmic` option is selected
 * _Spectra_: this option is provided if the user wants to provide a pre-computed mutational spectra (ex. 96-base context; see COSMIC site)
 

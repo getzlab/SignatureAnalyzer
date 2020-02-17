@@ -28,6 +28,7 @@ def run_maf(
     hg_build: Union[str, None] = None,
     nruns: int = 10,
     verbose: bool = False,
+    plot_results: bool = True,
     **nmf_kwargs
     ):
     """
@@ -136,23 +137,24 @@ def run_maf(
     store.close()
 
     # Plots
-    print("   * Saving report plots to {}".format(outdir))
-    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
-    W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
-    cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
+    if plot_results:
+        print("   * Saving report plots to {}".format(outdir))
+        H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+        W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+        cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
-    if cosmic == 'cosmic3_DBS':
-        _ = signature_barplot_DBS(W, contributions=np.sum(H))
-    else:
-        _ = signature_barplot(W, contributions=np.sum(H))
+        if cosmic == 'cosmic3_DBS':
+            _ = signature_barplot_DBS(W, contributions=np.sum(H))
+        else:
+            _ = signature_barplot(W, contributions=np.sum(H))
 
-    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
-    _ = stacked_bar(H)
-    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
-    _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
-    _ = cosine_similarity_plot(cosine)
-    plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
+        _ = stacked_bar(H)
+        plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
+        _ = k_dist(np.array(aggr.K, dtype=int))
+        plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+        _ = cosine_similarity_plot(cosine)
+        plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
 
 def run_spectra(
     spectra: Union[str, pd.DataFrame],
@@ -160,6 +162,7 @@ def run_spectra(
     cosmic: str = 'cosmic2',
     nruns: int = 10,
     verbose: bool = False,
+    plot_results: bool = True,
     **nmf_kwargs
     ):
     """
@@ -260,29 +263,31 @@ def run_spectra(
     store.close()
 
     # Plots
-    print("   * Saving report plots to {}".format(outdir))
-    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
-    W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
-    cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
+    if plot_results:
+        print("   * Saving report plots to {}".format(outdir))
+        H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+        W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+        cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
-    if cosmic == 'cosmic3_DBS':
-        _ = signature_barplot_DBS(W, contributions=np.sum(H))
-    else:
-        _ = signature_barplot(W, contributions=np.sum(H))
+        if cosmic == 'cosmic3_DBS':
+            _ = signature_barplot_DBS(W, contributions=np.sum(H))
+        else:
+            _ = signature_barplot(W, contributions=np.sum(H))
 
-    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
-    _ = stacked_bar(H)
-    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
-    _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
-    _ = cosine_similarity_plot(cosine)
-    plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
+        _ = stacked_bar(H)
+        plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
+        _ = k_dist(np.array(aggr.K, dtype=int))
+        plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+        _ = cosine_similarity_plot(cosine)
+        plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
 
 def run_matrix(
     matrix: Union[str, pd.DataFrame],
     outdir: str = '.',
     nruns: int = 20,
     verbose: bool = False,
+    plot_results: bool = True,
     **nmf_kwargs
     ):
     """
@@ -393,27 +398,30 @@ def run_matrix(
     store["aggr"] = aggr
     store.close()
 
-    # Plots
-    print("   * Saving report plots to {}".format(outdir))
 
-    H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
-    X = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "X")
-    signatures = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "signatures")
-
-    _ = k_dist(np.array(aggr.K, dtype=int))
-    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
-
-    _ = marker_heatmap(X, signatures, H.sort_values('max_id').max_id)
-    plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=100, bbox_inches='tight')
-
+    # Consensus Clustering
     print("   * Computing consensus matrix")
     cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
     f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter)
 
     cmatrix.to_csv(os.path.join(outdir, 'consensus_matrix.tsv'), sep='\t')
     d.to_csv(os.path.join(outdir, 'consensus_assign.tsv'), sep='\t')
-    plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
+
+    if plot_results: plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
 
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
     store['consensus'] = d
     store.close()
+
+    # Plots
+    if plot_results:
+        print("   * Saving report plots to {}".format(outdir))
+        H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
+        X = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "X")
+        signatures = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "signatures")
+
+        _ = k_dist(np.array(aggr.K, dtype=int))
+        plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+
+        _ = marker_heatmap(X, signatures, H.sort_values('max_id').max_id)
+        plt.savefig(os.path.join(outdir, "marker_heatmap.pdf"), dpi=100, bbox_inches='tight')

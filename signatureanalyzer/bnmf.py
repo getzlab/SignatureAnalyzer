@@ -36,7 +36,7 @@ def ardnmf(
     cuda_int: Union[int, None] = 0,
     verbose: bool = True,
     tag: str = ""
-    ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    ) -> dict:
     """
     Wrapper for ARD-NMF. Wraps GPU implementaiton from:
     https://github.com/broadinstitute/SignatureAnalyzer-GPU
@@ -66,10 +66,8 @@ def ardnmf(
         * verbose: verbose reporting of algorithm convergence
 
     Returns:
-        * H: (samples x K)
-        * W: (K x features)
-        * markers
-        * signatures
+        * results - dict with following keys:
+            {'H', 'W', 'Wraw', 'Hraw', 'markers', 'signatures', 'objective', 'log', 'lam'}
     """
     assert objective in ('poisson','gaussian'), \
         "Unable to use {}; specify either poisson or gaussian objective.".format(objective)

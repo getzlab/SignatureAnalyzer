@@ -15,9 +15,9 @@ The following columns are **required**:
 * `Start_Position`
 * `Reference_Allele`
 * `Tumor_Seq_Allele2`
+* `Variant_Type`
 
 The following columns are **optional**:
-* `Variant_Type`: will automatically determine this if not provided
 * `ref_context`: will map context if not provided
 
 ```{python}

@@ -80,7 +80,7 @@ import signatureanalyzer as sa
 # ---------------------
 
 # Run array of decompositions with mutational signature processing
-sa.run_maf(input.maf, outdir='./ardnmf_output/', cosmic='cosmic2', hg_build='hg19', nruns=10)
+sa.run_maf(input.maf, outdir='./ardnmf_output/', cosmic='cosmic2', hg_build='./ref/hg19.2bit', nruns=10)
 
 # Run ARD-NMF algorithm standalone
 sa.ardnmf(...)

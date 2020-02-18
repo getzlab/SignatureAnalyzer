@@ -5,6 +5,7 @@ from tqdm import tqdm
 import h5py
 from sklearn.metrics.pairwise import cosine_similarity
 import pkg_resources
+import re
 
 from missingpy import KNNImputer, MissForest
 
@@ -286,23 +287,35 @@ def sbs_annotation_converter(x: str) -> str:
         return x[2]+'['+x[0]+'>'+x[1]+']'+x[3]
 
 def _map_id_sigs(
-    df: pd.DataFrame,
-    cosmic_df: pd.DataFrame,
-    sub_index: str = 'Substitution Type'
+    df: pd.DataFrame
     ) -> pd.Series:
     """
     Map Insertion-Deletion Substitution Signatures.
     -----------------------
     Args:
         * df: pandas.core.frame.DataFrame with index to be mapped
-        * cosmic_df: dataframe with Cosmic indices to map to
-        * sub_index: substitution index - the column to map to in the cosmic dataframe
 
     Returns:
         * pandas.core.series.Series with matching indices to input cosmic
     """
-    # TODO @ Justin
-    pass
+    def _convert_to_cosmic(x):
+        i1 = 'DEL' if 'del' in x else 'INS'
+        if x[0].isdigit():
+            i2 = 'MH' if 'm' in x else 'repeats'
+            i3 = re.search('[\d+]+', x).group()
+        else:
+            i2 = x[0]
+            i3 = '1'
+        i4 = re.search('[\d+]+$', x).group()
+        if 'del' in x:
+            i4 = str(int(i4[0]) - 1) + i4[1:]
+        return '_'.join([i1, i2, i3, i4])
+
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
+
+    context_s = df.reset_index()[df_idx]
+    return context_s.apply(_convert_to_cosmic)
 
 def _map_dbs_sigs(
     df: pd.DataFrame,

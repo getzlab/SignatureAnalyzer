@@ -31,6 +31,10 @@ Link: `http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
 ---
 
 #### Source Publications
+**PCAWG Mutational Signatures**
+* Alexandrov, L. B., Kim, J., Haradhvala, N. J., Huang, M. N., Ng, A. W. T., Wu, Y., ... & Islam, S. A. (2020). The repertoire of mutational signatures in human cancer. Nature, 578(7793), 94-101.
+ * see: https://www.nature.com/articles/s41586-020-1943-3
+ * see `./PCAWG/`
 
 **SignatureAnalyzer-GPU source publication**
 * Taylor-Weiner, A., Aguet, F., Haradhvala, N.J. et al. Scaling computational genomics to millions of individuals with GPUs. Genome Biol 20, 228 (2019) doi:10.1186/s13059-019-1836-7

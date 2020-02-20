@@ -258,6 +258,10 @@ def load_cosmic_signatures(cosmic: str):
         print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
+    elif cosmic == 'cosmic3_ID':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(1)
+        cosmic_index = "Mutation Type"
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
 
@@ -396,9 +400,9 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_DBS':
-        res["Wraw"].to_parquet("W_test.parquet")
-        cosmic.to_parquet("cosmic_test.parquet")
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
+    elif cosmic_type == 'cosmic3_ID':
+        res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]

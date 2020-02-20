@@ -8,6 +8,7 @@ from ._rna import marker_heatmap
 
 from ._muts import signature_barplot
 from ._muts import signature_barplot_DBS
+from ._muts import signature_barplot_ID
 from ._muts import stacked_bar
 
 from ._nmf import k_dist

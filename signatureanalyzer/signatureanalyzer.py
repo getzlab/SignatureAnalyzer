@@ -14,7 +14,7 @@ from .utils import split_negatives
 from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
-from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS
+from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID
 from .plotting import marker_heatmap
 from .plotting import cosine_similarity_plot
 
@@ -145,6 +145,8 @@ def run_maf(
 
         if cosmic == 'cosmic3_DBS':
             _ = signature_barplot_DBS(W, contributions=np.sum(H))
+        elif cosmic == 'cosmic3_ID':
+            _ = signature_barplot_ID(W, contributions=np.sum(H))
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
 
@@ -271,6 +273,8 @@ def run_spectra(
 
         if cosmic == 'cosmic3_DBS':
             _ = signature_barplot_DBS(W, contributions=np.sum(H))
+        elif cosmic == 'cosmic3_ID':
+            _ = signature_barplot_ID(W, contributions=np.sum(H))
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
 

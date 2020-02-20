@@ -79,13 +79,42 @@ def _map_sbs_sigs_back(df: pd.DataFrame) -> pd.Series:
     df_idx = df.index.name
 
     if ">" in df.index[0]:
-        # Already in word format
+        # Already in arrow format
         context_s = df.reset_index()[df_idx].apply(sbs_annotation_converter)
     else:
-        # Already in arrow format
+        # Already in word format
         context_s = df.reset_index()[df_idx]
 
     return context_s.apply(lambda x: _check_to_flip(x, context96.keys()))
+
+def _map_id_sigs_back(df: pd.DataFrame) -> pd.Series:
+    """
+        Map Back Insertion-Deletion Signatures.
+        -----------------------
+        Args:
+            * df: pandas.core.frame.DataFrame with index to be mapped
+
+        Returns:
+            * pandas.core.series.Series with matching indices to context83
+        """
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
+
+    context_s = df.reset_index()[df_idx]
+
+    def _convert_from_cosmic(x):
+        if x in context83:
+            return x
+        i1, i2, i3, i4 = x.split('_')
+        pre = i2 if i3 == '1' else i3
+        main = i1.lower() + ('m' if i2 == 'MH' else '')
+        if main == 'del':
+            post = str(int(i4[0]) + 1) + i4[1:]
+        else:
+            post = i4
+        return pre + main + post
+
+    return context_s.apply(_convert_from_cosmic)
 
 def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
@@ -238,7 +267,7 @@ def signature_barplot_DBS(W, contributions):
 
     return fig
 
-def plot_signatures_ID(W, contributions):
+def signature_barplot_ID(W, contributions):
     """
     Plots signatures from W-matrix for Insertions-Deletions
     --------------------------------------
@@ -254,6 +283,7 @@ def plot_signatures_ID(W, contributions):
         signature_barplot_ID(W, np.sum(H))
     """
     W = W.copy()
+    W.index = _map_id_sigs_back(W)
     for c in context83:
         if c not in W.index:
             W.loc[c] = 0

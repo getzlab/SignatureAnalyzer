@@ -18,6 +18,14 @@ Use:
 
 ---
 
+#### Type of Run
+This specifies whether or not to do Cosmic mapping for your dataset. For expression matrices, this is not relevent. 
+
+Use:
+```{bash}
+-t matrix
+```
+
 #### Prior on H & W
 We generally impose an exponential (`L1`) or half-normal (`L2`) prior on the W & H matrices for non-negative matrix factorization.
 
@@ -38,6 +46,7 @@ This method may be run using an input of (n samples x m features).
 Use:
 ```
 signatureanalyzer -n 10 \
+                  -t matrix \
                   --objective gaussian \
                   --max_iter 30000 \
                   --prior_on_H L1 \

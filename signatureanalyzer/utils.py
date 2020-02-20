@@ -307,7 +307,7 @@ def _map_id_sigs(
             i2 = x[0]
             i3 = '1'
         i4 = re.search('[\d+]+$', x).group()
-        if 'del' in x:
+        if i1 == 'DEL' and i2 != 'MH':
             i4 = str(int(i4[0]) - 1) + i4[1:]
         return '_'.join([i1, i2, i3, i4])
 

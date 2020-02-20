@@ -30,7 +30,8 @@ Link: `http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
 
 ---
 
-#### Source Publications
+## Source Publications
+
 **PCAWG Mutational Signatures**
 * Alexandrov, L. B., Kim, J., Haradhvala, N. J., Huang, M. N., Ng, A. W. T., Wu, Y., ... & Islam, S. A. (2020). The repertoire of mutational signatures in human cancer. Nature, 578(7793), 94-101.
  * see: https://www.nature.com/articles/s41586-020-1943-3

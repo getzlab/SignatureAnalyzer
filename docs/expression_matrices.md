@@ -26,6 +26,8 @@ Use:
 -t matrix
 ```
 
+---
+
 #### Prior on H & W
 We generally impose an exponential (`L1`) or half-normal (`L2`) prior on the W & H matrices for non-negative matrix factorization.
 

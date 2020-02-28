@@ -28,3 +28,11 @@ export PATH=$PATH:/usr/local/cuda-10.1/bin
 export CUDADIR=/usr/local/cuda-10.1
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-10.1/lib64
 ```
+
+Once this is set up, you can easily test if this is working by running:
+
+```{bash}
+watch nvidia-smi
+```
+
+If you have a GPU attached to your VM or your machine and this runs properly, you should be set.

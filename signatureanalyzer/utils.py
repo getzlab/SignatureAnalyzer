@@ -454,7 +454,19 @@ def get_nlogs_from_output(file: str) -> pd.DataFrame:
     df.index = np.arange(n_runs)
     return df
 
+# ---------------------------------
+# Preprocessing input mafs
+# ---------------------------------
 def get_dnps_from_maf(maf: pd.DataFrame):
+    """
+    Get DNPs from a maf which has adjacent SNPs
+    ________________________
+    Args:
+        * maf: maf DataFrame
+
+    Returns:
+        * pd.DataFrame of maf with only adjacent SNPs (annotated as DNPs)
+    """
     sub_mafs = []
     for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
         df = df.sort_values('Start_position')
@@ -481,6 +493,15 @@ def get_dnps_from_maf(maf: pd.DataFrame):
     return pd.concat(sub_mafs).reset_index(drop=True)
 
 def get_true_snps_from_maf(maf: pd.DataFrame):
+    """
+    Get SNPs from a maf which has adjacent SNPs
+    ________________________
+    Args:
+        * maf: maf DataFrame
+
+    Returns:
+        * pd.DataFrame of maf with adjacent SNPs filtered out
+    """
     sub_mafs = []
     for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
         df = df.sort_values('Start_position')

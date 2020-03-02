@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
 from .utils import load_cosmic_signatures
 from .utils import split_negatives
+from .utils import assign_signature_weights_to_maf
 
 from .consensus import consensus_cluster
 
@@ -136,11 +137,16 @@ def run_maf(
     store["aggr"] = aggr
     store.close()
 
+    H = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "H")
+    W = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W")
+
+    weighted_maf = assign_signature_weights_to_maf(maf, W, H)
+    weighted_maf.to_csv(os.path.join(outdir, 'signature_weighted_maf.tsv'), sep='\t', index=False)
+
     # Plots
     if plot_results:
         print("   * Saving report plots to {}".format(outdir))
-        H = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "H")
-        W = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "W")
+
         cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
 
         if cosmic == 'cosmic3_DBS':

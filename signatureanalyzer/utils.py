@@ -423,6 +423,26 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     res["Hraw"] = res["Hraw"].T.rename(columns=s_assign)
     res["cosine"] = res["cosine"].rename(columns=s_assign)
 
+def assign_signature_weights_to_maf(maf: pd.DataFrame, W: pd.DataFrame, H: pd.DataFrame):
+    """
+    Assign probabilities for each signature to each mutation in the maf
+    ------------------------
+    Args:
+        * maf: input maf as a pd.DataFrame
+        * W: W-matrix from NMF
+        * H: H-matrix from NMF
+
+    Returns:
+        Maf with columns appended to the end for the weights of each signature
+    """
+    sig_columns = W.columns[W.columns.str.startswith('S')]
+    W_prob = W.loc[maf[W.index.name], sig_columns].reset_index(drop=True)
+    H_prob = H.loc[maf['sample'], sig_columns].reset_index(drop=True)
+    signature_probabilities = W_prob * H_prob
+    signature_probabilities /= np.sum(signature_probabilities.values, axis=1, keepdims=True)
+    maf[sig_columns] = signature_probabilities
+    return maf
+
 # ---------------------------------
 # Parsing Output H5 Utils
 # ---------------------------------

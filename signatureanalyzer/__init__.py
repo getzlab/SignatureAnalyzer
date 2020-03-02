@@ -11,4 +11,4 @@ from .signatureanalyzer import run_maf
 from .signatureanalyzer import run_spectra
 from .signatureanalyzer import run_matrix
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'

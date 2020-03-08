@@ -9,7 +9,6 @@ Generating mutational signatures using  `signatureanalyzer`. For a comprehensive
 For more information about the `.maf` format, see [here](https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/). The following examples show generating mutational spectra from an `hg19` `.maf` using `signatureanalyzer`. First, load your `maf` as a pandas dataframe.
 
 The following columns are **required**:
-* `Hugo_Symbol`
 * `Tumor_Sample_Barcode`
 * `Chromosome`
 * `Start_Position`

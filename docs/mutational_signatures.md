@@ -15,8 +15,8 @@ Use:
 
 #### Human Genome (Hg) Build
 Select which human genome build to use for mapping. We build base contexts using a 2-bit representation of the genome build. These may be downloaded here:
-* hg19: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit`
-* hg38: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit`
+* hg38: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit`
+* hg19: `wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit`
 
 Use:
 ```{bash}

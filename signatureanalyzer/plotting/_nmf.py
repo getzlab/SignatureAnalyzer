@@ -39,7 +39,6 @@ def k_dist(X: np.ndarray, figsize: tuple = (8,8)):
 
     return fig
 
-
 def consensus_matrix(
     cmatrix: pd.DataFrame,
     metric: str = 'euclidean',
@@ -48,7 +47,12 @@ def consensus_matrix(
     color_thresh_scale: float = 0.3,
     figsize: tuple = (8,8),
     p: int = 30,
-    metas: Union[list, None] = None
+    metas: Union[list, None] = None,
+    vmax: Union[float, None] = None,
+    vmin: Union[float, None] = None,
+    cbar_label: str = 'ARD-NMF \nMembership',
+    cmap: Union[str, None] = None,
+    plot_cluster_lines: bool = False
     ):
     """
     Plot consensus matrix.
@@ -80,24 +84,32 @@ def consensus_matrix(
     dgram_idx = list(map(int, dres['ivl']))
 
     # Create heatmap
+    if vmax is None:
+        cbar_top_lim = np.max(cmatrix.values)
+    else:
+        cbar_top_lim = vmax
+
+    if vmin is None:
+        cbar_bottom_lim = 0
+    else:
+        cbar_bottom_lim = vmin
+
+    # Create heatmap
     sns.heatmap(
         cmatrix.iloc[dgram_idx,dgram_idx].values,
         ax=ax,
         square=True,
         cbar_ax=cbar_ax,
-        cbar_kws = {'ticks':[0, np.max(cmatrix.values)]},
-        rasterized=True
+        cbar_kws = {'ticks':[cbar_bottom_lim, cbar_top_lim]},
+        rasterized=True,
+        vmax=vmax,
+        vmin=vmin,
+        cmap=cmap
     )
 
-    cbar_ax.set_ylabel('ARD-NMF \nMembership', fontsize=10,rotation=90)
+    cbar_ax.set_ylabel(cbar_label, fontsize=10,rotation=90)
     ax.set_xticks([])
     ax.set_yticks([])
-
-    # -------------
-    # Dendrogram
-    # -------------
-    cmap = cm.rainbow(np.linspace(0, 1, 10))
-    hierarchy.set_link_color_palette([mpl.colors.rgb2hex(rgb[:3]) for rgb in cmap])
 
     x0 = ax.get_position().x0
     x1 = ax.get_position().x1
@@ -105,6 +117,25 @@ def consensus_matrix(
     y1 = ax.get_position().y1
 
     buf = y1*0.015
+
+    # -------------
+    # Clustering
+    # -------------
+    cluster = AgglomerativeClustering(
+        n_clusters=n_clusters,
+        affinity=metric,
+        linkage=method
+    )
+
+    clusters = cluster.fit_predict(cmatrix.iloc[dgram_idx,dgram_idx])
+    cluster_color_list, _ = series_to_colors(pd.Series(clusters))
+
+    # -------------
+    # Dendrogram
+    # -------------
+    cmap = cm.rainbow(np.linspace(0, 1, 10))
+    hierarchy.set_link_color_palette([mpl.colors.rgb2hex(rgb[:3]) for rgb in cmap])
+
     dax = fig.add_axes([x0, y1+buf, x1-x0, 0.15])
 
     dres = shc.dendrogram(
@@ -122,16 +153,21 @@ def consensus_matrix(
     # -------------
     # Metadata Axes
     # -------------
+    if plot_cluster_lines:
+        hz_lines = np.sort(np.unique(pd.Series(clusters), return_index=True)[1])
+        v,c = np.unique(clusters, return_counts=True)
 
-    # Agglomerative Clustering
-    cluster = AgglomerativeClustering(
-        n_clusters=n_clusters,
-        affinity=metric,
-        linkage=method
-    )
+        _c = hz_lines
+        _c = np.roll(hz_lines, 1)
+        _c[0] = 0
+        _c[1] = 0
 
-    clusters = cluster.fit_predict(cmatrix.iloc[dgram_idx,dgram_idx])
-    cluster_color_list, _ = series_to_colors(pd.Series(clusters))
+        _ci = hz_lines[1:]
+        _ci = np.append(_ci, clusters.shape[0])
+
+        for idx, hz in enumerate(hz_lines):
+            ax.hlines(hz, _c[idx], _ci[idx], rasterized=True)
+            ax.vlines(hz, _c[idx], _ci[idx], rasterized=True)
 
     # Add axes
     # Plots agglomerative clustering results
@@ -158,7 +194,7 @@ def consensus_matrix(
         for _, spine in lax.spines.items():
             spine.set_visible(True)
 
-        lax.set_xlabel("Consensus", rotation=45)
+        lax.set_xlabel("Consensus", rotation=90)
 
     else:
         for idx,meta in enumerate(metas):
@@ -186,14 +222,13 @@ def consensus_matrix(
 
                 lax.set_xlabel("Consensus", rotation=45)
 
-
             else:
                 meta = meta.loc[cmatrix.index[dgram_idx]]
 
                 cluster_color_list, _ = series_to_colors(meta)
                 mat,cmap = color_list_to_matrix_and_cmap(cluster_color_list)
                 sns.heatmap(mat.T, cmap=cmap, ax=lax, yticklabels=False, xticklabels=False, cbar=False)
-                lax.set_xlabel(meta.name, rotation=45)
+                lax.set_xlabel(meta.name, rotation=90)
 
             for _, spine in lax.spines.items():
                 spine.set_visible(True)

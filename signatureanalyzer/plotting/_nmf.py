@@ -220,7 +220,7 @@ def consensus_matrix(
                         fontsize=14
                     )
 
-                lax.set_xlabel("Consensus", rotation=45)
+                lax.set_xlabel("Consensus", rotation=90)
 
             else:
                 meta = meta.loc[cmatrix.index[dgram_idx]]

@@ -4,6 +4,7 @@ from . import pathways as pw
 
 # Independent imports
 from .bnmf import ardnmf
+from .semi_supervised_bnmf import ss_ardnmf
 from .utils import postprocess_msigs
 from .consensus import consensus_cluster
 

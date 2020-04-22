@@ -1,6 +1,7 @@
 # Modules
 from . import plotting as pl
 from . import pathways as pw
+from . import spectra as spectra
 
 # Independent imports
 from .bnmf import ardnmf

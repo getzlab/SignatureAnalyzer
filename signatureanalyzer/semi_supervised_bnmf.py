@@ -82,6 +82,12 @@ def ss_ardnmf(
     X = X_i.loc[intersecting_genes]
     W_ref = W_ref_i.loc[intersecting_genes]
 
+    # Fix naming
+    sig_map = {"S"+str(i):x for i,x in enumerate(W_ref.columns)}
+    sig_num_map = {i:x for i,x in enumerate(W_ref.columns)}
+    inv_sig_map = {x:"S"+str(i) for i,x in enumerate(W_ref.columns)}
+    W_ref.columns = W_ref.columns.map(inv_sig_map)
+
     # ---------------------------------
     # Load data into tensors
     # ---------------------------------
@@ -90,10 +96,10 @@ def ss_ardnmf(
     sample_names = results.sample_names
     sig_names = W_ref.columns
     sig_names = [x.split("S")[-1] for x in sig_names]
-    W_ref = torch.tensor(W_ref.values, dtype=results.dtype, requires_grad=False)
 
     # initalize the NMF run
     results.initalize_data(a, phi, b, prior_on_W, prior_on_H, Beta, W_ref.shape[1])
+    W_ref = torch.tensor(W_ref.loc[results.channel_names].values, dtype=results.dtype, requires_grad=False)
     results.W = W_ref
 
     # specify GPU
@@ -192,6 +198,17 @@ def ss_ardnmf(
 
     W,H = select_signatures(W,H)
     markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff, verbose=verbose)
+
+    # Assign Signatures to Original Input Names
+    W = W.rename(columns=sig_map)
+    W['max_id'] = W['max_id'].apply(lambda x: sig_num_map[x])
+    H = H.rename(columns=sig_map)
+    H['max_id'] = H['max_id'].apply(lambda x: sig_num_map[x])
+
+    Hraw.index = Hraw.index.astype(int)
+    Hraw = Hraw.rename(index=sig_num_map)
+    Wraw.columns = Wraw.columns.astype(int)
+    Wraw = Wraw.rename(columns=sig_num_map)
 
     return {
         'H': H,

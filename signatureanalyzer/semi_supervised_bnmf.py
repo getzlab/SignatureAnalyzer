@@ -23,7 +23,7 @@ def ss_ardnmf(
     prior_on_W: str = 'L1',
     prior_on_H: str = 'L1',
     report_freq: int = 100,
-    active_thresh: float = 0.0,
+    active_thresh: float = -1.0,
     cut_norm: float = 0.5,
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,

@@ -270,11 +270,12 @@ def get_spectra_from_maf(
     return maf, spectra
 
 
-def normalize_spectra(X,from_territory,to_territory,build):
+def renormalize_spectra(W,from_territory,to_territory,build):
     '''
-    Re-normalizes mutational spectrum to a given genome territory (e.g. WGS, WXS)
-    X: Matrix where columns are mutational spectra
-    from,to: Can be WXS,WGS, or Rates (Already normalized)
+    Re-normalizes signature spectrum to a given genome territory (e.g. WGS, WXS)
+    W: Matrix where columns are signature spectra
+    from,to: Can be WXS or WGS
+    Example: Wrenorm = renormalize_spectra(W,from_territory='WGS',to_territory='WXS',build='hg19')
     '''
     
     if build=='hg19':
@@ -293,18 +294,19 @@ def normalize_spectra(X,from_territory,to_territory,build):
     # Maps user input territories to columns
     col_map = {'WXS':'Nx','WGS':'Ng','Rates':'Rates'}
     # Add constant column for rates
-    Kc['Rates'] = 1 # 
 
     # Reformat from (R->A)L1L2 ordering to L1(R)L2 
-    trimer_keys = [context[2] + context[0] + context[3] for context in X.index]
+    trimer_keys = [context[2] + context[0] + context[3] for context in W.index]
 
     from_factor = Kc.loc[trimer_keys,col_map[from_territory]].values
-    from_factor = from_factor/from_factor.sum()
 
     to_factor = Kc.loc[trimer_keys,col_map[to_territory]].values
-    to_factor = to_factor/to_factor.sum()
 
-    return (X * to_factor.reshape(-1,1))/from_factor.reshape(-1,1)
+    
+
+    Wtrans =  (W * to_factor.reshape(-1,1))/from_factor.reshape(-1,1)
+
+    return Wtrans/Wtrans.sum(axis=0)
 
 
 

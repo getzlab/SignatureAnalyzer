@@ -1,3 +1,4 @@
+import pkg_resources
 import itertools
 import pandas as pd
 from twobitreader import TwoBitFile
@@ -267,3 +268,46 @@ def get_spectra_from_maf(
         raise NotImplementedError()
 
     return maf, spectra
+
+
+def normalize_spectra(X,from_territory,to_territory,build):
+    '''
+    Re-normalizes mutational spectrum to a given genome territory (e.g. WGS, WXS)
+    X: Matrix where columns are mutational spectra
+    from,to: Can be WXS,WGS, or Rates (Already normalized)
+    '''
+    
+    if build=='hg19':
+        K = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/trimer_counts.hg19.txt'),sep='\t')
+    else:
+        print('error: Not yet implemented')
+    
+    # Collapse by strand
+    ref_idx = K['name'].str.match('.(A|C).')
+    K['collapsed_name'] = [compl(trimer) for trimer in K['name']]
+    K.loc[ref_idx,'collapsed_name'] =  K.loc[ref_idx,'name']
+
+    # Sum complementary contexts
+    Kc = K.groupby('collapsed_name').sum()
+
+    # Maps user input territories to columns
+    col_map = {'WXS':'Nx','WGS':'Ng','Rates':'Rates'}
+    # Add constant column for rates
+    Kc['Rates'] = 1 # 
+
+    # Reformat from (R->A)L1L2 ordering to L1(R)L2 
+    trimer_keys = [context[2] + context[0] + context[3] for context in X.index]
+
+    from_factor = Kc.loc[trimer_keys,col_map[from_territory]].values
+    from_factor = from_factor/from_factor.sum()
+
+    to_factor = Kc.loc[trimer_keys,col_map[to_territory]].values
+    to_factor = to_factor/to_factor.sum()
+
+    return (X * to_factor.reshape(-1,1))/from_factor.reshape(-1,1)
+
+
+
+
+
+

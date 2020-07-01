@@ -60,7 +60,6 @@ signatureanalyzer -n 10 \
                   --cosmic cosmic3_exome \
                   --hg_build hg38.2bit \
                   --objective poisson \
-                  --hg_build hg38 \
                   --max_iter 30000 \
                   --prior_on_H L1 \
                   --prior_on_W L1 \

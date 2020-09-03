@@ -81,6 +81,8 @@ def get_spectra_from_maf(
             except:
                 raise Exception("{} not a valid 2bit file.".format(hgfile))
 
+            chr_contig = all('chr{}'.format(i) in hg for i in list(range(1, 23)) + ['X', 'Y'])
+
             # Map contexts
             _contexts = list()
             maf_size = maf.shape[0]
@@ -94,8 +96,10 @@ def get_spectra_from_maf(
                     chromosome = 'Y'
                 elif chromosome == 'MT':
                     chromosome = 'M'
-                if not chromosome.startswith('chr'):
+                if chr_contig and not chromosome.startswith('chr'):
                     chromosome = 'chr' + chromosome
+                if not chr_contig and chromosome.startswith('chr'):
+                    chromosome = chromosome[3:]
 
                 _contexts.append(hg[chromosome][pos-2:pos+1].lower())
 
@@ -172,6 +176,8 @@ def get_spectra_from_maf(
         except:
             raise Exception("{} not a valid 2bit file.".format(hgfile))
 
+        chr_contig = all('chr{}'.format(i) in hg for i in list(range(1, 23)) + ['X', 'Y'])
+
         # Map contexts
         contig = list()
         maf_size = maf.shape[0]
@@ -186,8 +192,10 @@ def get_spectra_from_maf(
                 chromosome = 'Y'
             elif chromosome == 'MT':
                 chromosome = 'M'
-            if not chromosome.startswith('chr'):
+            if chr_contig and not chromosome.startswith('chr'):
                 chromosome = 'chr' + chromosome
+            if not chr_contig and chromosome.startswith('chr'):
+                chromosome = chromosome[3:]
 
             if a == '-':
                 del_len = len(r)

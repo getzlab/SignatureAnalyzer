@@ -10,7 +10,7 @@ acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
 
 # Cartesian product for 1536 SNV
-a_1536 = itertools.product('ACGT','ACGT','[','A','>','CGT',']','ACGT','ACGT')
+a_1536 = itertools.product('ACGT','ACGT','[','T','>','ACG',']','ACGT','ACGT')
 c_1536 = itertools.product('ACGT','ACGT','[','C','>','AGT',']','ACGT','ACGT')
 
 # Define dictionary for all contexts

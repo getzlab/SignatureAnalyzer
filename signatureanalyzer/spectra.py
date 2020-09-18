@@ -5,10 +5,17 @@ from typing import Union
 from sys import stdout
 from .utils import compl, get_true_snps_from_maf, get_dnps_from_maf
 
+# Cartesian product for 96 SNV
 acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
 
+# Cartesian product for 1536 SNV
+a_1536 = itertools.product('ACGT','ACGT','[','A','>','CGT',']','ACGT','ACGT')
+c_1536 = itertools.product('ACGT','ACGT','[','C','>','AGT',']','ACGT','ACGT')
+
+# Define dictionary for all contexts
 context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
+context1536 = dict(zip(map(''.join, itertools.chain(a_1536, c_1536)), range(1, 1537)))
 context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
                       'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
                       'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',
@@ -58,7 +65,7 @@ def get_spectra_from_maf(
 
     maf['sample'] = maf['Tumor_Sample_Barcode']
 
-    if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome']:
+    if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome', 'cosmic3_1536']:
         # Subset to SNPs
         if 'Variant_Type' in maf.columns:
             maf = maf.loc[maf['Variant_Type'] == 'SNP']
@@ -66,6 +73,7 @@ def get_spectra_from_maf(
             maf = maf.loc[maf['Reference_Allele'].apply(lambda k: len(k) == 1 and k != '-') & \
             maf['Tumor_Seq_Allele2'].apply(lambda k: len(k) == 1 and k != '-')]
         if not real_snps:
+            # Filter out adjacent SNPs
             maf = get_true_snps_from_maf(maf)
 
         ref = maf['Reference_Allele'].str.upper()
@@ -97,7 +105,12 @@ def get_spectra_from_maf(
                 if not chromosome.startswith('chr'):
                     chromosome = 'chr' + chromosome
 
-                _contexts.append(hg[chromosome][pos-2:pos+1].lower())
+                # 96 context, get reference [pos-1, pos, pos+1]
+                if cosmic != 'cosmic3_1536':
+                    _contexts.append(hg[chromosome][pos-2:pos+1].lower())
+                # 1536 context, get refernece [pos-2, pos-1, pos, pos+1, pos+2]
+                else:
+                    _contexts.append(hg[chromosome][pos-3:pos+2].lower())
 
             maf['ref_context'] = _contexts
             stdout.write("\n")
@@ -106,22 +119,37 @@ def get_spectra_from_maf(
         n_context = context.str.len()
         mid = n_context // 2
 
-        contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
-                            else compl(r + a + c[m + 1] + c[m - 1]) \
-                            for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
-
+        if cosmic != 'cosmic3_1536':
+            contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
+                                else compl(r + a + c[m + 1] + c[m - 1]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+        else:
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'AC' \
+                                else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         try:
-            maf['context96.num'] = contig.apply(context96.__getitem__)
+            if cosmic != 'cosmic3_1536':
+                maf['context96.num'] = contig.apply(context96.__getitem__)
+            else:
+                maf['context1536.num'] = contig.apply(context1536.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
-        maf['context96.word'] = contig
-        spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
-        for c in context96:
-            if c not in spectra.index:
-                spectra.loc[c] = 0
-        spectra = spectra.loc[context96]
+        if cosmic != 'cosmic3_1536':
+            maf['context96.word'] = contig
+            spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
+            for c in context96:
+                if c not in spectra.index:
+                    spectra.loc[c] = 0
+            spectra = spectra.loc[context96]
 
+        else:
+            maf['context1536.arrow'] = contig
+            spectra = maf.groupby(['context1536.arrow', 'sample']).size().unstack().fillna(0).astype(int)
+            for c in context1536:
+                if c not in spectra.index:
+                    spectra.loc[c] = 0
+            spectra = spectra.loc[context1536]
     elif cosmic == 'cosmic3_DBS':
         # Subset to DNPs
         if 'Variant_Type' not in maf.columns:

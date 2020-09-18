@@ -6,6 +6,7 @@ import h5py
 from sklearn.metrics.pairwise import cosine_similarity
 import pkg_resources
 import re
+import itertools
 
 from missingpy import KNNImputer, MissForest
 
@@ -523,14 +524,46 @@ def get_true_snps_from_maf(maf: pd.DataFrame):
         * pd.DataFrame of maf with adjacent SNPs filtered out
     """
     sub_mafs = []
-    for _, df in maf.loc[maf['Variant_Type'] == 'SNP'].groupby(['sample', 'Chromosome']):
+    for _, df in maf.loc[maf['Variant_Type'].isin(['SNP','DEL',])].groupby(['sample', 'Chromosome']):
         df = df.sort_values('Start_position')
         start_pos = np.array(df['Start_position'])
+        end_pos = np.array(df['End_position'])
         pos_diff = np.diff(start_pos)
+        pos_diff_end = np.diff(end_pos)
         rem_idx = np.flatnonzero(pos_diff <= 1)
         rem_idx = np.concatenate([rem_idx, rem_idx + 1])
-        idx = np.delete(np.arange(len(start_pos)), rem_idx)
+        rem_idx_end = np.flatnonzero(pos_diff_end <= 1)
+        rem_idx_end = np.concatenate([rem_idx_end, rem_idx_end + 1])
+        idx = np.delete(np.arange(len(start_pos)), np.append(rem_idx,rem_idx_end))
         if len(idx):
             rows = df.iloc[idx]
             sub_mafs.append(rows)
-    return pd.concat(sub_mafs).reset_index(drop=True)
+    temp = pd.concat(sub_mafs).reset_index(drop=True)
+    return temp[temp['Variant_Type']=='SNP']
+
+
+def get96_from_1536(W1536):
+    """
+    Convert 1536 W matrix to 96 context W matrix to extract cosmic signatures
+    ________________________
+    Args:
+        * W1536: 1536 context W matrix
+    Returns:
+        * pd.Dataframe of 96 context matrix
+    """
+    # Generate 96 context
+    acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
+    ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
+    context96 = list(map(''.join, itertools.chain(acontext, ccontext)))
+    context96_df = pd.DataFrame(0, index=context96 , columns=W1536.columns)
+
+    # Define conversion function based on format
+    if ">" in W1536.index[0]:
+        convert = lambda x: x[3] + x[5] + x[1] + x[7]
+    else:
+        convert = lambda x: x[:2] + x[3:5]
+
+    # For each context in 96 SNV, sum all corresponding 1536 context rows
+    for context in context96:
+        context96_df.loc[context] = W1536[W1536.index.map(convert) == context].sum()
+    return context96_df

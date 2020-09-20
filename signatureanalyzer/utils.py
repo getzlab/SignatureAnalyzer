@@ -263,6 +263,14 @@ def load_cosmic_signatures(cosmic: str):
         print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(1)
         cosmic_index = "Mutation Type"
+    elif cosmic == 'cosmic3_1536':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_1536.tsv'), sep='\t').dropna(1)
+        cosmic_index = 'Somatic Mutation Type'
+    elif cosmic == 'cosmic3_composite':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_composite.tsv'), sep='\t').dropna(1)
+        cosmic_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
 
@@ -291,8 +299,23 @@ def sbs_annotation_converter(x: str) -> str:
     else:
         return x[2]+'['+x[0]+'>'+x[1]+']'+x[3]
 
-def _map_id_sigs(
+def _map_composite_sigs(
     df: pd.DataFrame
+        
+    ) -> pd.Series:
+    """
+    Map composite signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
+    """
+    
+def _map_id_sigs(
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
+    sub_index: str = 'Substitution Type'
     ) -> pd.Series:
     """
     Map Insertion-Deletion Substitution Signatures.

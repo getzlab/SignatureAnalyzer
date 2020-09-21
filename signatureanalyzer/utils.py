@@ -298,24 +298,9 @@ def sbs_annotation_converter(x: str) -> str:
         return x[2]+x[4]+x[0]+x[6]
     else:
         return x[2]+'['+x[0]+'>'+x[1]+']'+x[3]
-
-def _map_composite_sigs(
-    df: pd.DataFrame
-        
-    ) -> pd.Series:
-    """
-    Map composite signatures.
-    -----------------------
-    Args:
-        * df: pandas.core.frame.DataFrame with index to be mapped
-    Returns:
-        * pandas.core.series.Series with matching indices to input cosmic
-    """
     
 def _map_id_sigs(
     df: pd.DataFrame,
-    cosmic_df: pd.DataFrame,
-    sub_index: str = 'Substitution Type'
     ) -> pd.Series:
     """
     Map Insertion-Deletion Substitution Signatures.
@@ -407,6 +392,28 @@ def _map_sbs_sigs(
 
     return context_s.apply(lambda x: _check_to_flip(x, set(cosmic_df[sub_index])))
 
+
+def _map_composite_sigs(
+    df: pd.DataFrame
+    cosmic_df: pd.Data.Frame,
+    sub_index: str = 'Somatic Mutation Type'
+    ) -> pd.Series:
+    """
+    Map composite signatures. df must take hierarchical format SBS, DBS, then ID
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
+    """
+
+    context_sbs_s = _map_sbs_sigs(df.iloc[:1536], cosmic_df.iloc[:1536])
+    context_dbs_s = _map_dbs_sigs(df.iloc[1536:1614], cosmic_df.iloc[1536:1614])
+    context_id_s = df.iloc[1614:].index
+
+    return context_sbs_s.append(context_dbs_s).append(context_id_s)
+    
+
 def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic_type: str):
     """
     Post process ARD-NMF on mutational signatures.
@@ -421,12 +428,14 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     Returns:
         * None, edits res dictionary directly
     """
-    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
+    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome','cosmic3_1536'):
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_DBS':
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
+    elif cosmic_type == 'cosmic3_composite':
+        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic).values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
@@ -436,6 +445,9 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
+    # For 1536 and Composite, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
+    
+            
     # Add assignments
     s_assign = dict(res["cosine"].idxmax())
     s_assign = {key:key+"-" + s_assign[key] for key in s_assign}

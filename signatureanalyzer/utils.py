@@ -394,8 +394,8 @@ def _map_sbs_sigs(
 
 
 def _map_composite_sigs(
-    df: pd.DataFrame
-    cosmic_df: pd.Data.Frame,
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
     sub_index: str = 'Somatic Mutation Type'
     ) -> pd.Series:
     """
@@ -462,7 +462,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # For 1536 and Composite, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
-    if cosmic in ("cosmic3_1536", "cosmic3_composite"):
+    if cosmic_type in ("cosmic3_1536", "cosmic3_composite"):
         X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols]
         res["cosine96"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols,nmf_cols]
         # Add assignments

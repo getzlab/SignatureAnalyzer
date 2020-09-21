@@ -428,25 +428,49 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
     Returns:
         * None, edits res dictionary directly
     """
-    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome','cosmic3_1536'):
+    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_DBS':
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
     elif cosmic_type == 'cosmic3_composite':
+        # map with PCAWG
         res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic).values
+        # load Sanger 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
+        res["Wraw96"] = get96_from_1536(res["Wraw"].iloc[:1536])
+        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96).values
+    if cosmic_type == 'cosmic3_1536':
+        # Map with PCAWG
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
+        # load Sanger 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
+        res["Wraw96"] = get96_from_1536(res["Wraw"])
+        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96).values
+         
+         
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
+    if cosmic_type in ('cosmic3_1536', 'cosmic3_composite'):
+        ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
 
     # Create cosine similarity matrix
     X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # For 1536 and Composite, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
-    
+    if cosmic in ("cosmic3_1536", "cosmic3_composite"):
+        X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols]
+        res["cosine96"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols,nmf_cols]
+        # Add assignments
+        s_assign96 = dict(res["cosine96"].idxmax())
+        s_assign96 = {key:key+"-" + s_assign96[key] for key in s_assign96}
+        res["cosine96"] = res["cosine96"].rename(columns=s_assign96)
+        res["Wraw96"] = res["Wraw96"].rename(columns=s_assign96)
+        res["W96"] = get96_from_1536(res["W"]).rename(columns=s_assign96)
             
     # Add assignments
     s_assign = dict(res["cosine"].idxmax())

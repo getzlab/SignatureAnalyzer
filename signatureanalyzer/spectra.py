@@ -39,6 +39,7 @@ context83 = dict(zip(['Cdel1', 'Cdel2', 'Cdel3', 'Cdel4', 'Cdel5', 'Cdel6+',
                        '5+ins0', '5+ins1', '5+ins2', '5+ins3', '5+ins4', '5+ins5+',
                        '2delm1', '3delm1', '3delm2', '4delm1', '4delm2', '4delm3',
                        '5+delm1', '5+delm2', '5+delm3', '5+delm4', '5+delm5+'], range(1, 84)))
+context_composite = {**context1536, **({k:v+1536 for k,v in context78.items()}), **({k:v+1614 for k,v in context83.items()})}
 
 def get_spectra_from_maf(
     maf: pd.DataFrame,

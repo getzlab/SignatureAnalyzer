@@ -124,7 +124,7 @@ def get_spectra_from_maf(
                                 else compl(r + a + c[m + 1] + c[m - 1]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         else:
-            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'AC' \
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'TC' \
                                 else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         try:
@@ -291,6 +291,19 @@ def get_spectra_from_maf(
         spectra = spectra.loc[context83]
 
         stdout.write("\n")
+    
+    elif cosmic == 'cosmic3_composite':
+        """
+        Concatenate SBS, DBS, and ID spectra
+        """
+        # Get spectra for 3 sections
+        _,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_1536',real_snps)
+        _,dbs_df = get_spectra_from_maf(maf,'cosmic3_DBS')
+        _,id_df = get_spectra_from_maf(maf,'cosmic3_ID')
+        # concatenate spectra
+        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
+        
+        
     else:
         raise NotImplementedError()
 

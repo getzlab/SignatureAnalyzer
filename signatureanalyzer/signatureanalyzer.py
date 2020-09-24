@@ -79,12 +79,15 @@ def run_maf(
     # Cosmic Signatures
     cosmic_df, cosmic_index = load_cosmic_signatures(cosmic)
 
+    composite = (cosmic == 'cosmic3_composite')
+    
     # Generate Spectra from Maf
     print("   * Loading spectra from {}".format(maf))
     maf, spectra = get_spectra_from_maf(
         pd.read_csv(maf, sep='\t'),
         hgfile=hg_build,
-        cosmic=cosmic
+        cosmic=cosmic,
+        composite=composite
     )
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
@@ -114,6 +117,9 @@ def run_maf(
         store["run{}/signatures".format(n_iter)] = res["signatures"]
         store["run{}/log".format(n_iter)] = res["log"]
         store["run{}/cosine".format(n_iter)] = res["cosine"]
+        if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
+            store["run{}/cosine96".format(n_iter)] = res["cosine96"]
+            store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
 
     store.close()
 
@@ -135,6 +141,9 @@ def run_maf(
     store["log"] = store["run{}/log".format(best_run)]
     store["cosine"] = store["run{}/cosine".format(best_run)]
     store["aggr"] = aggr
+    if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
+        store["cosine96"] = store["run{}/cosine96".format(best_run)]
+        store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
     store.close()
 
     H = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "H")
@@ -153,9 +162,25 @@ def run_maf(
             _ = signature_barplot_DBS(W, contributions=np.sum(H))
         elif cosmic == 'cosmic3_ID':
             _ = signature_barplot_ID(W, contributions=np.sum(H))
+        elif cosmic == 'cosmic3_1536':
+            # Plot 96 Sanger cosine similarity
+            _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
+            plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
+            # Plot signature barplot with 96 SBS
+            _ = signature_barplot(pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96"), contributions=np.sum(H))
+        elif cosmic == 'cosmic3_composite':
+            # Plot 96 cosine similarity
+            _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
+            plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot_DBS(W.iloc[1536:1614], contributions=np.sum(H))
+            plt.savefig(os.path.join(outdir, "signature_contributions_dbs.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot_ID(W.iloc[1614:], contributions=np.sum(H))
+            plt.savefig(os.path.join(outdir, "signature_contributions_id.pdf"), dpi=100, bbox_inches='tight')
+            # Plot signature barplot with 96 SBS
+            _ = signature_barplot(pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96"), contributions=np.sum(H))
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
-
+            
         plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
         _ = stacked_bar(H)
         plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
@@ -247,6 +272,8 @@ def run_spectra(
         store["run{}/signatures".format(n_iter)] = res["signatures"]
         store["run{}/log".format(n_iter)] = res["log"]
         store["run{}/cosine".format(n_iter)] = res["cosine"]
+        if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
+            store["run{}/cosine96".format(n_iter)] = res["cosine96"]
 
     store.close()
 
@@ -268,6 +295,8 @@ def run_spectra(
     store["log"] = store["run{}/log".format(best_run)]
     store["cosine"] = store["run{}/cosine".format(best_run)]
     store["aggr"] = aggr
+    if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
+        store["cosine96"] = store["run{}/cosine96".format(best_run)]
     store.close()
 
     # Plots
@@ -281,6 +310,20 @@ def run_spectra(
             _ = signature_barplot_DBS(W, contributions=np.sum(H))
         elif cosmic == 'cosmic3_ID':
             _ = signature_barplot_ID(W, contributions=np.sum(H))
+        elif cosmic == 'cosmic3_1536':
+            # Plot 96 Sanger cosine similarity
+            _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
+            plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot(get96_from_1536(W.iloc[:1536]), contributions = np.sum(H))
+        elif cosmic == 'cosmic3_composite':
+            # Plot 96 cosine similarity
+            _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
+            plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot_DBS(W.iloc[1536:1614], contributions=np.sum(H))
+            plt.savefig(os.path.join(outdir, "signature_contributions_dbs.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot_ID(W.iloc[1614:], contributions=np.sum(H))
+            plt.savefig(os.path.join(outdir, "signature_contributions_id.pdf"), dpi=100, bbox_inches='tight')
+            _ = signature_barplot(get96_from_1536(W.iloc[:1536]), contributions=np.sum(H))              
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
 
@@ -302,7 +345,7 @@ def run_matrix(
     ):
     """
     Args:
-        * matrix: expression matrix; this should be normalized to accomodate
+em        * matrix: expression matrix; this should be normalized to accomodate
             Gaussian noise assumption (log2-norm) (n_features x n_samples)
 
             NOTE: recommended to filter out lowly expressed genes for RNA:

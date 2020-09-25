@@ -32,7 +32,8 @@ def get_spectra_from_maf(
 
     maf['sample'] = maf['Tumor_Sample_Barcode']
 
-    if (composite or cosmic == 'cosmic3_composite'): context_num, context_form, context_use, context_sbs = 'context_composite.num', 'context_composite.arrow', context_composite, context1536
+    # Assign values to variables based on context and whether method called from composite 
+    if composite: context_num, context_form, context_use, context_sbs = 'context_composite.num', 'context_composite.arrow', context_composite, context1536
     elif cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome']: context_num, context_form, context_use, context_sbs = 'context96.num', 'context96.word', context96, context96
     elif cosmic == 'cosmic3_1536': context_num, context_form, context_use, context_sbs = 'context1536.num', 'context1536.arrow', context1536, context1536
     elif cosmic == 'cosmic3_DBS':  context_num, context_form, context_use = 'context78.num', 'context78.word', context78
@@ -266,7 +267,6 @@ def get_spectra_from_maf(
         # concatenate spectra
         spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
         maf = pd.concat([maf_sbs,maf_dbs,maf_id])
-        stdout.write("spectra : {}\n".format(spectra))
     else:
         raise NotImplementedError()
     return maf, spectra

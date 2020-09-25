@@ -11,8 +11,11 @@ from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
 from .utils import load_cosmic_signatures
 from .utils import split_negatives
 from .utils import assign_signature_weights_to_maf
+from .utils import select_signatures, transfer_weights, get96_from_1536
 
 from .consensus import consensus_cluster
+
+from .context import context1536, context78, context96, context_composite, context83
 
 from .plotting import k_dist, consensus_matrix
 from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID
@@ -120,6 +123,7 @@ def run_maf(
         if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
             store["run{}/cosine96".format(n_iter)] = res["cosine96"]
             store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
+            store["run{}/W96".format(n_iter)] = res["W96"]
 
     store.close()
 
@@ -144,6 +148,7 @@ def run_maf(
     if cosmic in ["cosmic3_1536", "cosmic3_composite"]:
         store["cosine96"] = store["run{}/cosine96".format(best_run)]
         store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
+        store["W96"] = store["run{}/W96".format(best_run)]
     store.close()
 
     H = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "H")
@@ -166,18 +171,26 @@ def run_maf(
             # Plot 96 Sanger cosine similarity
             _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
             plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
-            # Plot signature barplot with 96 SBS
-            _ = signature_barplot(pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96"), contributions=np.sum(H))
+            # Plot signature barplot with 96 Sanger SBS
+            H96 = H.copy()
+            W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
+            H96.columns = W96.columns
+            _ = signature_barplot(W96, contributions=np.sum(H96))  ####ERROR HERE
         elif cosmic == 'cosmic3_composite':
+            H96 = H.copy()
+            W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
+            H96.columns = W96.columns
             # Plot 96 cosine similarity
             _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
             plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
-            _ = signature_barplot_DBS(W.iloc[1536:1614], contributions=np.sum(H))
+            # DBS sigs
+            _ = signature_barplot_DBS(W[W.index.isin(context78)], contributions=np.sum(H))
             plt.savefig(os.path.join(outdir, "signature_contributions_dbs.pdf"), dpi=100, bbox_inches='tight')
-            _ = signature_barplot_ID(W.iloc[1614:], contributions=np.sum(H))
+            # ID sigs
+            _ = signature_barplot_ID(W[W.index.isin(context83)], contributions=np.sum(H))
             plt.savefig(os.path.join(outdir, "signature_contributions_id.pdf"), dpi=100, bbox_inches='tight')
             # Plot signature barplot with 96 SBS
-            _ = signature_barplot(pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96"), contributions=np.sum(H))
+            _ = signature_barplot(W96, contributions=np.sum(H96))
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
             
@@ -319,11 +332,11 @@ def run_spectra(
             # Plot 96 cosine similarity
             _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine96"))
             plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
-            _ = signature_barplot_DBS(W.iloc[1536:1614], contributions=np.sum(H))
+            _ = signature_barplot_DBS(W[W.index.isin(context78)], contributions=np.sum(H))
             plt.savefig(os.path.join(outdir, "signature_contributions_dbs.pdf"), dpi=100, bbox_inches='tight')
-            _ = signature_barplot_ID(W.iloc[1614:], contributions=np.sum(H))
+            _ = signature_barplot_ID(W[W.index.isin(context83)], contributions=np.sum(H))
             plt.savefig(os.path.join(outdir, "signature_contributions_id.pdf"), dpi=100, bbox_inches='tight')
-            _ = signature_barplot(get96_from_1536(W.iloc[:1536]), contributions=np.sum(H))              
+            _ = signature_barplot(get96_from_1536(W[W.index.isin(context96)]), contributions=np.sum(H))              
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
 

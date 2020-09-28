@@ -1,13 +1,16 @@
 import itertools
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import seaborn as sns
 import pandas as pd
 from typing import Union
 import numpy as np
 import re
 
+import sys ### DEBUG
+
 from ..utils import compl, sbs_annotation_converter
-from ..spectra import context96, context78, context83
+from ..spectra import context96, context78, context83, context1536, context_composite
 
 def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
@@ -115,6 +118,17 @@ def _map_id_sigs_back(df: pd.DataFrame) -> pd.Series:
         return pre + main + post
 
     return context_s.apply(_convert_from_cosmic)
+
+#def _map_composite_sigs_back(df: pd.DataFrame) -> pd.Series:
+    """
+    Map Back Composite Substitution Signatures.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+    Returns:
+        * pandas.core.series.Series with matching indices to context_composite
+    """
+    
 
 def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
@@ -358,4 +372,201 @@ def signature_barplot_ID(W, contributions):
     plt.subplots_adjust(wspace=.08, hspace=.15)
     fig.text(.08, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
 
+    return fig
+
+def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
+    """
+    Plot signatures from W-matrix for SBS, DBS, and IDs from composite W matrix
+    --------------------------------------
+    Args:
+        * W: W-matrix
+        * contributions: Series of total contributions, np.sum(H), from each 
+            signature if W is normalized; else, 1
+
+    Returns:
+       * fig
+
+    Example usage:
+        signature_barplot(W, np.sum(H))
+    """
+    W = W.copy()
+    #W.index = _map_composite_sigs_back(W) #########WRITE FUNCTION For now, just reindex
+    sbs_index = _map_sbs_sigs_back(W[W.index.isin(context96)]).sort_values()
+    dbs_index = W[W.index.isin(context78.keys())].index.to_series().sort_values()
+    id_index = _map_id_sigs_back(W[W.index.isin(context83)]).sort_values()
+    W = W.reindex(sbs_index.append(dbs_index).append(id_index)).fillna(0)
+
+    all_index = list(context96.keys())+list(context78.keys())+list(context83.keys())
+    
+    for c in list(context96.keys())+list(context78.keys())+list(context83.keys()):
+        if c not in W.index:
+            W.loc[c] = 0
+    W = W.reindex(all_index)
+
+    
+            
+    # Get signature labels
+    sig_columns = [c for c in W if c.startswith('S')]
+    n_sigs = len(sig_columns)
+
+    # Evaluate contributions
+    if isinstance(contributions, pd.Series):
+        W = W[sig_columns] * contributions[sig_columns]
+    else:
+        W = W[sig_columns] * contributions
+
+    #### x coordinates for SBS contributions
+    context_label = []
+    change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}
+    for p in itertools.product('ACGT', 'ACGT'):
+        context = ''.join(p)
+        compl_context = compl(context, reverse=True)
+        context_label.append('-'.join(context))
+        for key in change_map:
+            if key.startswith('C'):
+                change_map[key].append(key + context)
+            else:
+                change_map[key].append(compl(key) + compl_context)
+    color_map_sbs = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
+    x_coords_sbs = range(16)
+                
+    ##### x coordinates for DBS contributions
+    ref_map = {'AC': [], 'AT': [], 'CC': [], 'CG': [], 'CT': [], 'GC': [], 'TA': [], 'TC': [], 'TG': [], 'TT': []}
+    for x in W[W.index.isin(context78)].index:
+        ref_map[x[:2]].append(x)
+    x_coords_dbs = {ref: range(len(sigs)) for ref, sigs in ref_map.items()}
+    color_map_dbs = {'AC': '#99CCFF', 'AT': '#0000FF', 'CC': '#CCFF99', 'CG': '#00FF00', 'CT': '#FF99CC',
+                 'GC': '#FF0000', 'TA': '#FFCC99', 'TC': '#FF8000', 'TG': '#CC99FF', 'TT': '#8000FF'}
+    
+    ##### x coordinates for ID contributions
+    group_map = {'Cdel': [], 'Tdel': [], 'Cins': [], 'Tins': [],
+                 '2del': [], '3del': [], '4del': [], '5+del': [],
+                 '2ins': [], '3ins': [], '4ins': [], '5+ins': [],
+                 '2delm': [], '3delm': [], '4delm': [], '5+delm': []}
+    for x in W[W.index.isin(context83)].index:
+        group = re.search('.+?(?=[\d])', x).group(0)
+        group_map[group].append(x)
+    x_coords_id = {group: range(len(sigs)) for group, sigs in group_map.items()}
+    sys.stdout.write("x_coords_id: \n{}\n".format(x_coords_id))
+
+    color_map_id = {'Cdel': '#FFCC99', 'Tdel': '#FF8000', 'Cins': '#00FF00', 'Tins': '#00BB00',
+                 '2del': '#FF99CC', '3del': '#FF3377', '4del': '#FF0000', '5+del': '#880000',
+                 '2ins': '#99CCFF', '3ins': '#3377FF', '4ins': '#0000FF', '5+ins': '#000088',
+                 '2delm': '#CC99FF', '3delm': '#9966FF', '4delm': '#8000FF', '5+delm': '#6000AA'}
+
+    all_columns = ['CA', 'CG', 'CT', 'TA', 'TC', 'TG'] + ['space'] + list(ref_map.keys()) + ['space'] + list(group_map.keys())
+    
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=34, figsize=(60,2.5*n_sigs), sharex='col',
+                             gridspec_kw={'width_ratios': (16,)*6 + (1,)+ (9,6,9,6,9,6,6,9,9,9) + (1,) + (6,)*12+(1,2,3,5)})
+    max_height = 0
+    for row, sig in enumerate(sig_columns):
+        for col, ref in enumerate(all_columns):
+            if n_sigs == 1:
+                ax = axes[col]
+            else:
+                ax = axes[row,col]
+            if col in [6,17]:
+                ax.remove()
+                continue
+            # For SBS portion
+            if col < 6:
+                bar_heights = W[sig].loc[change_map[ref]]
+                for height in bar_heights:
+                    if height > max_height: max_height = height
+                ax.bar(x_coords_sbs, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map_sbs[ref], rasterized=True)
+                ax.set_xlim(-.55, 15.55)
+                if row == 0:
+                    ax.set_title('>'.join(ref), fontsize=18)
+                    if col == 0:
+                        ax.text(8.1, 1.3, 'Mutational Signatures', transform=ax.transAxes,
+                                horizontalalignment='center', fontsize=24)
+                if row < n_sigs - 1:
+                    ax.tick_params(axis='x', length=0, labelbottom=False)
+                else:
+                    ax.set_xticks(x_coords_sbs)
+                    ax.set_xticklabels(context_label, fontfamily='monospace', rotation='vertical')
+                    if col == 0:
+                        ax.text(8.1, -.4, 'Motifs', transform = ax.transAxes, horizontalalignment='center', fontsize=20)
+                if col == 5:
+                    if n_sigs == 1:
+                        for axis in axes[:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    else:
+                        for axis in axes[row,:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    max_height = 0
+                             
+            # For DBS portion
+            elif col < 17:
+                bar_heights = W[sig].loc[ref_map[ref]]
+                for height in bar_heights:
+                    if height > max_height: max_height = height
+                ax.bar(x_coords_dbs[ref], bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map_dbs[ref],
+                       rasterized=True)
+                ax.set_xlim(-.55, x_coords_dbs[ref][-1] + .55)
+                if row == 0:
+                    ax.set_title(ref)
+                if row < n_sigs - 1:
+                    ax.tick_params(axis='x', length=0)
+                else:
+                    xlabels = [x[3:] for x in ref_map[ref]]
+                    ax.set_xticks(x_coords_dbs[ref])
+                    ax.set_xticklabels(xlabels, fontfamily='monospace', rotation='vertical')
+                if col == 15:
+                    if n_sigs == 1:
+                        for axis in axes[6:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    else:
+                        for axis in axes[row,6:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    max_height = 0
+                             
+            # For ID portion
+            else:
+                bar_heights = W[sig].loc[group_map[ref]]
+                for height in bar_heights:
+                    if height > max_height: max_height = height
+                ax.bar(x_coords_id[ref], bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map_id[ref],
+                       rasterized=True)
+                ax.set_xlim(-.55, x_coords_id[ref][-1] + .55)
+                if row == 0:
+                    ax.set_title(re.search('[\d+CT]+', ref).group(0), color=color_map_id[ref])
+                    if ref == 'Tdel':
+                        ax.text(-.02, 1.16, '1bp deletions at repeats', fontsize=10, transform=ax.transAxes,
+                                horizontalalignment='center', color=color_map_id[ref])
+                    if ref == 'Tins':
+                        ax.text(-.02, 1.16, '1bp insertions at repeats', fontsize=10, transform=ax.transAxes,
+                                horizontalalignment='center', color=color_map_id[ref])
+                    if ref == '4del':
+                        ax.text(-.02, 1.16, '>1bp deletions at repeats', fontsize=10, transform=ax.transAxes,
+                                horizontalalignment='center', color=color_map_id[ref])
+                    if ref == '4ins':
+                        ax.text(-.02, 1.16, '>1bp insertions at repeats', fontsize=10, transform=ax.transAxes,
+                                horizontalalignment='center', color=color_map_id[ref])
+                    if ref == '4delm':
+                        ax.text(.8, 1.16, '>1bp deletions with microhomology', fontsize=10, transform=ax.transAxes,
+                                horizontalalignment='center', color=color_map_id[ref])
+                if row < n_sigs - 1:
+                    ax.tick_params(axis='x', length=0)
+                else:
+                    xlabels = [re.search('[\d+]+$', x).group(0) for x in group_map[ref]]
+                    ax.set_xticks(x_coords_id[ref])
+                    ax.set_xticklabels(xlabels, fontfamily='monospace')
+                if col == 33:
+                    if n_sigs == 1:
+                        for axis in axes[16:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    else:
+                        for axis in axes[row,16:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    max_height = 0
+
+            if col not in [0,7,18]:
+                ax.tick_params(axis='y', which='both',length=0, labelleft=False)
+            if col == 33:
+                ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment='center')
+
+    # Set titles and organize plot
+    plt.subplots_adjust(wspace=.12, hspace=.15)
+    fig.text(.105, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
     return fig

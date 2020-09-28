@@ -9,7 +9,7 @@ import re
 import itertools
 
 from sys import stdout ### GET rid of later
-from .context import context_composite, context96, context1536
+from .context import context_composite, context96, context1536, context78, context83
 
 from missingpy import KNNImputer, MissForest
 
@@ -418,9 +418,9 @@ def _map_composite_sigs(
         * pandas.core.series.Series with matching indices to input cosmic
     """
 
-    context_sbs_s = _map_sbs_sigs(df.iloc[:1536], cosmic_df.iloc[:1536], cosmic_type)
-    context_dbs_s = _map_dbs_sigs(df.iloc[1536:1614], cosmic_df.iloc[1536:1614])
-    context_id_s = df.iloc[1614:].index.to_series()
+    context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
+    context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[1536:1614])
+    context_id_s = df[df.index.isin(context83)].index.to_series()
 
     return context_sbs_s.append(context_dbs_s).append(context_id_s)
     
@@ -447,11 +447,10 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
     elif cosmic_type == 'cosmic3_composite':
         # map with PCAWG
-        res["Wraw"] = res["Wraw"].reindex(context_composite.keys()).fillna(0)
         res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic, cosmic_type).values
         # load Sanger 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
-        res["Wraw96"] = get96_from_1536(res["Wraw"].iloc[:1536])
+        res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
         res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
     if cosmic_type == 'cosmic3_1536':
         # Map with PCAWG

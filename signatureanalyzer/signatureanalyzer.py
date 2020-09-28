@@ -18,7 +18,7 @@ from .consensus import consensus_cluster
 from .context import context1536, context78, context96, context_composite, context83
 
 from .plotting import k_dist, consensus_matrix
-from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID
+from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite
 from .plotting import marker_heatmap
 from .plotting import cosine_similarity_plot
 
@@ -189,8 +189,16 @@ def run_maf(
             # ID sigs
             _ = signature_barplot_ID(W[W.index.isin(context83)], contributions=np.sum(H))
             plt.savefig(os.path.join(outdir, "signature_contributions_id.pdf"), dpi=100, bbox_inches='tight')
-            # Plot signature barplot with 96 SBS
+            # Plot signature contributions for COSMIC signatures
             _ = signature_barplot(W96, contributions=np.sum(H96))
+            plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=100,bbox_inches='tight')
+            # Plot signature contributions for PCAWG SBS collapsed to 96
+            #_ = signature_barplot(get96_from_1536(W[W.index.isin(context1536)]), contributions=np.sum(H))
+            
+            ## Concatenate W96 with W DBS and ID rows
+            W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
+            _ = signature_barplot_composite(W_plot, contributions=np.sum(H))
+            
         else:
             _ = signature_barplot(W, contributions=np.sum(H))
             

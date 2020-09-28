@@ -126,11 +126,10 @@ def get_spectra_from_maf(
                 if len(r) == 2 and len(a) == 2:
                     return 'DNP'
             maf['Variant_Type'] = ref_alt.apply(get_variant_type)
-        if 'DNP' in maf['Variant_Type']:
+        if maf['Variant_Type'].str.contains('DNP').any():
             maf = maf.loc[maf['Variant_Type'] == 'DNP']
         else:
             maf = get_dnps_from_maf(maf)
-
         ref = maf['Reference_Allele'].str.upper()
         alt = maf['Tumor_Seq_Allele2'].str.upper()
 
@@ -139,7 +138,7 @@ def get_spectra_from_maf(
                             for r, a in zip(ref, alt)], index=maf.index)
 
         try:
-            maf[context_num] = contig.apply(context_use.__getitem__)
+           maf[context_num] = contig.apply(context_use.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 

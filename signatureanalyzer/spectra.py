@@ -124,7 +124,7 @@ def get_spectra_from_maf(
                                 else compl(r + a + c[m + 1] + c[m - 1]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         else:
-            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'AC' \
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'TC' \
                                 else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         try:

@@ -8,6 +8,9 @@ import pkg_resources
 import re
 import itertools
 
+from sys import stdout ### GET rid of later
+from .context import context_composite, context96, context1536, context78, context83
+
 from missingpy import KNNImputer, MissForest
 
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
@@ -114,7 +117,7 @@ def compute_phi(mu: float, var: float, beta: float):
     """
     return var / (mu ** (2-beta))
 
-def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-2):
+def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, channel_names: pd.DataFrame.index, composite: bool = False, active_thresh:float = 1e-2):
     """
     Transfers weights from output of NMF.
     ------------------------
@@ -132,14 +135,23 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-
     H = H.copy()
 
     nonzero_idx = (np.sum(H, axis=1) * np.sum(W, axis=0)) > active_thresh
-
     W_active = W[:, nonzero_idx]
     H_active = H[nonzero_idx, :]
     nsig = np.sum(nonzero_idx)
 
-    # Normalize W and transfer weight to H matrix
     W_weight = np.sum(W_active, axis=0)
-    W_final = W_active / W_weight
+    # Normalize W and transfer weight to H matrix
+    if not composite:
+        W_final = W_active / W_weight
+    else:
+        W_active = pd.DataFrame(data=W_active, index=channel_names)
+        sys.stdout.write("W_active:\n{}\n".format(W_active))
+        W_weight_dbs = np.sum(W_active[W_active.index.isin(context78)], axis=0)
+        W_weight_id = np.sum(W_active[W_active.index.isin(context83)], axis=0)
+        W_weight_sbs = np.sum(W_active[~W_active.index.isin({**context78,**context83})], axis=0)
+        W_final = pd.concat([ W_active[~W_active.index.isin({**context78,**context83})]/W_weight_sbs,
+                              W_active[W_active.index.isin(context78)]/W_weight_dbs, W_active[W_active.index.isin(context83)]/W_weight_id ])
+        
     H_final = W_weight[:, np.newaxis] * H_active
 
     return W_final, H_final, nsig, nonzero_idx
@@ -180,8 +192,8 @@ def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     W_max_id = W.idxmax(axis=1, skipna=True).astype('int')
     W['max'] = W.max(axis=1, skipna=True)
     W['max_id'] = W_max_id
-    Wnorm['max_norm']=Wnorm.max(axis=1, skipna=True)
-
+    Wnorm['max_norm'] = Wnorm.max(axis=1, skipna=True)
+    
     H['max_norm'] = Hnorm['max_norm']
     W['max_norm'] = Wnorm['max_norm']
 
@@ -270,6 +282,10 @@ def load_cosmic_signatures(cosmic: str):
     elif cosmic == 'cosmic3_composite':
         print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_composite.tsv'), sep='\t').dropna(1)
+        cosmic_index = 'Somatic Mutation Type'
+    elif cosmic == 'cosmic3_composite96':
+        print("   * Using {} signatures".format(cosmic))
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_composite96.tsv'), sep='\t').dropna(1)
         cosmic_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
@@ -361,7 +377,8 @@ def _map_dbs_sigs(
 def _map_sbs_sigs(
     df: pd.DataFrame,
     cosmic_df: pd.DataFrame,
-    sub_index: str = 'Substitution Type'
+    cosmic_type: str,
+    sub_index: str = 'Substitution Type',
     ) -> pd.Series:
     """
     Map Single-Base Substitution Signatures.
@@ -374,12 +391,19 @@ def _map_sbs_sigs(
     Returns:
         * pandas.core.series.Series with matching indices to input cosmic
     """
-    def _check_to_flip(x, ref):
-        if x[2:-2] in ref:
-            return x
-        else:
-            return compl(x)
-
+    if cosmic_type in ['cosmic3_1536', 'cosmic3_composite']:
+        def _check_to_flip(x, ref):
+            if x[3:-3] in ref:
+                return x
+            else:
+                return compl(x)
+    else:
+        def _check_to_flip(x, ref):
+            if x[2:-2] in ref:
+                return x
+            else:
+                return compl(x)
+            
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name
 
@@ -396,6 +420,7 @@ def _map_sbs_sigs(
 def _map_composite_sigs(
     df: pd.DataFrame,
     cosmic_df: pd.DataFrame,
+    cosmic_type: str,
     sub_index: str = 'Somatic Mutation Type'
     ) -> pd.Series:
     """
@@ -406,10 +431,13 @@ def _map_composite_sigs(
     Returns:
         * pandas.core.series.Series with matching indices to input cosmic
     """
-
-    context_sbs_s = _map_sbs_sigs(df.iloc[:1536], cosmic_df.iloc[:1536])
-    context_dbs_s = _map_dbs_sigs(df.iloc[1536:1614], cosmic_df.iloc[1536:1614])
-    context_id_s = df.iloc[1614:].index
+    if cosmic_type == 'cosmic3_composite':
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
+        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[1536:1614])
+    else:
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
+        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[96:174])
+    context_id_s = df[df.index.isin(context83)].index.to_series()
 
     return context_sbs_s.append(context_dbs_s).append(context_id_s)
     
@@ -429,48 +457,69 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         * None, edits res dictionary directly
     """
     if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic, cosmic_type).values
     elif cosmic_type == 'cosmic3_DBS':
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
     elif cosmic_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
-    elif cosmic_type == 'cosmic3_composite':
+    elif cosmic_type in ['cosmic3_composite', 'cosmic3_composite96']:
         # map with PCAWG
-        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic).values
+        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic, cosmic_type).values
         # load Sanger 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
-        res["Wraw96"] = get96_from_1536(res["Wraw"].iloc[:1536])
-        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96).values
+        if cosmic_type == 'cosmic3_composite':
+            res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+        else:
+            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
     if cosmic_type == 'cosmic3_1536':
         # Map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic).values
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic, cosmic_type).values
         # load Sanger 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
         res["Wraw96"] = get96_from_1536(res["Wraw"])
-        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96).values
-         
-         
+        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
-    if cosmic_type in ('cosmic3_1536', 'cosmic3_composite'):
+    if cosmic_type in ('cosmic3_1536', 'cosmic3_composite','cosmic3_composite96'):
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
-
+    
     # Create cosine similarity matrix
     X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
-    # For 1536 and Composite, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
-    if cosmic_type in ("cosmic3_1536", "cosmic3_composite"):
-        X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols]
-        res["cosine96"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols,nmf_cols]
+    # For 1536, Composite, and Composite 96 context, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
+    if cosmic_type in ("cosmic3_1536", "cosmic3_composite", "cosmic3_composite96"):
+        X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols_96]
+        res["cosine96"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols_96,nmf_cols]
+        
+        # Construct 96 context W matrix
+        if cosmic_type in ["cosmic3_1536","cosmic3_composite"]:
+            W96 = get96_from_1536(res["W"][res["W"].index.isin(context1536)].copy().drop(columns=['max','max_id','max_norm']))
+        else:
+            W96 = res["W"][res["W"].index.isin(context96)].copy().drop(columns=['max','max_id','max_norm'])
+        W96.columns = range(1,W96.shape[1]+1)
+        Wnorm = W96.copy()
+        for j in range(W96.shape[1]):
+            Wnorm.iloc[:,j] *= res['H'].sum(1).values[j]
+        Wnorm = Wnorm.div(Wnorm.sum(1),axis=0)
+        W96_max_id = W96.idxmax(axis=1,skipna=True).astype('int')
+        W96['max'] = W96.max(axis=1, skipna=True)
+        W96['max_id'] = W96_max_id
+        W96['max_norm']= Wnorm.max(axis=1, skipna=True)
+        _rename = {x+1:'S'+ str(x+1) for x in range(len(list(res['H'])[:-3]))}
+        res["W96"] = W96.rename(columns=_rename)
+        
         # Add assignments
         s_assign96 = dict(res["cosine96"].idxmax())
         s_assign96 = {key:key+"-" + s_assign96[key] for key in s_assign96}
         res["cosine96"] = res["cosine96"].rename(columns=s_assign96)
         res["Wraw96"] = res["Wraw96"].rename(columns=s_assign96)
-        res["W96"] = get96_from_1536(res["W"]).rename(columns=s_assign96)
+        res["W96"] = res["W96"].rename(columns=s_assign96)
+        
             
     # Add assignments
     s_assign = dict(res["cosine"].idxmax())
@@ -583,6 +632,16 @@ def get_true_snps_from_maf(maf: pd.DataFrame):
         * pd.DataFrame of maf with adjacent SNPs filtered out
     """
     sub_mafs = []
+
+    # Check if MAF includes End_position
+    if not 'End_position' in list(maf):
+        def get_endpos(row):
+            if row['Variant_Type'] in ['SNP', 'DEL']:
+                return int(row['Start_position']) + len(row['Reference_Allele']) - 1
+            else:
+                return int(row['Start_position']) + 1
+        maf['End_position'] = maf.apply(get_endpos, axis=1)
+    
     for _, df in maf.loc[maf['Variant_Type'].isin(['SNP','DEL',])].groupby(['sample', 'Chromosome']):
         df = df.sort_values('Start_position')
         start_pos = np.array(df['Start_position'])
@@ -610,18 +669,22 @@ def get96_from_1536(W1536):
     Returns:
         * pd.Dataframe of 96 context matrix
     """
-    # Generate 96 context
-    acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
-    ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
-    context96 = list(map(''.join, itertools.chain(acontext, ccontext)))
     context96_df = pd.DataFrame(0, index=context96 , columns=W1536.columns)
-
+    
     # Define conversion function based on format
     if ">" in W1536.index[0]:
-        convert = lambda x: x[3] + x[5] + x[1] + x[7]
+        def convert(x):
+            sbs = x[3] + x[5] + x[1] + x[7]
+            if sbs[0] not in ['C','A']:
+                sbs = compl(sbs[:2]) + compl(sbs[-1]) + compl(sbs[-2])
+            return sbs
     else:
-        convert = lambda x: x[:2] + x[3:5]
-
+        def convert(x):
+            sbs = x[:2] + x[3:5]
+            if sbs[0] not in ['C','A']:
+                sbs = compl(sbs[:2]) + compl(sbs[-1]) + compl(sbs[-2])
+            return sbs
+        
     # For each context in 96 SNV, sum all corresponding 1536 context rows
     for context in context96:
         context96_df.loc[context] = W1536[W1536.index.map(convert) == context].sum()

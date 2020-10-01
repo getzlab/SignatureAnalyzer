@@ -7,10 +7,8 @@ from typing import Union
 import numpy as np
 import re
 
-import sys ### DEBUG
-
 from ..utils import compl, sbs_annotation_converter
-from ..spectra import context96, context78, context83, context1536, context_composite
+from ..context import context96, context78, context83, context1536, context_composite
 
 def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     """
@@ -447,7 +445,6 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
         group = re.search('.+?(?=[\d])', x).group(0)
         group_map[group].append(x)
     x_coords_id = {group: range(len(sigs)) for group, sigs in group_map.items()}
-    sys.stdout.write("x_coords_id: \n{}\n".format(x_coords_id))
 
     color_map_id = {'Cdel': '#FFCC99', 'Tdel': '#FF8000', 'Cins': '#00FF00', 'Tins': '#00BB00',
                  '2del': '#FF99CC', '3del': '#FF3377', '4del': '#FF0000', '5+del': '#880000',

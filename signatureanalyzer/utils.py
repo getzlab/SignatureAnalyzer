@@ -140,17 +140,18 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, channel_names: pd.DataFra
     nsig = np.sum(nonzero_idx)
 
     W_weight = np.sum(W_active, axis=0)
+    ##### FIX AFTER DEBUG
     # Normalize W and transfer weight to H matrix
-    if not composite:
-        W_final = W_active / W_weight
-    else:
-        W_active = pd.DataFrame(data=W_active, index=channel_names)
-        sys.stdout.write("W_active:\n{}\n".format(W_active))
-        W_weight_dbs = np.sum(W_active[W_active.index.isin(context78)], axis=0)
-        W_weight_id = np.sum(W_active[W_active.index.isin(context83)], axis=0)
-        W_weight_sbs = np.sum(W_active[~W_active.index.isin({**context78,**context83})], axis=0)
-        W_final = pd.concat([ W_active[~W_active.index.isin({**context78,**context83})]/W_weight_sbs,
-                              W_active[W_active.index.isin(context78)]/W_weight_dbs, W_active[W_active.index.isin(context83)]/W_weight_id ])
+    #if not composite:
+    W_final = W_active / W_weight
+    #else:
+    #    W_active = pd.DataFrame(data=W_active, index=channel_names)
+    #    sys.stdout.write("W_active:\n{}\n".format(W_active))
+    #    W_weight_dbs = np.sum(W_active[W_active.index.isin(context78)], axis=0)
+    #    W_weight_id = np.sum(W_active[W_active.index.isin(context83)], axis=0)
+    #    W_weight_sbs = np.sum(W_active[~W_active.index.isin({**context78,**context83})], axis=0)
+    #    W_final = pd.concat([ W_active[~W_active.index.isin({**context78,**context83})]/W_weight_sbs,
+    #                          W_active[W_active.index.isin(context78)]/W_weight_dbs, W_active[W_active.index.isin(context83)]/W_weight_id ])
         
     H_final = W_weight[:, np.newaxis] * H_active
 
@@ -488,8 +489,21 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
     
     # Create cosine similarity matrix
-    X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
-    res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
+    if cosmic_type not in ['cosmic3_composite','cosmic3_composite96']:
+        X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+        res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
+    else:
+        Wcosine = res["Wraw"].set_index("mut")
+        W_weight_dbs = np.sum(Wcosine[Wcosine.index.isin(context78)])
+        W_weight_id = np.sum(Wcosine[Wcosine.index.isin(context83)])
+        if cosmic_type == 'cosmic3_composite':
+            W_weight_sbs = np.sum(Wcosine[Wcosine.index.isin(context1536)])
+            X =  pd.concat([Wcosine[Wcosine.index.isin(context1536)]/W_weight_sbs, Wcosine[Wcosine.index.isin(context78)]/W_weight_dbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])            
+        else:
+            W_weight_sbs = np.sum(Wcosine[~Wcosine.index.isin({**context78, **context83})])
+            X =  pd.concat([Wcosine[Wcosine.index.isin({**context78, **context83})]/W_weight_sbs, Wcosine[Wcosine.index.isin(context78)]/W_weight_dbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])
+        X = X.join(cosmic.set_index(cosmic_index)).fillna(0).loc[:,nmf_cols+ref_cols]
+        res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # For 1536, Composite, and Composite 96 context, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
     if cosmic_type in ("cosmic3_1536", "cosmic3_composite", "cosmic3_composite96"):

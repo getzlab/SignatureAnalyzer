@@ -366,7 +366,7 @@ def run_spectra(
             _ = signature_barplot(W, contributions=np.sum(H))
 
         plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
-        _ = stacked_bar(H)
+        _ = stacked_bar(H,cosmic)
         plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
         _ = k_dist(np.array(aggr.K, dtype=int))
         plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')

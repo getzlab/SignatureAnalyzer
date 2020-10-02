@@ -6,6 +6,7 @@ import pandas as pd
 from typing import Union
 import numpy as np
 import re
+import sys
 
 from ..utils import compl, sbs_annotation_converter
 from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_96, signature_DBS, signature_ID
@@ -25,12 +26,12 @@ def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
         plot_bar(H)
     """
     H = H.iloc[:,:-3].copy()
-    H['sum'] = H.sum(1)
-    H = H.sort_values('sum', ascending=False)
     if cosmic_type in ['cosmic3_composite', 'cosmic3_composite96', 'cosmic3_1536']:
-        H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('-')]).map(signature_composite)
+        H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('_')]).map(signature_composite)
     if cosmic_type in ['cosmic3', 'cosmic3_exome']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_96)
+    H['sum'] = H.sum(1)
+    H = H.sort_values('sum', ascending=False)
 
     fig,axes = plt.subplots(2,1,figsize=figsize, sharex=True)
 

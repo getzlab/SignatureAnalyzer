@@ -8,9 +8,9 @@ import numpy as np
 import re
 
 from ..utils import compl, sbs_annotation_converter
-from ..context import context96, context78, context83, context1536, context_composite
+from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_96, signature_DBS, signature_ID
 
-def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
+def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
     """
     Plot stacked barchart & normalized stacked barchart.
     --------------------------------------
@@ -27,6 +27,10 @@ def stacked_bar(H: pd.DataFrame, figsize: tuple = (8,8)):
     H = H.iloc[:,:-3].copy()
     H['sum'] = H.sum(1)
     H = H.sort_values('sum', ascending=False)
+    if cosmic_type in ['cosmic3_composite', 'cosmic3_composite96', 'cosmic3_1536']:
+        H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('-')]).map(signature_composite)
+    if cosmic_type in ['cosmic3', 'cosmic3_exome']:
+        H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_96)
 
     fig,axes = plt.subplots(2,1,figsize=figsize, sharex=True)
 
@@ -412,7 +416,9 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
         W = W[sig_columns] * contributions[sig_columns]
     else:
         W = W[sig_columns] * contributions
-
+    import sys
+    sys.stdout.write("W dbs:\n{}\n".format(W.loc[['CC>AA', 'CC>TT','CC>GA']]))
+        
     #### x coordinates for SBS contributions
     context_label = []
     change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}

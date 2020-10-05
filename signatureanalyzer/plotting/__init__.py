@@ -11,6 +11,7 @@ from ._muts import signature_barplot_DBS
 from ._muts import signature_barplot_ID
 from ._muts import stacked_bar
 from ._muts import signature_barplot_composite
+from ._muts import signature_barplot_sbs_id
 
 from ._nmf import k_dist
 from ._nmf import consensus_matrix

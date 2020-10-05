@@ -51,7 +51,9 @@ def main():
             'cosmic3_TSB',
             'cosmic3_1536',
             'cosmic3_composite',
-            'cosmic3_composite96'
+            'cosmic3_composite96',
+            'cosmic3_sbs1536_id',
+            'cosmic3_sbs96_id'
             ]
     )
     parser.add_argument(

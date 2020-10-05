@@ -257,40 +257,39 @@ def load_cosmic_signatures(cosmic: str):
     Pre-processed Cosmic Mutational Signatures.
     """
     if cosmic == 'cosmic2':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_exome':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_DBS':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
         cosmic_index = "Somatic Mutation Type"
     elif cosmic == 'cosmic3_ID':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(1)
         cosmic_index = "Mutation Type"
     elif cosmic == 'cosmic3_1536':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_1536.tsv'), sep='\t').dropna(1)
         cosmic_index = 'Somatic Mutation Type'
     elif cosmic == 'cosmic3_composite':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_composite.tsv'), sep='\t').dropna(1)
         cosmic_index = 'Somatic Mutation Type'
     elif cosmic == 'cosmic3_composite96':
-        print("   * Using {} signatures".format(cosmic))
         cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_composite96.tsv'), sep='\t').dropna(1)
+        cosmic_index = 'Somatic Mutation Type'
+    elif cosmic == 'cosmic3_sbs1536_id':
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs96_id.tsv'), sep='\t').dropna(1)
+        cosmic_index = 'Somatic Mutation Type'
+    elif cosmic == 'cosmic3_sbs96_id':
+        cosmic = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs96_id.tsv'), sep='\t').dropna(1)
         cosmic_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(cosmic))
-
+    
+    print("   * Using {} signatures".format(cosmic))
     return cosmic, cosmic_index
 
 def compl(seq: str, reverse: bool = False):
@@ -425,7 +424,7 @@ def _map_composite_sigs(
     sub_index: str = 'Somatic Mutation Type'
     ) -> pd.Series:
     """
-    Map composite signatures. df must take hierarchical format SBS, DBS, then ID
+    Map composite signatures
     -----------------------
     Args:
         * df: pandas.core.frame.DataFrame with index to be mapped
@@ -439,10 +438,31 @@ def _map_composite_sigs(
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
         context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[96:174])
     context_id_s = df[df.index.isin(context83)].index.to_series()
-
     return context_sbs_s.append(context_dbs_s).append(context_id_s)
     
 
+def _map_sbs_id_sigs(
+    df: pd.DataFrame,
+    cosmic_df: pd.DataFrame,
+    cosmic_type: str,
+    sub_index: str = 'Somatic Mutation Type',
+    ) -> pd.Series:
+    """
+    Map signatures for SBS + ID spectra.
+    -----------------------
+    Args:
+        * df: pandas.core.frame.DataFrame with index to be mapped
+    Returns:
+        * pandas.core.series.Series with matching indices to input cosmic
+    """
+    if cosmic_type == 'cosmic3_sbs1536_id':
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
+    else:
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
+    context_id_s = df[df.index.isin(context83)].index.to_series()
+    return context_sbs_s.append(context_id_s)
+
+    
 def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic_type: str):
     """
     Post process ARD-NMF on mutational signatures.
@@ -474,44 +494,61 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
-    if cosmic_type == 'cosmic3_1536':
+    elif cosmic_type == 'cosmic3_1536':
         # Map with PCAWG
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic, cosmic_type).values
         # load Sanger 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
         res["Wraw96"] = get96_from_1536(res["Wraw"])
         res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+    elif cosmic_type in ['cosmic3_sbs1536_id', 'cosmic3_sbs96_id']:
+        # map with PCAWG
+        res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], cosmic, cosmic_type).values
+        # load Sanger 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_cosmic_signatures("cosmic3")
+        if cosmic_type == 'cosmic3_sbs1536_id':
+            res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+        else:
+            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+        
+        
 
     # Column names of NMF signatures & COSMIC References
     nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
-    if cosmic_type in ('cosmic3_1536', 'cosmic3_composite','cosmic3_composite96'):
+    if cosmic_type in ('cosmic3_1536', 'cosmic3_composite','cosmic3_composite96','cosmic3_sbs1536_id','cosmic3_sbs96_id'):
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
     
     # Create cosine similarity matrix
-    if cosmic_type not in ['cosmic3_composite','cosmic3_composite96']:
+    if cosmic_type not in ['cosmic3_composite','cosmic3_composite96','cosmic3_sbs96_id','cosmic3_sbs1536_id']:
         X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
         res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
-    else:
+    elif cosmic_type in ['cosmic3_composite','cosmic3_composite96']:
         Wcosine = res["Wraw"].set_index("mut")
         W_weight_dbs = np.sum(Wcosine[Wcosine.index.isin(context78)])
         W_weight_id = np.sum(Wcosine[Wcosine.index.isin(context83)])
-        if cosmic_type == 'cosmic3_composite':
-            W_weight_sbs = np.sum(Wcosine[Wcosine.index.isin(context1536)])
-            X =  pd.concat([Wcosine[Wcosine.index.isin(context1536)]/W_weight_sbs, Wcosine[Wcosine.index.isin(context78)]/W_weight_dbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])            
-        else:
-            W_weight_sbs = np.sum(Wcosine[~Wcosine.index.isin({**context78, **context83})])
-            X =  pd.concat([Wcosine[Wcosine.index.isin({**context78, **context83})]/W_weight_sbs, Wcosine[Wcosine.index.isin(context78)]/W_weight_dbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])
+        W_weight_sbs = np.sum(Wcosine[~Wcosine.index.isin({**context78, **context83})])
+        # Normalize by feature category
+        X =  pd.concat([Wcosine[~Wcosine.index.isin({**context78, **context83})]/W_weight_sbs, Wcosine[Wcosine.index.isin(context78)]/W_weight_dbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])
+        X = X.join(cosmic.set_index(cosmic_index)).fillna(0).loc[:,nmf_cols+ref_cols]
+        res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
+    else:
+        Wcosine = res["Wraw"].set_index("mut")
+        W_weight_id = np.sum(Wcosine[Wcosine.index.isin(context83)])
+        W_weight_sbs = np.sum(Wcosine[~Wcosine.index.isin(context83)])
+        X = pd.concat([Wcosine[~Wcosine.index.isin(context83)]/W_weight_sbs, Wcosine[Wcosine.index.isin(context83)]/W_weight_id])
         X = X.join(cosmic.set_index(cosmic_index)).fillna(0).loc[:,nmf_cols+ref_cols]
         res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # For 1536, Composite, and Composite 96 context, transform to 96 SBS and create cosine similarity matrix with Sanger signatures
-    if cosmic_type in ("cosmic3_1536", "cosmic3_composite", "cosmic3_composite96"):
+    if cosmic_type in ("cosmic3_1536", "cosmic3_composite", "cosmic3_composite96", "cosmic3_sbs1536_id", "cosmic3_sbs96_id"):
         X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols_96]
         res["cosine96"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols_96,nmf_cols]
         
         # Construct 96 context W matrix
-        if cosmic_type in ["cosmic3_1536","cosmic3_composite"]:
+        if cosmic_type in ["cosmic3_1536","cosmic3_composite", "cosmic3_sbs1536_id"]:
             W96 = get96_from_1536(res["W"][res["W"].index.isin(context1536)].copy().drop(columns=['max','max_id','max_norm']))
         else:
             W96 = res["W"][res["W"].index.isin(context96)].copy().drop(columns=['max','max_id','max_norm'])

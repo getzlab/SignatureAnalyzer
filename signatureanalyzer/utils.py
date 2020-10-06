@@ -140,18 +140,9 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, channel_names: pd.DataFra
     nsig = np.sum(nonzero_idx)
 
     W_weight = np.sum(W_active, axis=0)
-    ##### FIX AFTER DEBUG
+
     # Normalize W and transfer weight to H matrix
-    #if not composite:
     W_final = W_active / W_weight
-    #else:
-    #    W_active = pd.DataFrame(data=W_active, index=channel_names)
-    #    sys.stdout.write("W_active:\n{}\n".format(W_active))
-    #    W_weight_dbs = np.sum(W_active[W_active.index.isin(context78)], axis=0)
-    #    W_weight_id = np.sum(W_active[W_active.index.isin(context83)], axis=0)
-    #    W_weight_sbs = np.sum(W_active[~W_active.index.isin({**context78,**context83})], axis=0)
-    #    W_final = pd.concat([ W_active[~W_active.index.isin({**context78,**context83})]/W_weight_sbs,
-    #                          W_active[W_active.index.isin(context78)]/W_weight_dbs, W_active[W_active.index.isin(context83)]/W_weight_id ])
         
     H_final = W_weight[:, np.newaxis] * H_active
 
@@ -172,18 +163,27 @@ def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     Wnorm = W.copy()
     Hnorm = H.copy()
 
+    sys.stdout.write("Wnorm:\n{}\nHnorm\n{}\n".format(Wnorm,Hnorm))
+
+    sys.stdout.write("W.shape[1]:\n{}\n".format(W.shape[1]))
     # Scale Matrix
     for j in range(W.shape[1]):
         Wnorm.iloc[:,j] *= H.sum(1).values[j]
         Hnorm.iloc[j,:] *= W.sum(0).values[j]
 
+    sys.stdout.write("AFTER SCALING \nWnorm:\n{}\nHnorm\n{}\n".format(Wnorm,Hnorm))
+        
     # Normalize
     Wnorm = Wnorm.div(Wnorm.sum(1),axis=0)
     Hnorm = Hnorm.div(Hnorm.sum(0),axis=1)
 
+    sys.stdout.write("AFTER NORMALIZE \nWnorm:\n{}\nHnorm\n{}\n".format(Wnorm,Hnorm))
+    
     H = H.T
     Hnorm = Hnorm.T
 
+    sys.stdout.write("AFTER TRANSPOSE H:\n{}\n Hnorm\n{}\n".format(H,Hnorm))
+    
     # Get Max Values
     H_max_id = H.idxmax(axis=1, skipna=True).astype('int')
     H['max'] = H.max(axis=1, skipna=True)
@@ -197,6 +197,8 @@ def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     
     H['max_norm'] = Hnorm['max_norm']
     W['max_norm'] = Wnorm['max_norm']
+
+    sys.stdout.write("AFTER MAXID W:\n{}\n H\n{}\n".format(W,H))
 
     _rename = {x:'S'+x for x in list(H)[:-3]}
     H = H.rename(columns=_rename)
@@ -516,7 +518,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         
 
     # Column names of NMF signatures & COSMIC References
-    nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
+    nmf_cols = list(res["signatures"].columns[res["signatures"].columns.str.match('S\d+')])
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
     if cosmic_type in ('cosmic3_1536', 'cosmic3_composite','cosmic3_composite96','cosmic3_sbs1536_id','cosmic3_sbs96_id'):
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])

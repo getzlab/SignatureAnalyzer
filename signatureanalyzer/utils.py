@@ -518,7 +518,7 @@ def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic
         
 
     # Column names of NMF signatures & COSMIC References
-    nmf_cols = ["S"+x for x in list(map(str, set(res["signatures"].max_id)))]
+    nmf_cols = list(res["signatures"].columns[res["signatures"].columns.str.match('S\d+')])
     ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
     if cosmic_type in ('cosmic3_1536', 'cosmic3_composite','cosmic3_composite96','cosmic3_sbs1536_id','cosmic3_sbs96_id'):
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])

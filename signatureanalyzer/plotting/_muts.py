@@ -656,7 +656,7 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
                 ax = axes[col]
             else:
                 ax = axes[row,col]
-            if col in [6,17]:
+            if col == 6:
                 ax.remove()
                 continue
             # For SBS portion

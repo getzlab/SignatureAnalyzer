@@ -71,7 +71,7 @@ def run_maf(
     except:
         pass
 
-    if outdir is not ".":
+    if outdir != ".":
         print("   * Creating output dir at {}".format(outdir))
         os.makedirs(outdir, exist_ok=True)
 
@@ -121,7 +121,7 @@ def run_maf(
         store["run{}/signatures".format(n_iter)] = res["signatures"]
         store["run{}/log".format(n_iter)] = res["log"]
         store["run{}/cosine".format(n_iter)] = res["cosine"]
-        if cosmic in ["cosmic3_1536", "cosmic3_composite", "cosmic3_composite96"]:
+        if cosmic in ["cosmic3_1536", "cosmic3_composite", "cosmic3_composite96", "composite_sbs96_id"]:
             store["run{}/cosine96".format(n_iter)] = res["cosine96"]
             store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
             store["run{}/W96".format(n_iter)] = res["W96"]
@@ -260,7 +260,7 @@ def run_spectra(
     if isinstance(spectra, str):
         spectra = file_loader(spectra)
 
-    if outdir is not ".":
+    if outdir != ".":
         print("   * Creating output dir at {}".format(outdir))
         os.makedirs(outdir, exist_ok=True)
 
@@ -464,7 +464,7 @@ em        * matrix: expression matrix; this should be normalized to accomodate
         print("   * Negative values detecting, splitting vars m={} --> m={}".format(matrix.shape[0], matrix.shape[0]*2))
         matrix = split_negatives(matrix, axis=0)
 
-    if outdir is not ".":
+    if outdir != ".":
         print("   * Creating output dir at {}".format(outdir))
         os.makedirs(outdir, exist_ok=True)
 

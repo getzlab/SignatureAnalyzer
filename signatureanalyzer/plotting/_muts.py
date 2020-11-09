@@ -9,7 +9,7 @@ import re
 import sys
 
 from ..utils import compl, sbs_annotation_converter
-from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_96, signature_DBS, signature_ID
+from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_cosmic, signature_DBS, signature_ID
 
 def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
     """
@@ -29,7 +29,7 @@ def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
     if cosmic_type in ['cosmic3_composite', 'cosmic3_composite96', 'cosmic3_1536', 'cosmic3_sbs96_id', 'cosmic3_sbs1536_id']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('_')]).map(signature_composite)
     if cosmic_type in ['cosmic3', 'cosmic3_exome']:
-        H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_96)
+        H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_cosmic)
     H['sum'] = H.sum(1)
     H = H.sort_values('sum', ascending=False)
 

@@ -38,6 +38,7 @@ def get_spectra_from_maf(
     elif cosmic == 'cosmic3_1536': context_num, context_form, context_use, context_sbs = 'context1536.num', 'context1536.arrow', context1536, context1536
     elif cosmic == 'cosmic3_DBS':  context_num, context_form, context_use = 'context78.num', 'context78.word', context78
     elif cosmic == 'cosmic3_ID': context_num, context_form, context_use = 'context83.num', 'context83.word', context83
+    elif cosmic == 'cosmic3_sbs96_id': context_num, context_form, context_use = 'context96.num','context96.word',context96, context96
     else: raise NotImplementedError()
     
     if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome', 'cosmic3_1536']:

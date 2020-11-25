@@ -257,13 +257,30 @@ def get_spectra_from_maf(
     
     elif cosmic == 'cosmic3_composite':
         """
-        Concatenate SBS, DBS, and ID spectra
+        Concatenate 1536 SBS, DBS, and ID spectra
         """
         # Get spectra for 3 sections
         maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_1536',real_snps,composite=True)
         maf_dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS',composite=True)
         maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
         # concatenate spectra
+        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
+        maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+    elif cosmic == 'cosmic3_96composite':
+        """
+        Concatenate 96 SBS, DBS, and ID spectra
+        """
+        maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps,composite=True)
+        dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS',composite=True)
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
+        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
+        maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+    elif cosmic == 'cosmic3_sbs96_id':
+        """
+        Concatenate 96 SBS + ID spectra
+        """
+        maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps,composite=True)
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
         spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
         maf = pd.concat([maf_sbs,maf_dbs,maf_id])
     else:

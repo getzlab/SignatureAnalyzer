@@ -742,3 +742,36 @@ def get96_from_1536(W1536):
     for context in context96:
         context96_df.loc[context] = W1536[W1536.index.map(convert) == context].sum()
     return context96_df
+
+def get_pole_pold_muts(maf: pd.DataFrame):
+    """
+    Prints sets of samples with POLE-exo mutation, POLD-exo mutation, and
+    POLE-exo + POLD-exo mutation
+    """
+    pole_res = (223,517)
+    pold_res = (245-571)
+    if 'UniProt_AApos' in list(maf) or 'HGVSp_Short' in list(maf):
+        if 'HGVSp_Short' in list(maf) and 'UniProt_AApos' not in list(maf):
+            table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','HGVSp_Short', 'Tumor_Sample_Barcode']].copy()
+            table = table[table['Variant_Classification']=='Missense_Mutation']
+            table.rename(columns={'HGVSp_Short':'UniProt_AApos'})
+            get_pos = lambda x: int(''.join(c for c in x if c.isdigit()))
+            table['UniProt_AApos'] = table['HGVSp_Short'].map(get_pos)
+        else:
+            table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','UniProt_AApos', 'Tumor_Sample_Barcode']].copy()
+            table = table[table['Variant_Classification'] == 'Missense_Mutation']
+        pole = []
+        pold = []
+        for m in table.index:
+            if table.loc[m,'Hugo_Symbol'] == 'POLE':
+                if table.loc[m,'UniProt_AApos'] >= pole_res[0] and table.loc[m,'UniProt_AApos'] <= pole_res[1]:
+                    pole.append(table.loc[m,'Tumor_Sample_Barcode'])
+            else:
+                if table.loc[m,'UniProt_AApos'] >= pole_res[0] and table.loc[m,'UniProt_AApos'] <= pole_res[1]:
+                    pold.append(table.loc[m,'Tumor_Sample_Barcode'])
+        stdout.write("POLE-exo* patients:\n{}\n".format(np.unique(pole)))
+        stdout.write("POLD-exo* patients:\n{}\n".format(np.unique(pold)))
+        stdout.write("POLE-exo* + POLD-exo* patients:\n{}\n".format(np.intersect1d(pole,pold)))
+    else:
+        stdout.write("Neither UniProt_AApos nor HGVSp_Short were found in the maf columns. Please try again with one of these columns")
+    return np.unique(pole), np.unique(pold)

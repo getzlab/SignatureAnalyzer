@@ -26,10 +26,17 @@ def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
         plot_bar(H)
     """
     H = H.iloc[:,:-3].copy()
-    if cosmic_type in ['cosmic3_composite', 'cosmic3_composite96', 'cosmic3_1536', 'cosmic3_sbs96_id', 'cosmic3_sbs1536_id']:
+    # Map signature etiology
+    if cosmic_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS', 'pcawg_SBS96_ID', 'pcawg_SBS_ID']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('_')]).map(signature_composite)
-    if cosmic_type in ['cosmic3', 'cosmic3_exome']:
+    elif cosmic_type in ['cosmic3', 'cosmic3_exome']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_cosmic)
+    elif cosmic_type == 'cosmic3_DBS':
+        H.columns = H.columns.map(lambda x: x[x.index('DBS'):]).map(signature_DBS)
+    elif cosmic_type == 'cosmic3_ID':
+        H.columns = H.columns.map(lambda x: x[x.index('ID'):]).map(signature_ID)
+
+    # Sort H matrix by mutation burden for relevant mutation type
     H['sum'] = H.sum(1)
     H = H.sort_values('sum', ascending=False)
 
@@ -121,17 +128,6 @@ def _map_id_sigs_back(df: pd.DataFrame) -> pd.Series:
         return pre + main + post
 
     return context_s.apply(_convert_from_cosmic)
-
-#def _map_composite_sigs_back(df: pd.DataFrame) -> pd.Series:
-    """
-    Map Back Composite Substitution Signatures.
-    -----------------------
-    Args:
-        * df: pandas.core.frame.DataFrame with index to be mapped
-    Returns:
-        * pandas.core.series.Series with matching indices to context_composite
-    """
-    
 
 def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
     """
@@ -393,10 +389,9 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
         signature_barplot(W, np.sum(H))
     """
     W = W.copy()
-    #W.index = _map_composite_sigs_back(W) #########WRITE FUNCTION For now, just reindex
-    sbs_index = _map_sbs_sigs_back(W[W.index.isin(context96)]).sort_values()
-    dbs_index = W[W.index.isin(context78.keys())].index.to_series().sort_values()
-    id_index = _map_id_sigs_back(W[W.index.isin(context83)]).sort_values()
+    sbs_index = _map_sbs_sigs_back(W[W.index.isin(context96)])
+    dbs_index = W[W.index.isin(context78.keys())].index.to_series()
+    id_index = _map_id_sigs_back(W[W.index.isin(context83)])
     W = W.reindex(sbs_index.append(dbs_index).append(id_index)).fillna(0)
 
     all_index = list(context96.keys())+list(context78.keys())+list(context83.keys())

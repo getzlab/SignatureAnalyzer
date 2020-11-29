@@ -38,7 +38,7 @@ def main():
         default="."
     )
     parser.add_argument(
-        '--cosmic',
+        '--reference',
         help="Cosmic signatures to map to and provide results for. Support for Cosmic 2 & 3 (default: 'cosmic2')\n"
              "  * Reference: https://cancer.sanger.ac.uk/cosmic/signatures",
         default='cosmic2',

@@ -12,13 +12,13 @@ from .utils import load_reference_signatures
 from .utils import split_negatives
 from .utils import assign_signature_weights_to_maf
 from .utils import get96_from_1536
+from .utils import plot_mutational_signatures
 
 from .consensus import consensus_cluster
 
 from .context import context1536, context78, context96, context_composite, context83
 
 from .plotting import k_dist, consensus_matrix
-from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, signature_barplot_sbs_id
 from .plotting import marker_heatmap
 from .plotting import cosine_similarity_plot
 
@@ -65,7 +65,7 @@ def run_maf(
             (used in post-processing)
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
-    """
+3    """
     try:
         [nmf_kwargs.pop(key) for key in ['input', 'type']]
     except:
@@ -87,7 +87,7 @@ def run_maf(
     maf, spectra = get_spectra_from_maf(
         pd.read_csv(maf, sep='\t'),
         hgfile=hg_build,
-        cosmic=reference,
+        reference=reference
     )
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
@@ -117,7 +117,7 @@ def run_maf(
         store["run{}/signatures".format(n_iter)] = res["signatures"]
         store["run{}/log".format(n_iter)] = res["log"]
         store["run{}/cosine".format(n_iter)] = res["cosine"]
-        if reference in ["pcawg_SBS", "pcawg_COMPOSITE", "pcawg_COMPOSITE96", "pcawg_SBS96_ID"]:
+        if "pcawg" in reference:
             store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]
             store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
             store["run{}/W96".format(n_iter)] = res["W96"]
@@ -142,7 +142,7 @@ def run_maf(
     store["log"] = store["run{}/log".format(best_run)]
     store["cosine"] = store["run{}/cosine".format(best_run)]
     store["aggr"] = aggr
-    if reference in ["pcawg_SBS", "pcawg_COMPOSITE", "pcawg_COMPOSITE96"]:
+    if "pcawg" in reference:
         store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
         store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
         store["W96"] = store["run{}/W96".format(best_run)]
@@ -156,7 +156,7 @@ def run_maf(
 
     # Plots
     if plot_results:
-        plot_mutational_signatures(outdir, reference)
+        plot_mutational_signatures(outdir, reference, aggr.K)
 
 def run_spectra(
     spectra: Union[str, pd.DataFrame],
@@ -276,7 +276,7 @@ def run_spectra(
 
     # Plots
     if plot_results:
-        plot_mutational_signatures(outdir, reference)
+        plot_mutational_signatures(outdir, reference, aggr.K)
 
 def run_matrix(
     matrix: Union[str, pd.DataFrame],

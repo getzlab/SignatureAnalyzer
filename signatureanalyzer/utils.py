@@ -7,6 +7,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pkg_resources
 import re
 import itertools
+import os
+import matplotlib.pyplot as plt
 
 from sys import stdout ### GET rid of later
 from .context import context_composite, context96, context1536, context78, context83
@@ -137,20 +139,17 @@ def transfer_weights(W: pd.DataFrame, H: pd.DataFrame, active_thresh:float = 1e-
     # Active signatures
     nonzero_idx = (np.sum(H, axis=1) * np.sum(W, axis=0)) > active_thresh
     nsig = np.sum(nonzero_idx)
-    sig_names = [str(i) for i in range(1,nsig+1)]
 
     # Raw matrices for active signatures
-    W_active = pd.DataFrame(data=W[:, nonzero_idx])
-    H_active = pd.DataFrame(data=H[nonzero_idx, :])
-
-    W_weight = np.sum(W_active, axis=0)
-
+    W_active = W[:, nonzero_idx]
+    H_active = H[nonzero_idx, :]
+    
     # Normalize W and transfer weight to H matrix
+    W_weight = np.sum(W_active, axis=0)
     W_final = W_active / W_weight
-        
     H_final = W_weight[:, np.newaxis] * H_active
 
-    return W_final, H_final, W_active, H_active, nsig, nonzero_idx
+    return W_final, H_final, nsig, nonzero_idx
 
 def select_signatures(W: pd.DataFrame, H: pd.DataFrame):
     """
@@ -245,46 +244,46 @@ def select_markers(
 # ---------------------------------
 # Mutational Signature Utils
 # ---------------------------------
-def load_reference_signatures(cosmic: str):
+def load_reference_signatures(ref: str):
     """
     Load cosmic signatures.
     -------------------------
     Pre-processed Cosmic Mutational Signatures.
     """
-    if cosmic == 'cosmic2':
+    if ref == 'cosmic2':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
         reference_index = "Somatic Mutation Type"
-    elif cosmic == 'cosmic3':
+    elif ref == 'cosmic3':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
         reference_index = "Somatic Mutation Type"
-    elif cosmic == 'cosmic3_exome':
+    elif ref == 'cosmic3_exome':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
         reference_index = "Somatic Mutation Type"
-    elif cosmic == 'cosmic3_DBS':
+    elif ref == 'cosmic3_DBS':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
         reference_index = "Somatic Mutation Type"
-    elif cosmic == 'cosmic3_ID':
+    elif ref == 'cosmic3_ID':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(1)
         reference_index = "Mutation Type"
-    elif cosmic == 'pcawg_SBS':
+    elif ref == 'pcawg_SBS':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
-    elif cosmic == 'pcawg_COMPOSITE':
+    elif ref == 'pcawg_COMPOSITE':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
-    elif cosmic == 'pcawg_COMPOSITE96':
+    elif ref == 'pcawg_COMPOSITE96':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite96.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
-    elif cosmic == 'pcawg_SBS_ID':
+    elif ref == 'pcawg_SBS_ID':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs_id.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
-    elif cosmic == 'pcawg_SBS96_ID':
+    elif ref == 'pcawg_SBS96_ID':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
     else:
-        raise Exception("Not yet implemented for {}".format(cosmic))
+        raise Exception("Not yet implemented for {}".format(ref))
     
-    print("   * Using {} signatures".format(cosmic))
+    print("   * Using {} signatures".format(ref))
     return reference, reference_index
 
 def compl(seq: str, reverse: bool = False):
@@ -371,8 +370,8 @@ def _map_dbs_sigs(
 
 def _map_sbs_sigs(
     df: pd.DataFrame,
-    cosmic_df: pd.DataFrame,
-    cosmic_type: str,
+    ref_df: pd.DataFrame,
+    ref_type: str,
     sub_index: str = 'Substitution Type',
     ) -> pd.Series:
     """
@@ -380,13 +379,13 @@ def _map_sbs_sigs(
     -----------------------
     Args:
         * df: pandas.core.frame.DataFrame with index to be mapped
-        * cosmic_df: dataframe with Cosmic indices to map to
-        * sub_index: substitution index - the column to map to in the cosmic dataframe
+        * ref_df: dataframe with reference indices to map to
+        * sub_index: substitution index - the column to map to in the reference dataframe
 
     Returns:
-        * pandas.core.series.Series with matching indices to input cosmic
+        * pandas.core.series.Series with matching indices to input reference
     """
-    if cosmic_type in ['pcawg_SBS', 'pcawg_COMPOSITE']:
+    if ref_type in ["pcawg_SBS", "pcawg_COMPOSITE", "pcawg_SBS_ID"]:
         def _check_to_flip(x, ref):
             if x[3:-3] in ref:
                 return x
@@ -409,13 +408,13 @@ def _map_sbs_sigs(
         # Already in arrow format
         context_s = df.reset_index()[df_idx]
 
-    return context_s.apply(lambda x: _check_to_flip(x, set(cosmic_df[sub_index])))
+    return context_s.apply(lambda x: _check_to_flip(x, set(ref_df[sub_index])))
 
 
 def _map_composite_sigs(
     df: pd.DataFrame,
-    cosmic_df: pd.DataFrame,
-    cosmic_type: str,
+    ref_df: pd.DataFrame,
+    ref_type: str,
     sub_index: str = 'Somatic Mutation Type'
     ) -> pd.Series:
     """
@@ -427,11 +426,11 @@ def _map_composite_sigs(
         * pandas.core.series.Series with matching indices to input cosmic
     """
     if cosmic_type == 'pcawg_COMPOSITE':
-        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
-        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[1536:1614])
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], ref_df.iloc[:1536], ref_type)
+        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[1536:1614])
     else:
-        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
-        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], cosmic_df.iloc[96:174])
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], ref_df.iloc[:96], ref_type)
+        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[96:174])
     context_id_s = df[df.index.isin(context83)].index.to_series()
     return context_sbs_s.append(context_dbs_s).append(context_id_s)
     
@@ -450,7 +449,7 @@ def _map_sbs_id_sigs(
     Returns:
         * pandas.core.series.Series with matching indices to input cosmic
     """
-    if cosmic_type == 'pcwg_SBS_ID':
+    if cosmic_type == 'pcawg_SBS_ID':
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
     else:
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
@@ -458,76 +457,76 @@ def _map_sbs_id_sigs(
     return context_sbs_s.append(context_id_s)
 
     
-def postprocess_msigs(res: dict, cosmic: pd.DataFrame, cosmic_index: str, cosmic_type: str):
+def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: str):
     """
     Post process ARD-NMF on mutational signatures.
     ------------------------
     Args:
         * res: results dictionary from ARD-NMF (see ardnmf function)
-        * cosmic: cosmic pd.DataFrmae
-        * cosmic_index: feature index column in cosmic
+        * ref: cosmic pd.DataFrmae
+        * ref_index: feature index column in reference
             ** ex. in cosmic_v2, "Somatic Mutation Type" columns map to
                 A[C>A]A, A[C>A]C, etc.
 
     Returns:
         * None, edits res dictionary directly
     """
-    if cosmic_type in ('cosmic2','cosmic3','cosmic3_exome'):
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic, cosmic_type).values
-    elif cosmic_type == 'cosmic3_DBS':
-        res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], cosmic).values
-    elif cosmic_type == 'cosmic3_ID':
-        res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values
-    elif cosmic_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
+    # Annotate raw W matrix with mutation indices
+    if ref_type in ('cosmic2','cosmic3','cosmic3_exome'):
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
+    elif ref_type == 'cosmic3_DBS':
+        res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], ref).values
+    elif ref_type == 'cosmic3_ID':
+        res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values  
+    elif ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
         # map with PCAWG
-        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], cosmic, cosmic_type).values
-        # load Sanger 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3")
-        if cosmic_type == 'pcawg_COMPOSITE':
+        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
+        # load COSMIC 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
+        if ref_type == 'pcawg_COMPOSITE':
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
-            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
-    elif cosmic_type == 'pcawg_SBS':
+            res["Wraw96"] = res["Wraw"].copy()
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
+    elif ref_type == 'pcawg_SBS':
         # Map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], cosmic, cosmic_type).values
-        # load Sanger 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3")
+        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
+        # load COSMIC 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
         res["Wraw96"] = get96_from_1536(res["Wraw"])
-        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
-    elif cosmic_type in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
+        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
+    elif ref_type in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
         # map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], cosmic, cosmic_type).values
-        # load Sanger 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3")
-        if cosmic_type == 'pcawg_SBS_ID':
+        res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
+        # load COSMIC 96 SBS and map
+        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
+        if ref_type == 'pcawg_SBS_ID':
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3').values
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
     else:
-        raise Exception("Error: Invalid Cosmic Type (Not yet Implemented for {}".format(cosmic_type))
+        raise Exception("Error: Invalid Reference Type (Not yet Implemented for {}".format(ref_type))
         
     # Column names of NMF signatures & COSMIC References
     nmf_cols = list(res["signatures"].columns[res["signatures"].columns.str.match('S\d+')])
-    ref_cols = list(cosmic.columns[cosmic.dtypes == 'float64'])
-    if cosmic_type in ('pcawg_SBS', 'pcawg_COMPOSITE','pcawg_COMPOSITE96','pcawg_SBS_ID','pcawg_SBS96_ID'):
+    ref_cols = list(ref.columns[ref.dtypes == 'float64'])
+    if "pcawg" in ref_type:
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
     
     # Create cosine similarity matrix
-    #if cosmic_type not in ['pcawg_COMPOSITE','pcawg_COMPOSITE96','pcawg_SBS96_ID','pcawg_SBS_ID']:
-    X = res["Wraw"].set_index("mut").join(cosmic.set_index(cosmic_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+    X = res["Wraw"].set_index("mut").join(ref.set_index(ref_index)).dropna(1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
-    # For 1536, Composite, and Composite 96 context, transform to 96 SBS and create cosine similarity matrix with COSMIC signatures
-    if "pcawg" in cosmic_type:
+    # For PCAWG references, compute cosine similarity for COSMIC SBS as well
+    if "pcawg" in ref_type:
         X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols_96]
         res["cosine_cosmic"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols_96,nmf_cols]
         
         # Construct 96 context W matrix
-        if cosmic_type in ["pcawg_SBS","pcawg_COMPOSITE", "pcawg_SBS_ID"]:
+        if ref_type in ["pcawg_SBS","pcawg_COMPOSITE", "pcawg_SBS_ID"]:
             W96 = get96_from_1536(res["W"][res["W"].index.isin(context1536)].copy().drop(columns=['max','max_id','max_norm']))
         else:
             W96 = res["W"][res["W"].index.isin(context96)].copy().drop(columns=['max','max_id','max_norm'])
@@ -692,7 +691,7 @@ def get_true_snps_from_maf(maf: pd.DataFrame):
 
 def get96_from_1536(W1536):
     """
-    Convert 1536 W matrix to 96 context W matrix to extract cosmic signatures
+    Convert 1536 W matrix to 96 context W matrix to extract COSMIC signatures
     ________________________
     Args:
         * W1536: 1536 context W matrix
@@ -753,7 +752,10 @@ def get_pole_pold_muts(maf: pd.DataFrame):
         stdout.write("Neither UniProt_AApos nor HGVSp_Short were found in the maf columns. Please try again with one of these columns")
     return np.unique(pole), np.unique(pold)
 
-def plot_mutational_signatures(outdir, reference):
+def plot_mutational_signatures(outdir, reference, k):
+    from .plotting import k_dist
+    from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, signature_barplot_sbs_id, cosine_similarity_plot
+
     # Import plotting functions
     from .plotting import k_dist, signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, cosine_similarity_plot
     
@@ -776,10 +778,10 @@ def plot_mutational_signatures(outdir, reference):
         H96.columns = W96.columns
         # Plot 96 COSMIC cosine similarity
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
-        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # Plot COSMIC Signature Attribution Stacked Barplot
         _ = stacked_bar(H96, 'cosmic3')
-        plt.savefig(os.path.join(outdir, "signature_stacked_barplot_cosmic.pdf"), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "signature_stacked_barplot_cosmic.pdf"), dpi=100, bbox_inches='tight')
         # Plot signature contribution barplot collapsed to 96 SBS
         _ = signature_barplot(W96, contributions=np.sum(H96))
     elif reference in ['pcawg_COMPOSITE','pcawg_COMPOSITE96']:
@@ -792,13 +794,13 @@ def plot_mutational_signatures(outdir, reference):
         H96.columns = W96.columns
         # COSMIC cosine similarity
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
-        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # COSMIC attribution stacked barplot
         _ = stacked_bar(H96, 'cosmic3')
-        plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=100, bbox_inches='tight')
         # COSMIC contribution barplot
         _ = signature_barplot(W96, contributions=np.sum(H96))
-        plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=320,bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=100,bbox_inches='tight')
         # PCAWG contribution barplot
         if reference == 'pcawg_COMPOSITE':
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
@@ -815,13 +817,13 @@ def plot_mutational_signatures(outdir, reference):
         H96.columns = W96.columns
         # COSMIC cosine similarity
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
-        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # COSMIC attribution stacked barplot
         _ = stacked_bar(H96, 'cosmic3')
-        plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=320, bbox_inches='tight')
+        plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=100, bbox_inches='tight')
         # COSMIC contribution barplot
         _ = signature_barplot(W96, contributions=np.sum(H96))
-        plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=320,bbox_inches='tight')
+        plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=100,bbox_inches='tight')
         # PCAWG contribution barplot
         if reference == 'pcawg_SBS_ID':
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
@@ -831,11 +833,12 @@ def plot_mutational_signatures(outdir, reference):
     else:
         _ = signature_barplot(W, contributions=np.sum(H))
         
-        # Plot signature contributions, attribution stacked barplot, K distribution, and cosine similarity
-        plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=320, bbox_inches='tight')
-        _ = stacked_bar(H,reference)
-        plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=320, bbox_inches='tight')
-        _ = k_dist(np.array(aggr.K, dtype=int))
-        plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=320, bbox_inches='tight')
-        _ = cosine_similarity_plot(cosine)
-        plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=320, bbox_inches='tight')
+    # Plot signature contributions, attribution stacked barplot, K distribution, and cosine similarity
+    plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
+    _ = stacked_bar(H,reference)
+    plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
+    _ = k_dist(np.array(k, dtype=int))
+    plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+    _ = cosine_similarity_plot(cosine)
+    plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
+    

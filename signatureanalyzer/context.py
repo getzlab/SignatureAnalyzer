@@ -4,13 +4,17 @@ import itertools
 acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
 
-# Cartesian product for 1536 SNV
-a_1536 = itertools.product('ACGT','ACGT','[','T','>','ACG',']','ACGT','ACGT')
+# Cartesian product for 1536 SNV Arrow
+t_1536 = itertools.product('ACGT','ACGT','[','T','>','ACG',']','ACGT','ACGT')
 c_1536 = itertools.product('ACGT','ACGT','[','C','>','AGT',']','ACGT','ACGT')
+
+t_1536_word = itertools.product('T', 'ACG', 'ACGT', 'ACGT', 'ACGT', 'ACGT')
+c_1536_word = itertools.product('C', 'AGT', 'ACGT', 'ACGT', 'ACGT', 'ACGT')
 
 # Define dictionary for all contexts
 context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
-context1536 = dict(zip(map(''.join, itertools.chain(a_1536, c_1536)), range(1, 1537)))
+context1536 = dict(zip(map(''.join, itertools.chain(t_1536, c_1536)), range(1, 1537)))
+context1536_word = dict(zip(map(''.join, itertools.chain(t_1536_word, c_1536_word)), range(1, 1537)))
 context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
                       'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
                       'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',

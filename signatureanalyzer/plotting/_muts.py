@@ -412,8 +412,6 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
         W = W[sig_columns] * contributions[sig_columns]
     else:
         W = W[sig_columns] * contributions
-    import sys
-    sys.stdout.write("W dbs:\n{}\n".format(W.loc[['CC>AA', 'CC>TT','CC>GA']]))
         
     #### x coordinates for SBS contributions
     context_label = []

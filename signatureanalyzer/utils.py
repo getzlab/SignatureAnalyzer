@@ -246,9 +246,9 @@ def select_markers(
 # ---------------------------------
 def load_reference_signatures(ref: str):
     """
-    Load cosmic signatures.
+    Load reference signatures.
     -------------------------
-    Pre-processed Cosmic Mutational Signatures.
+    Pre-processed Reference Mutational Signatures.
     """
     if ref == 'cosmic2':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
@@ -308,6 +308,17 @@ def sbs_annotation_converter(x: str) -> str:
         return x[2]+x[4]+x[0]+x[6]
     else:
         return x[2]+'['+x[0]+'>'+x[1]+']'+x[3]
+
+def sbs1536_annotation_converter(x: str) -> str:
+    """
+    Eithers swaps from word -> arrow format for 1536 SBS or vice versa.
+        word: (REF)(ALT)(L-2)(L-1)(R+1)(R+2)
+        arrow: (L-2)(L-1)[(REF)>(ALT)](R+1)(R+2)
+    """
+    if '>' in x:
+        return x[3] + x[5] + x[:2] + x[7:9]
+    else:
+        return x[2:4] + '[' + x[0] + '>' + x[1] + ']' + x[4:6]
     
 def _map_id_sigs(
     df: pd.DataFrame,
@@ -402,8 +413,11 @@ def _map_sbs_sigs(
     df_idx = df.index.name
 
     if ">" not in df.index[0]:
-        # Already in word format
-        context_s = df.reset_index()[df_idx].apply(sbs_annotation_converter)
+        # Convert word format to arrow format
+        if ref_type in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
+            context_s = df.reset_index()[df_idx].apply(sbs1536_annotation_converter)
+        else:
+            context_s = df.reset_index()[df_idx].apply(sbs_annotation_converter)
     else:
         # Already in arrow format
         context_s = df.reset_index()[df_idx]
@@ -423,9 +437,9 @@ def _map_composite_sigs(
     Args:
         * df: pandas.core.frame.DataFrame with index to be mapped
     Returns:
-        * pandas.core.series.Series with matching indices to input cosmic
+        * pandas.core.series.Series with matching indices to input reference
     """
-    if cosmic_type == 'pcawg_COMPOSITE':
+    if ref_type == 'pcawg_COMPOSITE':
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], ref_df.iloc[:1536], ref_type)
         context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[1536:1614])
     else:
@@ -437,8 +451,8 @@ def _map_composite_sigs(
 
 def _map_sbs_id_sigs(
     df: pd.DataFrame,
-    cosmic_df: pd.DataFrame,
-    cosmic_type: str,
+    ref_df: pd.DataFrame,
+    ref_type: str,
     sub_index: str = 'Somatic Mutation Type',
     ) -> pd.Series:
     """
@@ -447,12 +461,12 @@ def _map_sbs_id_sigs(
     Args:
         * df: pandas.core.frame.DataFrame with index to be mapped
     Returns:
-        * pandas.core.series.Series with matching indices to input cosmic
+        * pandas.core.series.Series with matching indices to input reference
     """
-    if cosmic_type == 'pcawg_SBS_ID':
-        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], cosmic_df.iloc[:1536], cosmic_type)
+    if ref_type == 'pcawg_SBS_ID':
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], ref_df.iloc[:1536], ref_type)
     else:
-        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], cosmic_df.iloc[:96], cosmic_type)
+        context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], ref_df.iloc[:96], ref_type)
     context_id_s = df[df.index.isin(context83)].index.to_series()
     return context_sbs_s.append(context_id_s)
 
@@ -463,7 +477,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
     ------------------------
     Args:
         * res: results dictionary from ARD-NMF (see ardnmf function)
-        * ref: cosmic pd.DataFrmae
+        * ref: reference pd.DataFrmae
         * ref_index: feature index column in reference
             ** ex. in cosmic_v2, "Somatic Mutation Type" columns map to
                 A[C>A]A, A[C>A]C, etc.
@@ -487,7 +501,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
-            res["Wraw96"] = res["Wraw"].copy()
+            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)].copy()
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
     elif ref_type == 'pcawg_SBS':
         # Map with PCAWG
@@ -510,7 +524,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
     else:
         raise Exception("Error: Invalid Reference Type (Not yet Implemented for {}".format(ref_type))
         
-    # Column names of NMF signatures & COSMIC References
+    # Column names of NMF signatures & References
     nmf_cols = list(res["signatures"].columns[res["signatures"].columns.str.match('S\d+')])
     ref_cols = list(ref.columns[ref.dtypes == 'float64'])
     if "pcawg" in ref_type:

@@ -11,12 +11,12 @@ from .utils import postprocess_msigs, get_nlogs_from_output, file_loader
 from .utils import load_reference_signatures
 from .utils import split_negatives
 from .utils import assign_signature_weights_to_maf
-from .utils import get96_from_1536
 from .utils import plot_mutational_signatures
+from .utils import sbs1536_annotation_converter
+
+from .context import context1536_word
 
 from .consensus import consensus_cluster
-
-from .context import context1536, context78, context96, context_composite, context83
 
 from .plotting import k_dist, consensus_matrix
 from .plotting import marker_heatmap
@@ -39,7 +39,7 @@ def run_maf(
     Args:
         * maf: input .maf file format
         * outdir: output directory to save files
-        * cosmic: cosmic signature set to use
+        * reference: reference signature set to use
         * hg_build: human genome build for generating reference context
         * nruns: number of iterations for ARD-NMF
         * verbose: bool
@@ -172,7 +172,7 @@ def run_spectra(
         * spectra: filepath or pd.DataFrame of input spectra file (context x samples)
             NOTE: index should be context in the following format (1234): 3[1>2]4
         * outdir: output directory to save files
-        * cosmic: cosmic signature set to use
+        * reference: reference signature set to use
         * nruns: number of iterations for ARD-NMF
         * verbose: bool
 
@@ -217,6 +217,10 @@ def run_spectra(
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
 
+    if reference in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
+        if spectra.index.isin(context1536_word).any():
+            spectra.index = spectra.index.map(lambda x: sbs1536_annotation_converter(x) if x in context1536_word else x)
+    
     print("   * Running ARD-NMF...")
     for n_iter in range(nruns):
         store['X'] = spectra

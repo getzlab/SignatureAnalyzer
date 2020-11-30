@@ -31,9 +31,15 @@ Signature Analyzer supports encoding of:
 * Doublet Base Substitution (DBS) Signatures (DBS: `cosmic3_DBS`)
 * Small Insertion & Deletion (ID) Signatures (ID: `cosmic3_ID`)
 
+### PCAWG Signatures
+Signature Analyzer supports encoding of:
+* 1536 Single Base Substitution (SBS) Signatures ('pcawg_SBS')
+* Composite Signatures (1536 SBS:'pcawg_COMPOSITE', 96 SBS: 'pcawg_COMPOSITE96')
+* SBS + ID Signatures (1536 SBS:'pcawg_SBS_ID', 96 SBS: 'pcawg_SBS96_ID')
+
 Use:
 ```{bash}
---cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}
+--reference {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB,pcawg_SBS,'pcawg_COMPOSITE','pcawg_COMPOSITE96','pcawg_SBS_ID','pcawg_SBS96_ID'}
 ```
 
 ---

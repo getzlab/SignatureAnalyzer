@@ -114,3 +114,109 @@ print(spectra_id.head().iloc[:,:5])
 | Cdel3            |          2 |          2 |          2 |          9 |          0 |
 | Cdel4            |          0 |          0 |          0 |          3 |          0 |
 | ...            |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG Composite spectra
+* This encodes the 1536-base + 78-base + 83-base context
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| AA[T>A]AA        |          0 |          1 |          3 |          1 |          0 |
+| AA[T>A]AC        |          0 |          4 |          3 |          6 |          0 |
+| AA[T>A]AG        |          2 |          2 |          2 |          9 |          0 |
+| AA[T>A]AT        |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| AC>CA            |          0 |          0 |          0 |          3 |          0 |
+| AC>CG            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG Composite 96 spectra
+* This encodes the 96-base + 78-base + 83-base context
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE96', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| A[C>A]A          |          0 |          1 |          3 |          1 |          0 |
+| A[C>A]C          |          0 |          4 |          3 |          6 |          0 |
+| A[C>A]G          |          2 |          2 |          2 |          9 |          0 |
+| A[C>A]T          |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| AC>CA            |          0 |          0 |          0 |          3 |          0 |
+| AC>CG            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG SBS + ID spectra
+* This encodes the 1536-base + 83-base context
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS_ID', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| AA[T>A]AA        |          0 |          1 |          3 |          1 |          0 |
+| AA[T>A]AC        |          0 |          4 |          3 |          6 |          0 |
+| AA[T>A]AG        |          2 |          2 |          2 |          9 |          0 |
+| AA[T>A]AT        |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG 96 SBS + ID spectra
+* This encodes the 96-base + 83-base context
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS96_ID', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| A[C>A]A          |          0 |          1 |          3 |          1 |          0 |
+| A[C>A]C          |          0 |          4 |          3 |          6 |          0 |
+| A[C>A]G          |          2 |          2 |          2 |          9 |          0 |
+| A[C>A]T          |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |

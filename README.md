@@ -56,7 +56,7 @@ Link: `http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
 
 ```
 usage: signatureanalyzer [-h] [-t {maf,spectra,matrix}] [-n NRUNS] [-o OUTDIR]
-                         [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
+                         [--reference {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB, pcawg_COMPOSITE, pcawg_COMPOSITE96, pcawg_SBS_ID, pcawg_SBS96_ID, pcawg_SBS}]
                          [--hg_build HG_BUILD] [--cuda_int CUDA_INT]
                          [--verbose] [--K0 K0] [--max_iter MAX_ITER]
                          [--del_ DEL_] [--tolerance TOLERANCE] [--phi PHI]

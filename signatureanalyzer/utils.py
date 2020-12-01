@@ -801,7 +801,7 @@ def plot_mutational_signatures(outdir, reference, k):
         _ = stacked_bar(H96, 'cosmic3')
         plt.savefig(os.path.join(outdir, "signature_stacked_barplot_cosmic.pdf"), dpi=100, bbox_inches='tight')
         # Plot signature contribution barplot collapsed to 96 SBS
-        sys.stdout.write("Plotting Contributions Barplot:\n")
+        sys.stdout.write("Plotting {} Contributions Barplot:\n".format(reference))
         _ = signature_barplot(W96, contributions=np.sum(H96))
     elif reference in ['pcawg_COMPOSITE','pcawg_COMPOSITE96']:
         #
@@ -828,7 +828,7 @@ def plot_mutational_signatures(outdir, reference, k):
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
         else:
             W_plot = W
-        sys.stdout.write("Plotting Contributions Barplot:\n")
+        sys.stdout.write("Plotting {} Contributions Barplot:\n".format(reference))
         _ = signature_barplot_composite(W_plot, contributions=np.sum(H))
     elif reference in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
         #
@@ -855,20 +855,20 @@ def plot_mutational_signatures(outdir, reference, k):
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
         else:
             W_plot = W
-        sys.stdout.write("Plotting Contributions Barplot:\n")
+        sys.stdout.write("Plotting {} Contributions Barplot:\n".format(reference))
         _ = signature_barplot_sbs_id(W_plot, contributions=np.sum(H))
     else:
         _ = signature_barplot(W, contributions=np.sum(H))
         
     # Plot signature contributions, attribution stacked barplot, K distribution, and cosine similarity
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
-    sys.stdout.write("Plotting Attributions Barplot:\n")
+    sys.stdout.write("Plotting {} Attributions Barplot:\n".format(reference))
     _ = stacked_bar(H,reference)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
     sys.stdout.write("Plotting K Histogram:\n")
     _ = k_dist(np.array(k, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
-    sys.stdout.write("Plotting COSINE Similarity:\n")
+    sys.stdout.write("Plotting {} Cosine Similarity:\n".format(reference))
     _ = cosine_similarity_plot(cosine)
     plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
     

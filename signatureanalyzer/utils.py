@@ -536,27 +536,16 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
 
     # For PCAWG references, compute cosine similarity for COSMIC SBS as well
     if "pcawg" in ref_type:
+        # Evaluate COSMIC cosine similarity
         X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols_96]
         res["cosine_cosmic"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols_96,nmf_cols]
+
+        # Generate W96 matrix
+        res["W96"] = res["Wraw96"].drop(columns='mut')
+        res["W96"] = res["W96"].div(res["W96"].sum(0),1)
+        res["W96"].columns = ['S' + str(x) for x in range(1,res["W96"].shape[1]+1)]
         
-        # Construct 96 context W matrix
-        if ref_type in ["pcawg_SBS","pcawg_COMPOSITE", "pcawg_SBS_ID"]:
-            W96 = get96_from_1536(res["W"][res["W"].index.isin(context1536)].copy().drop(columns=['max','max_id','max_norm']))
-        else:
-            W96 = res["W"][res["W"].index.isin(context96)].copy().drop(columns=['max','max_id','max_norm'])
-        W96.columns = range(1,W96.shape[1]+1)
-        Wnorm = W96.copy()
-        for j in range(W96.shape[1]):
-            Wnorm.iloc[:,j] *= res['H'].sum(1).values[j]
-        Wnorm = Wnorm.div(Wnorm.sum(1),axis=0)
-        W96_max_id = W96.idxmax(axis=1,skipna=True).astype('int')
-        W96['max'] = W96.max(axis=1, skipna=True)
-        W96['max_id'] = W96_max_id
-        W96['max_norm']= Wnorm.max(axis=1, skipna=True)
-        _rename = {x+1:'S'+ str(x+1) for x in range(len(list(res['H'])[:-3]))}
-        res["W96"] = W96.rename(columns=_rename)
-        
-        # Add assignments
+        # Get corresponding COSMIC signature name and rename
         s_assign96 = dict(res["cosine_cosmic"].idxmax())
         s_assign96 = {key:key+"-" + s_assign96[key] for key in s_assign96}
         res["cosine_cosmic"] = res["cosine_cosmic"].rename(columns=s_assign96)
@@ -791,7 +780,7 @@ def plot_mutational_signatures(outdir, reference, k):
         #
         H96 = H.copy()
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
-        H96.columns = W96.columns
+        H96.columns = W96.columns.append(pd.Index(['max','max_id','max_norm']))
         # Plot 96 COSMIC cosine similarity
         sys.stdout.write("Plotting COSMIC Cosine Similarity:\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
@@ -810,8 +799,7 @@ def plot_mutational_signatures(outdir, reference, k):
         #
         H96 = H.copy()
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
-        H96.columns = W96.columns
-        # COSMIC cosine similarity
+        H96.columns = W96.columns.append(pd.Index(['max','max_id','max_norm']))        # COSMIC cosine similarity
         sys.stdout.write("Plotting COSMIC Cosine Similarity:\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
         plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
@@ -837,7 +825,7 @@ def plot_mutational_signatures(outdir, reference, k):
         #
         H96 = H.copy()
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
-        H96.columns = W96.columns
+        H96.columns = W96.columns.append(pd.Index(['max','max_id','max_norm']))
         # COSMIC cosine similarity
         sys.stdout.write("Plotting COSMIC Cosine Similarity :\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))

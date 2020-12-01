@@ -53,7 +53,7 @@ print(maf_df.head())
 * REQUIRES a 2-bit human genome build
 
 ```
-_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_exome', hgfile='hg19.2bit')
+_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_exome', hgfile='hg19.2bit')
 
 print(spectra_sbs.head().iloc[:,:5])
 ```
@@ -82,7 +82,7 @@ _or_
 * This encodes the 78-base context
 
 ```
-_,spectra_dbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_DBS')
+_,spectra_dbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_DBS')
 
 print(spectra_dbs.head())
 ```
@@ -102,7 +102,7 @@ print(spectra_dbs.head())
 * REQUIRES a 2-bit human genome build
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_ID', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_ID', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```
@@ -125,7 +125,7 @@ print(spectra_id.head().iloc[:,:5])
 * REQUIRES a 2-bit human genome build
 
 ```
-_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_exome', hgfile='hg19.2bit')
+_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_exome', hgfile='hg19.2bit')
 
 print(spectra_sbs.head().iloc[:,:5])
 ```
@@ -156,7 +156,7 @@ _or_
 * Either SBS form should work  (Arrow vs Word)
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_COMPOSITE', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```
@@ -185,7 +185,7 @@ print(spectra_id.head().iloc[:,:5])
 * Either SBS form should work (Arrow vs Word)
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE96', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_COMPOSITE96', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```
@@ -214,7 +214,7 @@ print(spectra_id.head().iloc[:,:5])
 * Either SBS form should work (Arrow vs Word)
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS_ID', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_SBS_ID', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```
@@ -240,7 +240,7 @@ print(spectra_id.head().iloc[:,:5])
 * Either SBS form should work (Arrow vs Word)
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS96_ID', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_SBS96_ID', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```

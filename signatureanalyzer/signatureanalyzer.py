@@ -14,13 +14,12 @@ from .utils import assign_signature_weights_to_maf
 from .utils import plot_mutational_signatures
 from .utils import sbs1536_annotation_converter
 
-from .context import context1536_word
+from .context import context1536_word, context96
 
 from .consensus import consensus_cluster
 
 from .plotting import k_dist, consensus_matrix
 from .plotting import marker_heatmap
-from .plotting import cosine_similarity_plot
 
 from .spectra import get_spectra_from_maf
 from .bnmf import ardnmf
@@ -220,6 +219,9 @@ def run_spectra(
     if reference in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
         if spectra.index.isin(context1536_word).any():
             spectra.index = spectra.index.map(lambda x: sbs1536_annotation_converter(x) if x in context1536_word else x)
+    elif reference in ["pcawg_COMPOSITE96","pcawg_SBS96_ID"]:
+        if not spectra.index.isin(context96).any():
+            spectra.index = spectra.index.map(lambda x: x[2]+x[4]+x[0]+x[6] if ('>' in x and len(x)==7) else x)
     
     print("   * Running ARD-NMF...")
     for n_iter in range(nruns):
@@ -272,7 +274,6 @@ def run_spectra(
     store["cosine"] = store["run{}/cosine".format(best_run)]
     store["aggr"] = aggr
     if 'pcawg' in reference:
-        # Store 96-SBS/COSMIC related datatypes
         store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
         store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
         store["W96"] = store["run{}/W96".format(best_run)]

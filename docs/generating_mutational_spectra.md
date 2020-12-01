@@ -117,9 +117,43 @@ print(spectra_id.head().iloc[:,:5])
 
 ---
 
+#### Single-base-substitution (SBS) 1536-pentanucleotide spectra
+* This encodes the 1536-base context
+* **note**: two forms of this exist - either input should work
+  * word: ACAGAT --> (REF)(MUT)(L-2)(L-1)(R+1)(R+2)
+  * arrow: AA[A>C]GT --> (L-2)(L-1)[(REF)>(ALT)](R+1)(R+2)
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_exome', hgfile='hg19.2bit')
+
+print(spectra_sbs.head().iloc[:,:5])
+```
+**Arrow**
+|         |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:--------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| AA[T>A]AA |            1 |            2 |            0 |            1 |            2 |
+| AA[T>A]AC |            0 |            2 |            0 |            0 |            0 |
+| AA[T>A]AG |            0 |            6 |            2 |            2 |            0 |
+| AA[T>A]AT |            0 |            4 |            0 |            0 |            2 |
+| ... |            1 |            2 |            0 |            1 |            0 |
+
+_or_
+
+**Word**
+| context1536.word   |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:-----------------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| TAAAAA             |            1 |            2 |            0 |            1 |            2 |
+| TAAAAC             |            0 |            2 |            0 |            0 |            0 |
+| TAAAAG             |            0 |            6 |            2 |            2 |            0 |
+| TAAAAT             |            0 |            4 |            0 |            0 |            2 |
+| ...             |            1 |            2 |            0 |            1 |            0 |
+---
+
 #### PCAWG Composite spectra
 * This encodes the 1536-base + 78-base + 83-base context
 * REQUIRES a 2-bit human genome build
+* Either SBS form should work  (Arrow vs Word)
 
 ```
 _,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE', hgfile='hg19.2bit')
@@ -148,6 +182,7 @@ print(spectra_id.head().iloc[:,:5])
 #### PCAWG Composite 96 spectra
 * This encodes the 96-base + 78-base + 83-base context
 * REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
 
 ```
 _,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_COMPOSITE96', hgfile='hg19.2bit')
@@ -176,6 +211,7 @@ print(spectra_id.head().iloc[:,:5])
 #### PCAWG SBS + ID spectra
 * This encodes the 1536-base + 83-base context
 * REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
 
 ```
 _,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS_ID', hgfile='hg19.2bit')
@@ -201,6 +237,7 @@ print(spectra_id.head().iloc[:,:5])
 #### PCAWG 96 SBS + ID spectra
 * This encodes the 96-base + 83-base context
 * REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
 
 ```
 _,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='pcawg_SBS96_ID', hgfile='hg19.2bit')

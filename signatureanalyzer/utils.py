@@ -779,8 +779,10 @@ def plot_mutational_signatures(outdir, reference, k):
     cosine = pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine")
     
     if reference == 'cosmic3_DBS':
+        sys.stdout.write("Plotting Contributions Barplot:\n")
         _ = signature_barplot_DBS(W, contributions=np.sum(H))
     elif reference == 'cosmic3_ID':
+        sys.stdout.write("Plotting Contributions Barplot:\n")
         _ = signature_barplot_ID(W, contributions=np.sum(H))
     elif reference == 'pcawg_SBS':
         #
@@ -791,12 +793,15 @@ def plot_mutational_signatures(outdir, reference, k):
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
         H96.columns = W96.columns
         # Plot 96 COSMIC cosine similarity
+        sys.stdout.write("Plotting COSMIC Cosine Similarity:\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
         plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # Plot COSMIC Signature Attribution Stacked Barplot
+        sys.stdout.write("Plotting COSMIC Attribution Barplot:\n")
         _ = stacked_bar(H96, 'cosmic3')
         plt.savefig(os.path.join(outdir, "signature_stacked_barplot_cosmic.pdf"), dpi=100, bbox_inches='tight')
         # Plot signature contribution barplot collapsed to 96 SBS
+        sys.stdout.write("Plotting Contributions Barplot:\n")
         _ = signature_barplot(W96, contributions=np.sum(H96))
     elif reference in ['pcawg_COMPOSITE','pcawg_COMPOSITE96']:
         #
@@ -807,12 +812,15 @@ def plot_mutational_signatures(outdir, reference, k):
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
         H96.columns = W96.columns
         # COSMIC cosine similarity
+        sys.stdout.write("Plotting COSMIC Cosine Similarity:\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
         plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # COSMIC attribution stacked barplot
+        sys.stdout.write("Plotting COSMIC Attribution Barplot:\n")
         _ = stacked_bar(H96, 'cosmic3')
         plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=100, bbox_inches='tight')
         # COSMIC contribution barplot
+        sys.stdout.write("Plotting COSMIC Contribution Barplot:\n")
         _ = signature_barplot(W96, contributions=np.sum(H96))
         plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=100,bbox_inches='tight')
         # PCAWG contribution barplot
@@ -820,6 +828,7 @@ def plot_mutational_signatures(outdir, reference, k):
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
         else:
             W_plot = W
+        sys.stdout.write("Plotting Contributions Barplot:\n")
         _ = signature_barplot_composite(W_plot, contributions=np.sum(H))
     elif reference in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
         #
@@ -830,12 +839,15 @@ def plot_mutational_signatures(outdir, reference, k):
         W96 = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W96")
         H96.columns = W96.columns
         # COSMIC cosine similarity
+        sys.stdout.write("Plotting COSMIC Cosine Similarity :\n")
         _ = cosine_similarity_plot(pd.read_hdf(os.path.join(outdir,'nmf_output.h5'), "cosine_cosmic"))
         plt.savefig(os.path.join(outdir, "cosine_similarity_plot_96.pdf"), dpi=100, bbox_inches='tight')
         # COSMIC attribution stacked barplot
+        sys.stdout.write("Plotting COSMIC Attributions Barplot:\n")
         _ = stacked_bar(H96, 'cosmic3')
         plt.savefig(os.path.join(outdir,'signature_stacked_barplot_cosmic.pdf'), dpi=100, bbox_inches='tight')
         # COSMIC contribution barplot
+        sys.stdout.write("Plotting COSMIC Contribution Barplot:\n")
         _ = signature_barplot(W96, contributions=np.sum(H96))
         plt.savefig(os.path.join(outdir, "signature_contributions_COSMIC.pdf"), dpi=100,bbox_inches='tight')
         # PCAWG contribution barplot
@@ -843,16 +855,20 @@ def plot_mutational_signatures(outdir, reference, k):
             W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
         else:
             W_plot = W
+        sys.stdout.write("Plotting Contributions Barplot:\n")
         _ = signature_barplot_sbs_id(W_plot, contributions=np.sum(H))
     else:
         _ = signature_barplot(W, contributions=np.sum(H))
         
     # Plot signature contributions, attribution stacked barplot, K distribution, and cosine similarity
     plt.savefig(os.path.join(outdir, "signature_contributions.pdf"), dpi=100, bbox_inches='tight')
+    sys.stdout.write("Plotting Attributions Barplot:\n")
     _ = stacked_bar(H,reference)
     plt.savefig(os.path.join(outdir, "signature_stacked_barplot.pdf"), dpi=100, bbox_inches='tight')
+    sys.stdout.write("Plotting K Histogram:\n")
     _ = k_dist(np.array(k, dtype=int))
     plt.savefig(os.path.join(outdir, "k_dist.pdf"), dpi=100, bbox_inches='tight')
+    sys.stdout.write("Plotting COSINE Similarity:\n")
     _ = cosine_similarity_plot(cosine)
     plt.savefig(os.path.join(outdir, "cosine_similarity_plot.pdf"), dpi=100, bbox_inches='tight')
     

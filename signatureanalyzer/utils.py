@@ -729,6 +729,8 @@ def get_pole_pold_muts(maf: pd.DataFrame):
     """
     pole_res = (223,517)
     pold_res = (245-571)
+    pole = []
+    pold = []
     if 'UniProt_AApos' in list(maf) or 'HGVSp_Short' in list(maf):
         if 'HGVSp_Short' in list(maf) and 'UniProt_AApos' not in list(maf):
             table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','HGVSp_Short', 'Tumor_Sample_Barcode']].copy()
@@ -739,8 +741,6 @@ def get_pole_pold_muts(maf: pd.DataFrame):
         else:
             table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','UniProt_AApos', 'Tumor_Sample_Barcode']].copy()
             table = table[table['Variant_Classification'] == 'Missense_Mutation']
-        pole = []
-        pold = []
         for m in table.index:
             if table.loc[m,'Hugo_Symbol'] == 'POLE':
                 if table.loc[m,'UniProt_AApos'] >= pole_res[0] and table.loc[m,'UniProt_AApos'] <= pole_res[1]:

@@ -9,9 +9,8 @@ from .context import context96, context1536, context78, context83, context_compo
 def get_spectra_from_maf(
     maf: pd.DataFrame,
     hgfile: Union[str,None] = None,
-    cosmic: str = 'cosmic2',
+    reference: str = 'cosmic2',
     real_snps: bool = False,
-    composite: bool = False
     ):
     """
     Attaches context categories to maf and gets counts of contexts for each sample
@@ -19,7 +18,7 @@ def get_spectra_from_maf(
     Args:
         * maf: Pandas DataFrame of maf
         * hgfile: path to 2bit genome build file for computing reference context
-        * cosmic: cosmic signatures to decompose to
+        * ref: reference signatures to decompose to
 
     Returns:
         * Pandas DataFrame of maf with context category attached
@@ -32,15 +31,11 @@ def get_spectra_from_maf(
 
     maf['sample'] = maf['Tumor_Sample_Barcode']
 
-    # Assign values to variables based on context and whether method called from composite 
-    if composite: context_num, context_form, context_use, context_sbs = 'context_composite.num', 'context_composite.arrow', context_composite, context1536
-    elif cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome']: context_num, context_form, context_use, context_sbs = 'context96.num', 'context96.word', context96, context96
-    elif cosmic == 'cosmic3_1536': context_num, context_form, context_use, context_sbs = 'context1536.num', 'context1536.arrow', context1536, context1536
-    elif cosmic == 'cosmic3_DBS':  context_num, context_form, context_use = 'context78.num', 'context78.word', context78
-    elif cosmic == 'cosmic3_ID': context_num, context_form, context_use = 'context83.num', 'context83.word', context83
-    else: raise NotImplementedError()
-    
-    if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome', 'cosmic3_1536']:
+    if reference in ['cosmic2', 'cosmic3', 'cosmic3_exome', 'pcawg_SBS']:
+        # Context type
+        if reference in ['cosmic2', 'cosmic3', 'cosmic3_exome']: context_num, context_form, context_use = 'context96.num', 'context96.word', context96
+        else: context_num, context_form, context_use = 'context1536.num', 'context1536.arrow', context1536
+        
         # Subset to SNPs
         if 'Variant_Type' in maf.columns:
             maf = maf.loc[maf['Variant_Type'] == 'SNP']
@@ -81,7 +76,7 @@ def get_spectra_from_maf(
                     chromosome = 'chr' + chromosome
 
                 # 96 context, get reference [pos-1, pos, pos+1]
-                if cosmic != 'cosmic3_1536':
+                if reference != 'pcawg_SBS':
                     _contexts.append(hg[chromosome][pos-2:pos+1].lower())
                 # 1536 context, get refernece [pos-2, pos-1, pos, pos+1, pos+2]
                 else:
@@ -94,27 +89,29 @@ def get_spectra_from_maf(
         n_context = context.str.len()
         mid = n_context // 2
 
-        if cosmic != 'cosmic3_1536':
+        if reference != 'pcawg_SBS':
             contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
                                 else compl(r + a + c[m + 1] + c[m - 1]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
         else:
-            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:] if r in 'TC' \
-                                else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:]) \
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:m+3] if r in 'TC' \
+                                else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:m+3]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+            
         try:
             maf[context_num] = contig.apply(context_use.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
+        
         maf[context_form] = contig
         spectra = maf.groupby([context_form, 'sample']).size().unstack().fillna(0).astype(int)
-        for c in context_sbs:
+        for c in context_use:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context_sbs]               
+        spectra = spectra.loc[context_use]   
             
-    elif cosmic == 'cosmic3_DBS':
+    elif reference == 'cosmic3_DBS':
         # Subset to DNPs
         if 'Variant_Type' not in maf.columns:
             ref_alt = maf['Reference_Allele'] + '>' + maf['Tumor_Seq_Allele2']
@@ -138,18 +135,18 @@ def get_spectra_from_maf(
                             for r, a in zip(ref, alt)], index=maf.index)
 
         try:
-           maf[context_num] = contig.apply(context_use.__getitem__)
+           maf['context78.num'] = contig.apply(context78.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
-        maf[context_form] = contig
-        spectra = maf.groupby([context_form, 'sample']).size().unstack().fillna(0).astype(int)
-        for c in context_use:
+        maf['context78.word'] = contig
+        spectra = maf.groupby(['context78.word', 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context78:
             if c not in spectra.index:
                 spectra.loc[c] = 0
         spectra = spectra.loc[context78]     
 
-    elif cosmic == 'cosmic3_ID':
+    elif reference == 'cosmic3_ID':
 
         maf = maf.loc[(maf['Reference_Allele'] == '-') ^ (maf['Tumor_Seq_Allele2'] == '-')]
 
@@ -241,13 +238,13 @@ def get_spectra_from_maf(
                     post = str(n_repeats)
                 contig.append(pre + 'ins' + post)
 
-        maf[context_form] = contig
+        maf['context83.word'] = contig
         try:
-            maf[context_num] = maf[context_form].apply(context_use.__getitem__)
+            maf['context83.num'] = maf['context83.word'].apply(context83.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
-        spectra = maf.groupby([context_form, 'sample']).size().unstack().fillna(0).astype(int)
+        spectra = maf.groupby(['context83.word', 'sample']).size().unstack().fillna(0).astype(int)
         for c in context83:
             if c not in spectra.index:
                 spectra.loc[c] = 0
@@ -255,34 +252,39 @@ def get_spectra_from_maf(
 
         stdout.write("\n")
     
-    elif cosmic == 'cosmic3_composite':
+    elif reference in ["pcawg_COMPOSITE","pcawg_COMPOSITE96"]:
         """
-        Concatenate 1536 SBS, DBS, and ID spectra
+        Concatenate 1536 or 96 SBS, DBS, and ID spectra
         """
-        # Get spectra for 3 sections
-        maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_1536',real_snps,composite=True)
-        maf_dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS',composite=True)
-        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
+        maf_dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS')
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID')
+        if reference == "pcawg_COMPOSITE":
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
+            maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+            maf['context.pcawg'] = maf['context1536.arrow'].fillna('') + maf['context78.word'].fillna('') +  maf['context83.word'].fillna('')            
+        else:
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
+            maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+            maf['context.pcawg'] = maf['context96.word'].fillna('') + maf['context78.word'].fillna('') +  maf['context83.word'].fillna('')            
+            
         # concatenate spectra
         spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
-        maf = pd.concat([maf_sbs,maf_dbs,maf_id])
-    elif cosmic == 'cosmic3_96composite':
+        spectra.index.name = "context.pcawg"
+    elif reference in ["pcawg_SBS_ID","pcawg_SBS96_ID"]:
         """
-        Concatenate 96 SBS, DBS, and ID spectra
+        Concatenate 1536 or 96 SBS + ID spectra
         """
-        maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps,composite=True)
-        dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS',composite=True)
-        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
-        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
-        maf = pd.concat([maf_sbs,maf_dbs,maf_id])
-    elif cosmic == 'cosmic3_sbs96_id':
-        """
-        Concatenate 96 SBS + ID spectra
-        """
-        maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps,composite=True)
-        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID',composite=True)
-        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
-        maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID')
+        if reference == "pcawg_SBS96_ID":
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
+            maf = pd.concat([maf_sbs,maf_id])
+            maf['context.pcawg'] = maf['context96.word'].fillna('') + maf['context83.word'].fillna('')
+        else:
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
+            maf = pd.concat([maf_sbs,maf_id])
+            maf['context.pcawg'] = maf['context1536.arrow'].fillna('') + maf['context83.word'].fillna('')
+        spectra = pd.concat([sbs_df,id_df]).fillna(0)
+        spectra.index.name = "context.pcawg"
     else:
         raise NotImplementedError()
     return maf, spectra

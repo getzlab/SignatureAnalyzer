@@ -31,9 +31,15 @@ Signature Analyzer supports encoding of:
 * Doublet Base Substitution (DBS) Signatures (DBS: `cosmic3_DBS`)
 * Small Insertion & Deletion (ID) Signatures (ID: `cosmic3_ID`)
 
+#### PCAWG Signatures
+Signature Analyzer supports encoding of:
+* 1536 Single Base Substitution (SBS) Signatures (`pcawg_SBS`)
+* Composite Signatures (1536 SBS: `pcawg_COMPOSITE`, 96 SBS: `pcawg_COMPOSITE96`)
+* SBS + ID Signatures (1536 SBS: `pcawg_SBS_ID`, 96 SBS: `pcawg_SBS96_ID`)
+
 Use:
 ```{bash}
---cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}
+--reference {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB,pcawg_SBS,pcawg_COMPOSITE,pcawg_COMPOSITE96,pcawg_SBS_ID,pcawg_SBS96_ID}
 ```
 
 ---
@@ -51,13 +57,13 @@ Use:
 #### Running the method
 This method may be run in two ways, from a `.maf` file or a spectra file (`.txt`, `.parquet`, `.txt.gz`, `.csv`).
 * _Mutation Annotation Format_: for details on this format (`.maf`), please see [this](https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/) reference from NCI's Genomic Data Commons website
-  * If this option is used, `signatureanalyzer` will generate a spectra using the `.maf` based on what `--cosmic` option is selected
+  * If this option is used, `signatureanalyzer` will generate a spectra using the `.maf` based on what `--reference` option is selected
 * _Spectra_: this option is provided if the user wants to provide a pre-computed mutational spectra (ex. 96-base context; see COSMIC site or [**generating_mutational_spectra.md**](https://github.com/broadinstitute/getzlab-SignatureAnalyzer/blob/master/docs/generating_mutational_spectra.md)
 
 Use:
 ```
 signatureanalyzer -n 10 \
-                  --cosmic cosmic3_exome \
+                  --reference cosmic3_exome \
                   --hg_build hg38.2bit \
                   --objective poisson \
                   --max_iter 30000 \

@@ -36,7 +36,6 @@ def ardnmf(
     cuda_int: Union[int, None] = 0,
     verbose: bool = True,
     tag: str = "",
-    composite: bool = False
     ) -> dict:
     """
     Wrapper for ARD-NMF. Wraps GPU implementaiton from:
@@ -109,14 +108,10 @@ def ardnmf(
         tag=tag
     )
     
-    W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], channel_names, composite=composite, active_thresh=active_thresh)
+    W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
     sig_names = [str(i) for i in range(1,nsig+1)]
 
-    ## FIX AFTER DEBUG
-    #if not composite:
     W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)
-    #else:
-    #    W.columns = sig_names
     H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
     
     W,H = select_signatures(W,H)
@@ -126,10 +121,6 @@ def ardnmf(
     Wraw = Wraw.rename(columns={x:'S'+x for x in Wraw.columns})
     Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
     Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
-
-    ####DEBUG
-    sys.stdout.write("Wraw:\n{}\n".format(Wraw))
-    sys.stdout.write("W:\n{}\n".format(W))
     
     # Fix log typing
     results[3]['K'] = results[3]['K'].astype(int)

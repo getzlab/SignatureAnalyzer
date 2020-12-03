@@ -4,13 +4,17 @@ import itertools
 acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
 ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
 
-# Cartesian product for 1536 SNV
-a_1536 = itertools.product('ACGT','ACGT','[','T','>','ACG',']','ACGT','ACGT')
+# Cartesian product for 1536 SNV Arrow
+t_1536 = itertools.product('ACGT','ACGT','[','T','>','ACG',']','ACGT','ACGT')
 c_1536 = itertools.product('ACGT','ACGT','[','C','>','AGT',']','ACGT','ACGT')
+
+t_1536_word = itertools.product('T', 'ACG', 'ACGT', 'ACGT', 'ACGT', 'ACGT')
+c_1536_word = itertools.product('C', 'AGT', 'ACGT', 'ACGT', 'ACGT', 'ACGT')
 
 # Define dictionary for all contexts
 context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
-context1536 = dict(zip(map(''.join, itertools.chain(a_1536, c_1536)), range(1, 1537)))
+context1536 = dict(zip(map(''.join, itertools.chain(t_1536, c_1536)), range(1, 1537)))
+context1536_word = dict(zip(map(''.join, itertools.chain(t_1536_word, c_1536_word)), range(1, 1537)))
 context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
                       'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
                       'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',
@@ -146,22 +150,22 @@ signature_cosmic = {'SBS1':'Deamination of 5-methylcytosine',
                 'SBS42':'Haloalkane exposure',
                 'SBS43':'Sequencing artefact',
                 'SBS44':'Defective mismatch repair',
-                'SBS45':'Sequencing artefact',
-                'SBS46':'Sequencing artefact',
-                'SBS47':'Sequencing artefact',
-                'SBS48':'Sequencing artefact',
-                'SBS49':'Sequencing artefact',
-                'SBS50':'Sequencing artefact',
-                'SBS51':'Sequencing artefact',
-                'SBS52':'Sequencing artefact',
-                'SBS53':'Sequencing artefact',
-                'SBS54':'Sequencing artefact',
-                'SBS55':'Sequencing artefact',
-                'SBS56':'Sequencing artefact',
-                'SBS57':'Sequencing artefact',
-                'SBS58':'Sequencing artefact',
-                'SBS59':'Sequencing artefact',
-                'SBS60':'Sequencing artefact',
+                'SBS45':'Sequencing artefact-45',
+                'SBS46':'Sequencing artefact-46',
+                'SBS47':'Sequencing artefact-47',
+                'SBS48':'Sequencing artefact-48',
+                'SBS49':'Sequencing artefact-49',
+                'SBS50':'Sequencing artefact-50',
+                'SBS51':'Sequencing artefact-51',
+                'SBS52':'Sequencing artefact-52',
+                'SBS53':'Sequencing artefact-53',
+                'SBS54':'Sequencing artefact-54',
+                'SBS55':'Sequencing artefact-55',
+                'SBS56':'Sequencing artefact-56',
+                'SBS57':'Sequencing artefact-57',
+                'SBS58':'Sequencing artefact-58',
+                'SBS59':'Sequencing artefact-59',
+                'SBS60':'Sequencing artefact-60',
                 'SBS84':'Activity of activation-induced cytidine deaminase (AID)',
                 'SBS85':'Indirect effects of activation-induced cytidine deaminase (AID)',
                 'SBS86':'Unknown chemotherapy treatment',

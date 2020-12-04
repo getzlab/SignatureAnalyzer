@@ -492,35 +492,24 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], ref).values
     elif ref_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values  
-    elif ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
-        # map with PCAWG
-        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
+    elif 'pcawg' in ref_type:
+        # Map to PCAWG
+        if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
+            res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
+        elif ref_type == 'pcawg_SBS':
+            res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
+        elif ref_type in ['pcawg_SBS_ID','pcawg_SBS96_ID']:
+            res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
+            
         # load COSMIC 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        if ref_type == 'pcawg_COMPOSITE':
+        # Collapse 1536 to 96 if pentanucleotide context SBS
+        if '96' not in ref_type:
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)].copy()
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-    elif ref_type == 'pcawg_SBS':
-        # Map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
-        # load COSMIC 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        res["Wraw96"] = get96_from_1536(res["Wraw"])
-        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-    elif ref_type in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
-        # map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
-        # load COSMIC 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        if ref_type == 'pcawg_SBS_ID':
-            res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-        else:
-            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values   
     else:
         raise Exception("Error: Invalid Reference Type (Not yet Implemented for {}".format(ref_type))
         

@@ -381,28 +381,20 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
         * W: W-matrix
         * contributions: Series of total contributions, np.sum(H), from each 
             signature if W is normalized; else, 1
-
     Returns:
        * fig
-
     Example usage:
         signature_barplot(W, np.sum(H))
     """
+    
     W = W.copy()
-    sbs_index = _map_sbs_sigs_back(W[W.index.isin(context96)])
-    dbs_index = W[W.index.isin(context78.keys())].index.to_series()
-    id_index = _map_id_sigs_back(W[W.index.isin(context83)])
-    W = W.reindex(sbs_index.append(dbs_index).append(id_index)).fillna(0)
-
-    all_index = list(context96.keys())+list(context78.keys())+list(context83.keys())
-    
-    for c in list(context96.keys())+list(context78.keys())+list(context83.keys()):
-        if c not in W.index:
+    # Fill in missing features
+    composite_index = list(context96)+list(context78)+list(context83)
+    for c in composite_index:
+        if c not in list(W.index):
             W.loc[c] = 0
-    W = W.reindex(all_index)
+    W = W.reindex(composite_index)
 
-    
-            
     # Get signature labels
     sig_columns = [c for c in W if c.startswith('S')]
     n_sigs = len(sig_columns)
@@ -430,7 +422,7 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                 
     ##### x coordinates for DBS contributions
     ref_map = {'AC': [], 'AT': [], 'CC': [], 'CG': [], 'CT': [], 'GC': [], 'TA': [], 'TC': [], 'TG': [], 'TT': []}
-    for x in W[W.index.isin(context78)].index:
+    for x in context78:
         ref_map[x[:2]].append(x)
     x_coords_dbs = {ref: range(len(sigs)) for ref, sigs in ref_map.items()}
     color_map_dbs = {'AC': '#99CCFF', 'AT': '#0000FF', 'CC': '#CCFF99', 'CG': '#00FF00', 'CT': '#FF99CC',
@@ -441,7 +433,7 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                  '2del': [], '3del': [], '4del': [], '5+del': [],
                  '2ins': [], '3ins': [], '4ins': [], '5+ins': [],
                  '2delm': [], '3delm': [], '4delm': [], '5+delm': []}
-    for x in W[W.index.isin(context83)].index:
+    for x in context83:
         group = re.search('.+?(?=[\d])', x).group(0)
         group_map[group].append(x)
     x_coords_id = {group: range(len(sigs)) for group, sigs in group_map.items()}
@@ -451,21 +443,22 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                  '2ins': '#99CCFF', '3ins': '#3377FF', '4ins': '#0000FF', '5+ins': '#000088',
                  '2delm': '#CC99FF', '3delm': '#9966FF', '4delm': '#8000FF', '5+delm': '#6000AA'}
 
-    all_columns = ['CA', 'CG', 'CT', 'TA', 'TC', 'TG'] + ['space'] + list(ref_map.keys()) + ['space'] + list(group_map.keys())
-    
+    # Include spaces to separate feature types
+    all_columns = ['CA', 'CG', 'CT', 'TA', 'TC', 'TG'] + ['space'] + list(ref_map) + ['space'] + list(group_map)
     fig, axes = plt.subplots(nrows=n_sigs, ncols=34, figsize=(60,2.5*n_sigs), sharex='col',
                              gridspec_kw={'width_ratios': (16,)*6 + (1,)+ (9,6,9,6,9,6,6,9,9,9) + (1,) + (6,)*12+(1,2,3,5)})
-    max_height = 0
+    max_height = 0  # Maximum height for scaling y-axis per feature type per signature
+    # Iterate through signatures, such that each row plots mutational landscape for a signature
     for row, sig in enumerate(sig_columns):
         for col, ref in enumerate(all_columns):
             if n_sigs == 1:
                 ax = axes[col]
             else:
                 ax = axes[row,col]
-            if col in [6,17]:
+            if col in [6,17]:  # Space between feature types...Remove ax and move to next feature (column)
                 ax.remove()
                 continue
-            # For SBS portion
+            # For SBS portion, iterate through 6 SNV types (C>A, C>T, C>G, T>A...)
             if col < 6:
                 bar_heights = W[sig].loc[change_map[ref]]
                 for height in bar_heights:
@@ -585,18 +578,13 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
         signature_barplot(W, np.sum(H))
     """
     W = W.copy()
-    sbs_index = _map_sbs_sigs_back(W[W.index.isin(context96)]).sort_values()
-    id_index = _map_id_sigs_back(W[W.index.isin(context83)]).sort_values()
-    W = W.reindex(sbs_index.append(id_index)).fillna(0)
 
-    all_index = list(context96.keys())+list(context83.keys())
-    
-    for c in list(context96.keys())+list(context83.keys()):
-        if c not in W.index:
+    # Fill in missing features and sort
+    composite_index = list(context96)+list(context83)
+    for c in composite_index:
+        if c not in list(W.index):
             W.loc[c] = 0
-    W = W.reindex(all_index)
-
-    
+    W = W.reindex(composite_index)
             
     # Get signature labels
     sig_columns = [c for c in W if c.startswith('S')]
@@ -628,7 +616,7 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
                  '2del': [], '3del': [], '4del': [], '5+del': [],
                  '2ins': [], '3ins': [], '4ins': [], '5+ins': [],
                  '2delm': [], '3delm': [], '4delm': [], '5+delm': []}
-    for x in W[W.index.isin(context83)].index:
+    for x in context83:
         group = re.search('.+?(?=[\d])', x).group(0)
         group_map[group].append(x)
     x_coords_id = {group: range(len(sigs)) for group, sigs in group_map.items()}
@@ -638,7 +626,7 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
                  '2ins': '#99CCFF', '3ins': '#3377FF', '4ins': '#0000FF', '5+ins': '#000088',
                  '2delm': '#CC99FF', '3delm': '#9966FF', '4delm': '#8000FF', '5+delm': '#6000AA'}
 
-    all_columns = ['CA', 'CG', 'CT', 'TA', 'TC', 'TG'] + ['space'] + list(group_map.keys())
+    all_columns = ['CA', 'CG', 'CT', 'TA', 'TC', 'TG'] + ['space'] + list(group_map)
     
     fig, axes = plt.subplots(nrows=n_sigs, ncols=23, figsize=(60,2.5*n_sigs), sharex='col',
                              gridspec_kw={'width_ratios': (16,)*6 + (1,) + (6,)*12+(1,2,3,5)})

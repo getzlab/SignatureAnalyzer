@@ -82,7 +82,7 @@ def run_maf(
     # Generate Spectra from Maf
     print("   * Loading spectra from {}".format(maf))
     maf, spectra = get_spectra_from_maf(
-        pd.read_csv(maf, sep='\t'),
+        pd.read_csv(maf, sep='\t') if type(maf) == str else maf,
         hgfile=hg_build,
         cosmic=cosmic
     )

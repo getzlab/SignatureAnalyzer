@@ -717,7 +717,7 @@ def get_pole_pold_muts(maf: pd.DataFrame):
     POLE-exo + POLD-exo mutation
     """
     pole_res = (223,517)
-    pold_res = (245-571)
+    pold_res = (245,571)
     pole = []
     pold = []
     if 'UniProt_AApos' in list(maf) or 'HGVSp_Short' in list(maf):

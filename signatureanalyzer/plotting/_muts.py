@@ -11,7 +11,7 @@ import sys
 from ..utils import compl, sbs_annotation_converter
 from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_cosmic, signature_DBS, signature_ID
 
-def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
+def stacked_bar(H: pd.DataFrame, ref_type: str, figsize: tuple = (8,8)):
     """
     Plot stacked barchart & normalized stacked barchart.
     --------------------------------------
@@ -27,13 +27,13 @@ def stacked_bar(H: pd.DataFrame, cosmic_type: str, figsize: tuple = (8,8)):
     """
     H = H.iloc[:,:-3].copy()
     # Map signature etiology
-    if cosmic_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS', 'pcawg_SBS96_ID', 'pcawg_SBS_ID']:
+    if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS', 'pcawg_SBS96_ID', 'pcawg_SBS_ID']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('_')]).map(signature_composite)
-    elif cosmic_type in ['cosmic3', 'cosmic3_exome']:
+    elif ref_type in ['cosmic3', 'cosmic3_exome']:
         H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_cosmic)
-    elif cosmic_type == 'cosmic3_DBS':
+    elif ref_type == 'cosmic3_DBS':
         H.columns = H.columns.map(lambda x: x[x.index('DBS'):]).map(signature_DBS)
-    elif cosmic_type == 'cosmic3_ID':
+    elif ref_type == 'cosmic3_ID':
         H.columns = H.columns.map(lambda x: x[x.index('ID'):]).map(signature_ID)
 
     # Sort H matrix by mutation burden for relevant mutation type

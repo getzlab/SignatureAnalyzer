@@ -492,35 +492,24 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], ref).values
     elif ref_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values  
-    elif ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
-        # map with PCAWG
-        res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
+    elif 'pcawg' in ref_type:
+        # Map to PCAWG
+        if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
+            res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
+        elif ref_type == 'pcawg_SBS':
+            res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
+        elif ref_type in ['pcawg_SBS_ID','pcawg_SBS96_ID']:
+            res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
+            
         # load COSMIC 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        if ref_type == 'pcawg_COMPOSITE':
+        # Collapse 1536 to 96 if pentanucleotide context SBS
+        if '96' not in ref_type:
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)].copy()
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-    elif ref_type == 'pcawg_SBS':
-        # Map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
-        # load COSMIC 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        res["Wraw96"] = get96_from_1536(res["Wraw"])
-        res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-    elif ref_type in ['pcawg_SBS_ID', 'pcawg_SBS96_ID']:
-        # map with PCAWG
-        res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
-        # load COSMIC 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
-        if ref_type == 'pcawg_SBS_ID':
-            res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
-        else:
-            res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)]
-            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
+            res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values   
     else:
         raise Exception("Error: Invalid Reference Type (Not yet Implemented for {}".format(ref_type))
         
@@ -728,7 +717,9 @@ def get_pole_pold_muts(maf: pd.DataFrame):
     POLE-exo + POLD-exo mutation
     """
     pole_res = (223,517)
-    pold_res = (245-571)
+    pold_res = (245,571)
+    pole = []
+    pold = []
     if 'UniProt_AApos' in list(maf) or 'HGVSp_Short' in list(maf):
         if 'HGVSp_Short' in list(maf) and 'UniProt_AApos' not in list(maf):
             table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','HGVSp_Short', 'Tumor_Sample_Barcode']].copy()
@@ -739,8 +730,6 @@ def get_pole_pold_muts(maf: pd.DataFrame):
         else:
             table = maf[maf['Hugo_Symbol'].isin(['POLE','POLD1'])][['Hugo_Symbol','Variant_Classification','Variant_Type','UniProt_AApos', 'Tumor_Sample_Barcode']].copy()
             table = table[table['Variant_Classification'] == 'Missense_Mutation']
-        pole = []
-        pold = []
         for m in table.index:
             if table.loc[m,'Hugo_Symbol'] == 'POLE':
                 if table.loc[m,'UniProt_AApos'] >= pole_res[0] and table.loc[m,'UniProt_AApos'] <= pole_res[1]:

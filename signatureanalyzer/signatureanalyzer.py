@@ -216,6 +216,7 @@ def run_spectra(
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
 
+    # Transform SBS form for composite signatures ahead of analysis
     if reference in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
         if spectra.index.isin(context1536_word).any():
             spectra.index = spectra.index.map(lambda x: sbs1536_annotation_converter(x) if x in context1536_word else x)

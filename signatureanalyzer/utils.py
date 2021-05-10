@@ -244,7 +244,7 @@ def select_markers(
 # ---------------------------------
 # Mutational Signature Utils
 # ---------------------------------
-def load_reference_signatures(ref: str):
+def load_reference_signatures(ref: str, verbose=True):
     """
     Load reference signatures.
     -------------------------
@@ -282,8 +282,8 @@ def load_reference_signatures(ref: str):
         reference_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(ref))
-    
-    print("   * Using {} signatures".format(ref))
+    if verbose:
+        print("   * Using {} signatures".format(ref))
     return reference, reference_index
 
 def compl(seq: str, reverse: bool = False):
@@ -502,7 +502,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
             res["Wraw"]["mut"] = _map_sbs_id_sigs(res["Wraw"], ref, ref_type).values
             
         # load COSMIC 96 SBS and map
-        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3_exome")
+        cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3", verbose=False)
         # Collapse 1536 to 96 if pentanucleotide context SBS
         if '96' not in ref_type:
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
@@ -716,8 +716,8 @@ def get_pole_pold_muts(maf: pd.DataFrame):
     Prints sets of samples with POLE-exo mutation, POLD-exo mutation, and
     POLE-exo + POLD-exo mutation
     """
-    pole_res = (223,517)
-    pold_res = (245,571)
+    pole_res = (268,471)
+    pold_res = (304,517)
     pole = []
     pold = []
     if 'UniProt_AApos' in list(maf) or 'HGVSp_Short' in list(maf):

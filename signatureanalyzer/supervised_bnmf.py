@@ -8,7 +8,7 @@ SEloss = nn.MSELoss(reduction = 'sum')
 
 from .utils import select_signatures, select_markers, transfer_weights
 
-def ss_ardnmf(
+def supervised_ardnmf(
     X_i: pd.DataFrame,
     W_ref_i: pd.DataFrame,
     lam_ref: Union[None,np.ndarray] = None,
@@ -31,7 +31,7 @@ def ss_ardnmf(
     tag: str = ""
     ) -> dict:
     """
-    Semi-Supervised ARD-NMF
+    Supervised ARD-NMF
     ------------------------------------------------------------------------
     Args:
         * X: input matrix (features x samples)

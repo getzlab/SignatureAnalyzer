@@ -1,6 +1,6 @@
 ## Generating Mutational Spectra
 
-Generating mutational signatures using  `signatureanalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures). The following document is a reference for easy creation of spectra using `.mafs`.
+Generating mutational signatures using  `signatureanalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures), as well as *The repretoire of mutational signatures in human cancer*(https://www.nature.com/articles/s41586-020-1943-3). The following document is a reference for easy creation of spectra using `.mafs`.
 
 ---
 

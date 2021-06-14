@@ -13,8 +13,6 @@ import matplotlib.pyplot as plt
 from sys import stdout ### GET rid of later
 from .context import context_composite, context96, context1536, context78, context83, context_composite96
 
-from missingpy import KNNImputer, MissForest
-
 COMPL = {"A":"T","T":"A","G":"C","C":"G"}
 
 # ---------------------------------
@@ -55,35 +53,6 @@ def split_negatives(x: pd.DataFrame, tag: str = '_n', axis: int = 0):
         x_neg.index = [x+'_n' for x in x.index]
 
     return pd.concat([x.where(x > 0, 0), x_neg], axis=axis)
-
-def impute_values(df: pd.DataFrame, method: str = 'mean', **kwargs):
-    """
-    Impute missing values in DataFrame (np.nan or None).
-    ------------------------
-    Args:
-        * df: pd.DataFrame of (samples x features)
-        * method: string for what method of imputation to use
-            ** 'mean': mean imputation
-            ** 'knn': K-NN imputation (see missingpy.KNNImputer)
-            ** 'rf': random forest imputation (see missingpy.MissForest)
-
-    Returns:
-        * pd.DataFrame: imputed values (samples x features)
-    """
-    assert method in ('mean','knn','rf'), '{} not yet implemented.'.format(method)
-
-    if method=='mean':
-        return df.fillna(df.mean(0))
-    elif method=='knn':
-        X = df.values
-        imputer = KNNImputer(**kwargs)
-        X_impute = imputer.fit_transform(X)
-        return pd.DataFrame(X_impute, index=df.index, columns=df.columns)
-    elif method=='rf':
-        X = df.values
-        imputer = MissForest(**kwargs)
-        X_impute = imputer.fit_transform(X)
-        return pd.DataFrame(X_impute, index=df.index, columns=df.columns)
 
 def l2fc(df: pd.DataFrame, center: str = 'median', axis: int = 1):
     """

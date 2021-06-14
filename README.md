@@ -5,6 +5,7 @@ Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expr
 
 _Requires Python 3.6.0 or higher._
 
+Please visit our [wiki](https://github.com/broadinstitute/getzlab-SignatureAnalyzer/wiki) for full documentation.
 ## Installation
 
 ##### PIP

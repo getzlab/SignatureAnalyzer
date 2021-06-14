@@ -3,8 +3,9 @@ import pandas as pd
 from twobitreader import TwoBitFile
 from typing import Union
 from sys import stdout
+import numpy as np
 from .utils import compl, get_true_snps_from_maf, get_dnps_from_maf
-from .context import context96, context1536, context78, context83, context_composite
+from .context import context96, context1536, context78, context83, context_composite, context_polymerase, context_polymerase_id
 
 def get_spectra_from_maf(
     maf: pd.DataFrame,
@@ -276,15 +277,47 @@ def get_spectra_from_maf(
         """
         maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID')
         if reference == "pcawg_SBS96_ID":
-            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
-            maf = pd.concat([maf_sbs,maf_id])
+            maf_sbs, sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
+            maf = pd.concat([maf_sbs, maf_id])
             maf['context.pcawg'] = maf['context96.word'].fillna('') + maf['context83.word'].fillna('')
         else:
-            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
-            maf = pd.concat([maf_sbs,maf_id])
+            maf_sbs, sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
+            maf = pd.concat([maf_sbs, maf_id])
             maf['context.pcawg'] = maf['context1536.arrow'].fillna('') + maf['context83.word'].fillna('')
-        spectra = pd.concat([sbs_df,id_df]).fillna(0)
+        spectra = pd.concat([sbs_df, id_df]).fillna(0)
         spectra.index.name = "context.pcawg"
+
+    elif reference in ['polymerase_msi','polymerase_msi96']:
+        """
+        Concatenate 1536 or 96 SBS + POLE/POLD-MSI ID spectra
+        """
+
+        maf_id = maf[maf['Variant_Type'].isin(['DEL','INS'])].copy()
+        def get_indel_len(x):
+            if len(x) >= 4:
+                return("4")
+            else:
+                return(str(len(x)))
+
+        maf_id['context.polymerase'] = maf_id.apply(lambda x: '' if x['Variant_Type'] not in ['DEL','INS'] else
+                                                    ('DEL' + get_indel_len(x['Reference_Allele']) if x['Variant_Type']=='DEL' else
+                                                     'INS' + get_indel_len(x['Tumor_Seq_Allele2'])),1)
+        id_df = maf_id.groupby(['context.polymerase','sample']).size().unstack().fillna(0).astype(int)
+
+        if reference == "polymerase_msi":
+            sbs_context = 'pcawg_SBS'
+            context_form = 'context1536.arrow'
+        else:
+            sbs_context = 'cosmic3_exome'
+            context_form = 'context96.word'
+
+        maf_sbs, sbs_df = get_spectra_from_maf(maf, hgfile, sbs_context, real_snps)
+        maf = pd.concat([maf_sbs, maf_id])
+        maf['context.polymerase'] = maf[context_form].fillna('') + maf['context.polymerase'].fillna('')
+        maf = maf.drop(columns=context_form)
+        
+        spectra = pd.concat([sbs_df, id_df]).fillna(0)
+        spectra.index.name = "context.polymerase"
     else:
         raise NotImplementedError()
     return maf, spectra

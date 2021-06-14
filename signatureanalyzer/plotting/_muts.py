@@ -9,7 +9,7 @@ import re
 import sys
 
 from ..utils import compl, sbs_annotation_converter
-from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_cosmic, signature_DBS, signature_ID
+from ..context import context96, context78, context83, context1536, context_composite, signature_composite, signature_cosmic, signature_DBS, signature_ID, context_polymerase96
 
 def stacked_bar(H: pd.DataFrame, ref_type: str, figsize: tuple = (8,8)):
     """
@@ -716,4 +716,108 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
     # Set titles and organize plot
     plt.subplots_adjust(wspace=.12, hspace=.15)
     fig.text(.105, .5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
+    return fig
+
+def signature_barplot_polymerase(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1):
+    W = W.copy()
+    # Fill in missing features
+    for c in context_polymerase96:
+        if c not in list(W.index):
+            W.loc[c] = 0
+    W = W.reindex(context_polymerase96)
+
+    # Get signature labels
+    sig_columns = [c for c in W if c.startswith('S')]
+    n_sigs = len(sig_columns)
+
+    # Evaluate contributions
+    if isinstance(contributions, pd.Series):
+        W = W[sig_columns] * contributions[sig_columns]
+    else:
+        W = W[sig_columns] * contributions
+
+    #### X coordinates for SBS contributions
+    context_label = []
+    change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}
+    for p in itertools.product('ACGT','ACGT'):
+        context = ''.join(p)
+        compl_context = compl(context, reverse=True)
+        context_label.append('-'.join(context))
+        for key in change_map:
+            if key.startswith('C'):
+                change_map[key].append(key + context)
+            else:
+                change_map[key].append(compl(key) + compl_context)
+    color_map_sbs = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
+    x_coords_sbs = range(16)
+
+    #### X coordinates for ID contributions
+    group_map = {'INS': ['INS' + str(i+1) for i in range(4)], 'DEL': ['DEL' + str(i+1) for i in range(4)]}
+    color_map_id = {'INS':'#FFCC99', 'DEL':'#FF8000'}
+    x_coords_id = {'INS':range(0,4), 'DEL':range(0,4)}
+    all_columns = [x for x in change_map.keys()] + ['space', 'INS', 'DEL']
+
+    fig, axes = plt.subplots(nrows=n_sigs, ncols=9, figsize=(60,2.5*n_sigs), sharex='col',
+                             gridspec_kw={'width_ratios': (16,)*6 + (1,) + (4,)*2})
+    max_height = 0
+    # Iterate through signatures
+    for row, sig in enumerate(sig_columns):
+        # iterate through columns
+        for col, ref in enumerate(all_columns):
+            if n_sigs == 1:
+                ax = axes[col]
+            else:
+                ax  = axes[row,col]
+                if col == 6:
+                    ax.remove()
+                    continue
+            # For SBS portion
+            if col < 6:
+                bar_heights = W[sig].loc[change_map[ref]]
+                for height in bar_heights:
+                    if height > max_height: max_height = height
+                ax.bar(x_coords_sbs, bar_heights, width=.95, linewidth=1.5, edgecolor='gray', color=color_map_sbs[ref], rasterized=True)
+                ax.set_xlim(-.55, 15.55)
+                if row == 0:
+                    ax.set_title('>'.join(ref), fontsize=18)
+                    if col == 0:
+                        ax.text(4, 1.3, 'Mutational Signatures', transform=ax.transAxes,
+                                horizontalalignment='center', fontsize=24)
+                if row < n_sigs - 1:
+                    ax.tick_params(axis='x', length=0, labelbottom=False)
+                else:
+                    ax.set_xticks(x_coords_sbs)
+                    ax.set_xticklabels(context_label, fontfamily='monospace', rotation='vertical')
+                    if col == 0:
+                        ax.text(4, -.4, 'Motifs', transform = ax.transAxes, horizontalalignment='center', fontsize=20)
+                if col == 5:
+                    if n_sigs == 1:
+                        for axis in axes[:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    else:
+                        for axis in axes[row,:col+1]:
+                            axis.set_ylim(0,max_height + 0.1*max_height)
+                    max_height = 0
+            # For ID portion
+            else:
+                bar_heights = W[sig].loc[group_map[ref]]
+                for height in bar_heights:
+                    if height > max_height: max_height = height
+                ax.bar(x_coords_id[ref], bar_heights, width=0.95, linewidth=1.5, edgecolor='gray', color=color_map_id[ref],
+                       rasterized=True)
+                ax.set_xlim(-.55, x_coords_id[ref][-1] + 0.55)
+                # Set column titles
+                if row == 0:
+                    ax.set_title(ref, color=color_map_id[ref])
+                if row < n_sigs - 1:
+                    ax.tick_params(axis='x', length=0)
+                else:
+                    xlabels = ['1','2','3','4+']
+                    ax.set_xticks(x_coords_id[ref])
+                    ax.set_xticklabels(xlabels, fontfamily='monospace')
+                if col == 8:
+                    ax.text(1.05, .5, sig, fontsize=14, rotation=270, transform=ax.transAxes, verticalalignment="center")
+    # Set titles and organize plot
+    plt.subplots_adjust(wspace=.12, hspace=0.15)
+    fig.text(0.105, 0.5, 'Contributions', rotation='vertical', verticalalignment='center', fontsize=20, fontweight='bold')
     return fig

@@ -39,6 +39,11 @@ context83 = dict(zip(['Cdel1', 'Cdel2', 'Cdel3', 'Cdel4', 'Cdel5', 'Cdel6+',
                        '2delm1', '3delm1', '3delm2', '4delm1', '4delm2', '4delm3',
                        '5+delm1', '5+delm2', '5+delm3', '5+delm4', '5+delm5+'], range(1, 84)))
 context_composite = {**context1536, **({k:v+1536 for k,v in context78.items()}), **({k:v+1614 for k,v in context83.items()})}
+context_composite96 = {v:i for i, v in enumerate(list(context96.keys()) + list(context78.keys()) + list(context83.keys()))}
+
+context_polymerase_id = dict(zip(["INS" + str(i+1) for i in range(4)] + ["DEL" + str(i+1) for i in range(4)], range(1,9)))
+context_polymerase = {**context1536, **({k:v+1536 for k,v in context_polymerase_id.items()})}
+context_polymerase96 = {**context96, **({k:v+1536 for k,v in context_polymerase_id.items()})}
 
 signature_composite = {'SBS1':'Deamination of 5-methylcytosine (Aging)',
                        'SBS2':'APOBEC activity',

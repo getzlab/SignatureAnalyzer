@@ -11,7 +11,7 @@ import os
 import matplotlib.pyplot as plt
 
 from sys import stdout ### GET rid of later
-from .context import context_composite, context96, context1536, context78, context83
+from .context import context_composite, context96, context1536, context78, context83, context_composite96
 
 from missingpy import KNNImputer, MissForest
 
@@ -280,6 +280,12 @@ def load_reference_signatures(ref: str, verbose=True):
     elif ref == 'pcawg_SBS96_ID':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv'), sep='\t').dropna(1)
         reference_index = 'Somatic Mutation Type'
+    elif ref == 'polymerase_msi':
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_1536SBS_ID.tsv'), sep='\t').dropna(1)
+        reference_index = 'Somatic Mutation Type'
+    elif ref == 'polymerase_msi96':
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv'), sep='\t').dropna(1)
+        reference_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(ref))
     if verbose:
@@ -439,12 +445,14 @@ def _map_composite_sigs(
     Returns:
         * pandas.core.series.Series with matching indices to input reference
     """
+    
     if ref_type == 'pcawg_COMPOSITE':
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context1536)], ref_df.iloc[:1536], ref_type)
         context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[1536:1614])
     else:
         context_sbs_s = _map_sbs_sigs(df[df.index.isin(context96)], ref_df.iloc[:96], ref_type)
-        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[96:174])
+        context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[96:174])    
+    
     context_id_s = df[df.index.isin(context83)].index.to_series()
     return context_sbs_s.append(context_dbs_s).append(context_id_s)
     
@@ -470,6 +478,20 @@ def _map_sbs_id_sigs(
     context_id_s = df[df.index.isin(context83)].index.to_series()
     return context_sbs_s.append(context_id_s)
 
+def _map_polymerase96_id(
+        df: pd.DataFrame,
+        ref_df: pd.DataFrame,
+        sub_index: str = 'Substitution Type',
+        ) -> pd.Series:
+    def _check_to_flip(x, ref):
+        if x[2:-2] in ref:
+            return x
+        else:
+            return compl(x)
+    if df.index.name is None: df.index.name = 'index'
+    df_idx = df.index.name
+    context_s = df.reset_index()[df_idx].map(lambda x: x if ('INS' in x or 'DEL' in x) else sbs_annotation_converter(x))
+    return context_s.apply(lambda x: _check_to_flip(x, set(ref_df[sub_index])) if '>' in x else x)
     
 def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: str):
     """
@@ -486,15 +508,19 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         * None, edits res dictionary directly
     """
     # Annotate raw W matrix with mutation indices
-    if ref_type in ('cosmic2','cosmic3','cosmic3_exome'):
+    if ref_type in ['cosmic2','cosmic3','cosmic3_exome']:
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
     elif ref_type == 'cosmic3_DBS':
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], ref).values
     elif ref_type == 'cosmic3_ID':
         res["Wraw"]["mut"] = _map_id_sigs(res["Wraw"]).values  
-    elif 'pcawg' in ref_type:
+    elif 'pcawg' in ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS_ID', 'pcawg_SBS96_ID', 'pcawg_SBS']:
         # Map to PCAWG
         if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96']:
+            if ref_type == 'pcawg_COMPOSITE':
+                res["Wraw"] = res["Wraw"].sort_index(key=lambda x: x.map(context_composite))
+            else:
+                res["Wraw"] = res["Wraw"].sort_index(key=lambda x: x.map(context_composite96))
             res["Wraw"]["mut"] = _map_composite_sigs(res["Wraw"], ref, ref_type).values
         elif ref_type == 'pcawg_SBS':
             res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
@@ -504,12 +530,17 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         # load COSMIC 96 SBS and map
         cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3", verbose=False)
         # Collapse 1536 to 96 if pentanucleotide context SBS
-        if '96' not in ref_type:
+        if ref_type in ['pcawg_SBS96_ID','pcawg_COMPOSITE96']:
             res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)].copy()
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values   
+    elif ref_type in ['polymerase_msi', 'polymerase_msi96']:
+        if ref_type == 'polymerase_msi96':
+            res["Wraw"]["mut"] = _map_polymerase96_id(res["Wraw"], ref).values
+        else:
+            res["Wraw"]["mut"] = res["Wraw"].index
     else:
         raise Exception("Error: Invalid Reference Type (Not yet Implemented for {}".format(ref_type))
         
@@ -746,7 +777,7 @@ def get_pole_pold_muts(maf: pd.DataFrame):
 
 def plot_mutational_signatures(outdir, reference, k):
     from .plotting import k_dist
-    from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, signature_barplot_sbs_id, cosine_similarity_plot
+    from .plotting import signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, signature_barplot_sbs_id, signature_barplot_polymerase
 
     # Import plotting functions
     from .plotting import k_dist, signature_barplot, stacked_bar, signature_barplot_DBS, signature_barplot_ID, signature_barplot_composite, cosine_similarity_plot
@@ -834,6 +865,12 @@ def plot_mutational_signatures(outdir, reference, k):
             W_plot = W
         sys.stdout.write("Plotting {} Contributions Barplot:\n".format(reference))
         _ = signature_barplot_sbs_id(W_plot, contributions=np.sum(H))
+    elif reference in ['polymerase_msi', 'polymerase_msi96']:
+        sys.stdout.write("Plotting Contributions Barplot:\n")
+        W_plot = W
+        if reference == 'polymerase_msi':
+            W_plot = pd.concat([get96_from_1536(W[W.index.isin(context1536)]),W[~W.index.isin(context1536)]])
+        _ = signature_barplot_polymerase(W_plot, contributions=np.sum(H))
     else:
         _ = signature_barplot(W, contributions=np.sum(H))
         

@@ -3,41 +3,15 @@ import pandas as pd
 from twobitreader import TwoBitFile
 from typing import Union
 from sys import stdout
+import numpy as np
 from .utils import compl, get_true_snps_from_maf, get_dnps_from_maf
-
-acontext = itertools.product('A', 'CGT', 'ACGT', 'ACGT')
-ccontext = itertools.product('C', 'AGT', 'ACGT', 'ACGT')
-
-context96 = dict(zip(map(''.join, itertools.chain(acontext, ccontext)), range(1, 97)))
-context78 = dict(zip(['AC>CA', 'AC>CG', 'AC>CT', 'AC>GA', 'AC>GG', 'AC>GT', 'AC>TA', 'AC>TG', 'AC>TT', 'AT>CA',
-                      'AT>CC', 'AT>CG', 'AT>GA', 'AT>GC', 'AT>TA', 'CC>AA', 'CC>AG', 'CC>AT', 'CC>GA', 'CC>GG',
-                      'CC>GT', 'CC>TA', 'CC>TG', 'CC>TT', 'CG>AT', 'CG>GC', 'CG>GT', 'CG>TA', 'CG>TC', 'CG>TT',
-                      'CT>AA', 'CT>AC', 'CT>AG', 'CT>GA', 'CT>GC', 'CT>GG', 'CT>TA', 'CT>TC', 'CT>TG', 'GC>AA',
-                      'GC>AG', 'GC>AT', 'GC>CA', 'GC>CG', 'GC>TA', 'TA>AT', 'TA>CG', 'TA>CT', 'TA>GC', 'TA>GG',
-                      'TA>GT', 'TC>AA', 'TC>AG', 'TC>AT', 'TC>CA', 'TC>CG', 'TC>CT', 'TC>GA', 'TC>GG', 'TC>GT',
-                      'TG>AA', 'TG>AC', 'TG>AT', 'TG>CA', 'TG>CC', 'TG>CT', 'TG>GA', 'TG>GC', 'TG>GT', 'TT>AA',
-                      'TT>AC', 'TT>AG', 'TT>CA', 'TT>CC', 'TT>CG', 'TT>GA', 'TT>GC', 'TT>GG'], range(1, 79)))
-
-context83 = dict(zip(['Cdel1', 'Cdel2', 'Cdel3', 'Cdel4', 'Cdel5', 'Cdel6+',
-                       'Tdel1', 'Tdel2', 'Tdel3', 'Tdel4', 'Tdel5', 'Tdel6+',
-                       'Cins0', 'Cins1', 'Cins2', 'Cins3', 'Cins4', 'Cins5+',
-                       'Tins0', 'Tins1', 'Tins2', 'Tins3', 'Tins4', 'Tins5+',
-                       '2del1', '2del2', '2del3', '2del4', '2del5', '2del6+',
-                       '3del1', '3del2', '3del3', '3del4', '3del5', '3del6+',
-                       '4del1', '4del2', '4del3', '4del4', '4del5', '4del6+',
-                       '5+del1', '5+del2', '5+del3', '5+del4', '5+del5', '5+del6+',
-                       '2ins0', '2ins1', '2ins2', '2ins3', '2ins4', '2ins5+',
-                       '3ins0', '3ins1', '3ins2', '3ins3', '3ins4', '3ins5+',
-                       '4ins0', '4ins1', '4ins2', '4ins3', '4ins4', '4ins5+',
-                       '5+ins0', '5+ins1', '5+ins2', '5+ins3', '5+ins4', '5+ins5+',
-                       '2delm1', '3delm1', '3delm2', '4delm1', '4delm2', '4delm3',
-                       '5+delm1', '5+delm2', '5+delm3', '5+delm4', '5+delm5+'], range(1, 84)))
+from .context import context96, context1536, context78, context83, context_composite, context_polymerase, context_polymerase_id
 
 def get_spectra_from_maf(
     maf: pd.DataFrame,
     hgfile: Union[str,None] = None,
-    cosmic: str = 'cosmic2',
-    real_snps: bool = False
+    reference: str = 'cosmic2',
+    real_snps: bool = False,
     ):
     """
     Attaches context categories to maf and gets counts of contexts for each sample
@@ -45,7 +19,7 @@ def get_spectra_from_maf(
     Args:
         * maf: Pandas DataFrame of maf
         * hgfile: path to 2bit genome build file for computing reference context
-        * cosmic: cosmic signatures to decompose to
+        * ref: reference signatures to decompose to
 
     Returns:
         * Pandas DataFrame of maf with context category attached
@@ -58,7 +32,11 @@ def get_spectra_from_maf(
 
     maf['sample'] = maf['Tumor_Sample_Barcode']
 
-    if cosmic in ['cosmic2', 'cosmic3', 'cosmic3_exome']:
+    if reference in ['cosmic2', 'cosmic3', 'cosmic3_exome', 'pcawg_SBS']:
+        # Context type
+        if reference in ['cosmic2', 'cosmic3', 'cosmic3_exome']: context_num, context_form, context_use = 'context96.num', 'context96.word', context96
+        else: context_num, context_form, context_use = 'context1536.num', 'context1536.arrow', context1536
+        
         # Subset to SNPs
         if 'Variant_Type' in maf.columns:
             maf = maf.loc[maf['Variant_Type'] == 'SNP']
@@ -66,6 +44,7 @@ def get_spectra_from_maf(
             maf = maf.loc[maf['Reference_Allele'].apply(lambda k: len(k) == 1 and k != '-') & \
             maf['Tumor_Seq_Allele2'].apply(lambda k: len(k) == 1 and k != '-')]
         if not real_snps:
+            # Filter out adjacent SNPs
             maf = get_true_snps_from_maf(maf)
 
         ref = maf['Reference_Allele'].str.upper()
@@ -101,7 +80,12 @@ def get_spectra_from_maf(
                 if not chr_contig and chromosome.startswith('chr'):
                     chromosome = chromosome[3:]
 
-                _contexts.append(hg[chromosome][pos-2:pos+1].lower())
+                # 96 context, get reference [pos-1, pos, pos+1]
+                if reference != 'pcawg_SBS':
+                    _contexts.append(hg[chromosome][pos-2:pos+1].lower())
+                # 1536 context, get refernece [pos-2, pos-1, pos, pos+1, pos+2]
+                else:
+                    _contexts.append(hg[chromosome][pos-3:pos+2].lower())
 
             maf['ref_context'] = _contexts
             stdout.write("\n")
@@ -110,23 +94,29 @@ def get_spectra_from_maf(
         n_context = context.str.len()
         mid = n_context // 2
 
-        contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
-                            else compl(r + a + c[m + 1] + c[m - 1]) \
-                            for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
-
+        if reference != 'pcawg_SBS':
+            contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
+                                else compl(r + a + c[m + 1] + c[m - 1]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+        else:
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:m+3] if r in 'TC' \
+                                else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:m+3]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+            
         try:
-            maf['context96.num'] = contig.apply(context96.__getitem__)
+            maf[context_num] = contig.apply(context_use.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
-        maf['context96.word'] = contig
-        spectra = maf.groupby(['context96.word', 'sample']).size().unstack().fillna(0).astype(int)
-        for c in context96:
+        
+        maf[context_form] = contig
+        spectra = maf.groupby([context_form, 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context_use:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context96]
-
-    elif cosmic == 'cosmic3_DBS':
+        spectra = spectra.loc[context_use]   
+            
+    elif reference == 'cosmic3_DBS':
         # Subset to DNPs
         if 'Variant_Type' not in maf.columns:
             ref_alt = maf['Reference_Allele'] + '>' + maf['Tumor_Seq_Allele2']
@@ -138,11 +128,10 @@ def get_spectra_from_maf(
                 if len(r) == 2 and len(a) == 2:
                     return 'DNP'
             maf['Variant_Type'] = ref_alt.apply(get_variant_type)
-        if 'DNP' in maf['Variant_Type']:
+        if maf['Variant_Type'].str.contains('DNP').any():
             maf = maf.loc[maf['Variant_Type'] == 'DNP']
         else:
             maf = get_dnps_from_maf(maf)
-
         ref = maf['Reference_Allele'].str.upper()
         alt = maf['Tumor_Seq_Allele2'].str.upper()
 
@@ -151,7 +140,7 @@ def get_spectra_from_maf(
                             for r, a in zip(ref, alt)], index=maf.index)
 
         try:
-            maf['context78.num'] = contig.apply(context78.__getitem__)
+           maf['context78.num'] = contig.apply(context78.__getitem__)
         except KeyError as e:
             raise KeyError('Unusual context: ' + str(e))
 
@@ -160,9 +149,9 @@ def get_spectra_from_maf(
         for c in context78:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context78]
+        spectra = spectra.loc[context78]     
 
-    elif cosmic == 'cosmic3_ID':
+    elif reference == 'cosmic3_ID':
 
         maf = maf.loc[(maf['Reference_Allele'] == '-') ^ (maf['Tumor_Seq_Allele2'] == '-')]
 
@@ -271,7 +260,72 @@ def get_spectra_from_maf(
         spectra = spectra.loc[context83]
 
         stdout.write("\n")
+    
+    elif reference in ["pcawg_COMPOSITE","pcawg_COMPOSITE96"]:
+        """
+        Concatenate 1536 or 96 SBS, DBS, and ID spectra
+        """
+        maf_dbs,dbs_df = get_spectra_from_maf(maf,hgfile, 'cosmic3_DBS')
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID')
+        if reference == "pcawg_COMPOSITE":
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
+            maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+            maf['context.pcawg'] = maf['context1536.arrow'].fillna('') + maf['context78.word'].fillna('') +  maf['context83.word'].fillna('')            
+        else:
+            maf_sbs,sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
+            maf = pd.concat([maf_sbs,maf_dbs,maf_id])
+            maf['context.pcawg'] = maf['context96.word'].fillna('') + maf['context78.word'].fillna('') +  maf['context83.word'].fillna('')            
+            
+        # concatenate spectra
+        spectra = pd.concat([sbs_df,dbs_df,id_df]).fillna(0)
+        spectra.index.name = "context.pcawg"
+    elif reference in ["pcawg_SBS_ID","pcawg_SBS96_ID"]:
+        """
+        Concatenate 1536 or 96 SBS + ID spectra
+        """
+        maf_id,id_df = get_spectra_from_maf(maf,hgfile,'cosmic3_ID')
+        if reference == "pcawg_SBS96_ID":
+            maf_sbs, sbs_df = get_spectra_from_maf(maf,hgfile,'cosmic3_exome',real_snps)
+            maf = pd.concat([maf_sbs, maf_id])
+            maf['context.pcawg'] = maf['context96.word'].fillna('') + maf['context83.word'].fillna('')
+        else:
+            maf_sbs, sbs_df = get_spectra_from_maf(maf,hgfile,'pcawg_SBS',real_snps)
+            maf = pd.concat([maf_sbs, maf_id])
+            maf['context.pcawg'] = maf['context1536.arrow'].fillna('') + maf['context83.word'].fillna('')
+        spectra = pd.concat([sbs_df, id_df]).fillna(0)
+        spectra.index.name = "context.pcawg"
+
+    elif reference in ['polymerase_msi','polymerase_msi96']:
+        """
+        Concatenate 1536 or 96 SBS + POLE/POLD-MSI ID spectra
+        """
+
+        maf_id = maf[maf['Variant_Type'].isin(['DEL','INS'])].copy()
+        def get_indel_len(x):
+            if len(x) >= 4:
+                return("4")
+            else:
+                return(str(len(x)))
+
+        maf_id['context.polymerase'] = maf_id.apply(lambda x: '' if x['Variant_Type'] not in ['DEL','INS'] else
+                                                    ('DEL' + get_indel_len(x['Reference_Allele']) if x['Variant_Type']=='DEL' else
+                                                     'INS' + get_indel_len(x['Tumor_Seq_Allele2'])),1)
+        id_df = maf_id.groupby(['context.polymerase','sample']).size().unstack().fillna(0).astype(int)
+
+        if reference == "polymerase_msi":
+            sbs_context = 'pcawg_SBS'
+            context_form = 'context1536.arrow'
+        else:
+            sbs_context = 'cosmic3_exome'
+            context_form = 'context96.word'
+
+        maf_sbs, sbs_df = get_spectra_from_maf(maf, hgfile, sbs_context, real_snps)
+        maf = pd.concat([maf_sbs, maf_id])
+        maf['context.polymerase'] = maf[context_form].fillna('') + maf['context.polymerase'].fillna('')
+        maf = maf.drop(columns=context_form)
+        
+        spectra = pd.concat([sbs_df, id_df]).fillna(0)
+        spectra.index.name = "context.polymerase"
     else:
         raise NotImplementedError()
-
     return maf, spectra

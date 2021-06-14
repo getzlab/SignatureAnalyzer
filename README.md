@@ -16,6 +16,7 @@ or
 ##### Git Clone
 
 * `git clone --recursive https://github.com/broadinstitute/getzlab-SignatureAnalyzer.git`
+* `git checkout composite1536`
 * `cd getzlab-SignatureAnalyzer`
 * `pip3 install -e .`
 
@@ -56,7 +57,8 @@ Link: `http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
 
 ```
 usage: signatureanalyzer [-h] [-t {maf,spectra,matrix}] [-n NRUNS] [-o OUTDIR]
-                         [--cosmic {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB}]
+                         [--reference {cosmic2,cosmic3,cosmic3_exome,cosmic3_DBS,cosmic3_ID,cosmic3_TSB, pcawg_COMPOSITE, pcawg_COMPOSITE96, pcawg_SBS_ID, pcawg_SBS96_ID, pcawg_SBS,
+			 	       pole_msi, pole_msi96}]
                          [--hg_build HG_BUILD] [--cuda_int CUDA_INT]
                          [--verbose] [--K0 K0] [--max_iter MAX_ITER]
                          [--del_ DEL_] [--tolerance TOLERANCE] [--phi PHI]
@@ -71,7 +73,7 @@ usage: signatureanalyzer [-h] [-t {maf,spectra,matrix}] [-n NRUNS] [-o OUTDIR]
 #### Example:
 
 ```
-signatureanalyzer input.maf -n 10 --cosmic cosmic2 --objective poisson
+signatureanalyzer input.maf -n 10 --reference cosmic2 --objective poisson
 ```
 
 
@@ -85,7 +87,7 @@ import signatureanalyzer as sa
 # ---------------------
 
 # Run array of decompositions with mutational signature processing
-sa.run_maf(PATH_TO_MAF, outdir='./ardnmf_output/', cosmic='cosmic2', hg_build='./ref/hg19.2bit', nruns=10)
+sa.run_maf(PATH_TO_MAF, outdir='./ardnmf_output/', reference='cosmic2', hg_build='./ref/hg19.2bit', nruns=10)
 
 # Run ARD-NMF algorithm standalone
 sa.ardnmf(...)

@@ -1,6 +1,6 @@
 ## Generating Mutational Spectra
 
-Generating mutational signatures using  `signatureanalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures). The following document is a reference for easy creation of spectra using `.mafs`.
+Generating mutational signatures using  `signatureanalyzer`. For a comprehensive  description of mutational signatures, their relevance, and references, please see the Catalogue of Somatic Mutations in Cancer, or COSMIC, [here](https://cancer.sanger.ac.uk/cosmic/signatures), as well as *The repretoire of mutational signatures in human cancer*(https://www.nature.com/articles/s41586-020-1943-3). The following document is a reference for easy creation of spectra using `.mafs`.
 
 ---
 
@@ -53,7 +53,7 @@ print(maf_df.head())
 * REQUIRES a 2-bit human genome build
 
 ```
-_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_exome', hgfile='hg19.2bit')
+_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_exome', hgfile='hg19.2bit')
 
 print(spectra_sbs.head().iloc[:,:5])
 ```
@@ -82,7 +82,7 @@ _or_
 * This encodes the 78-base context
 
 ```
-_,spectra_dbs = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_DBS')
+_,spectra_dbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_DBS')
 
 print(spectra_dbs.head())
 ```
@@ -102,7 +102,7 @@ print(spectra_dbs.head())
 * REQUIRES a 2-bit human genome build
 
 ```
-_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, cosmic='cosmic3_ID', hgfile='hg19.2bit')
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_ID', hgfile='hg19.2bit')
 
 print(spectra_id.head().iloc[:,:5])
 ```
@@ -114,3 +114,146 @@ print(spectra_id.head().iloc[:,:5])
 | Cdel3            |          2 |          2 |          2 |          9 |          0 |
 | Cdel4            |          0 |          0 |          0 |          3 |          0 |
 | ...            |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### Single-base-substitution (SBS) 1536-pentanucleotide spectra
+* This encodes the 1536-base context
+* **note**: two forms of this exist - either input should work
+  * word: ACAGAT --> (REF)(MUT)(L-2)(L-1)(R+1)(R+2)
+  * arrow: AA[A>C]GT --> (L-2)(L-1)[(REF)>(ALT)](R+1)(R+2)
+* REQUIRES a 2-bit human genome build
+
+```
+_,spectra_sbs = sa.spectra.get_spectra_from_maf(maf_df, reference='cosmic3_exome', hgfile='hg19.2bit')
+
+print(spectra_sbs.head().iloc[:,:5])
+```
+**Arrow**
+|         |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:--------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| AA[T>A]AA |            1 |            2 |            0 |            1 |            2 |
+| AA[T>A]AC |            0 |            2 |            0 |            0 |            0 |
+| AA[T>A]AG |            0 |            6 |            2 |            2 |            0 |
+| AA[T>A]AT |            0 |            4 |            0 |            0 |            2 |
+| ... |            1 |            2 |            0 |            1 |            0 |
+
+_or_
+
+**Word**
+| context1536.word   |   sample_551 |   sample_135 |   sample_118 |   sample_191 |   sample_124 |
+|:-----------------|-------------:|-------------:|-------------:|-------------:|-------------:|
+| TAAAAA             |            1 |            2 |            0 |            1 |            2 |
+| TAAAAC             |            0 |            2 |            0 |            0 |            0 |
+| TAAAAG             |            0 |            6 |            2 |            2 |            0 |
+| TAAAAT             |            0 |            4 |            0 |            0 |            2 |
+| ...             |            1 |            2 |            0 |            1 |            0 |
+---
+
+#### PCAWG Composite spectra
+* This encodes the 1536-base + 78-base + 83-base context
+* REQUIRES a 2-bit human genome build
+* Either SBS form should work  (Arrow vs Word)
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_COMPOSITE', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| AA[T>A]AA        |          0 |          1 |          3 |          1 |          0 |
+| AA[T>A]AC        |          0 |          4 |          3 |          6 |          0 |
+| AA[T>A]AG        |          2 |          2 |          2 |          9 |          0 |
+| AA[T>A]AT        |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| AC>CA            |          0 |          0 |          0 |          3 |          0 |
+| AC>CG            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG Composite 96 spectra
+* This encodes the 96-base + 78-base + 83-base context
+* REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_COMPOSITE96', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| A[C>A]A          |          0 |          1 |          3 |          1 |          0 |
+| A[C>A]C          |          0 |          4 |          3 |          6 |          0 |
+| A[C>A]G          |          2 |          2 |          2 |          9 |          0 |
+| A[C>A]T          |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| AC>CA            |          0 |          0 |          0 |          3 |          0 |
+| AC>CG            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG SBS + ID spectra
+* This encodes the 1536-base + 83-base context
+* REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_SBS_ID', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| AA[T>A]AA        |          0 |          1 |          3 |          1 |          0 |
+| AA[T>A]AC        |          0 |          4 |          3 |          6 |          0 |
+| AA[T>A]AG        |          2 |          2 |          2 |          9 |          0 |
+| AA[T>A]AT        |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |
+
+---
+
+#### PCAWG 96 SBS + ID spectra
+* This encodes the 96-base + 83-base context
+* REQUIRES a 2-bit human genome build
+* Either SBS form should work (Arrow vs Word)
+
+```
+_,spectra_id = sa.spectra.get_spectra_from_maf(maf_df, reference='pcawg_SBS96_ID', hgfile='hg19.2bit')
+
+print(spectra_id.head().iloc[:,:5])
+```
+
+| context.pcawg   |   sample_0 |   sample_1 |   sample_2 |   sample_3 |   sample_4 |
+|:-----------------|-----------:|-----------:|-----------:|-----------:|-----------:|
+| A[C>A]A          |          0 |          1 |          3 |          1 |          0 |
+| A[C>A]C          |          0 |          4 |          3 |          6 |          0 |
+| A[C>A]G          |          2 |          2 |          2 |          9 |          0 |
+| A[C>A]T          |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          0 |          0 |          0 |
+| Cdel1            |          0 |          1 |          3 |          1 |          0 |
+| Cdel2            |          0 |          4 |          3 |          6 |          0 |
+| Cdel3            |          2 |          2 |          2 |          9 |          0 |
+| Cdel4            |          0 |          0 |          0 |          3 |          0 |
+| ...              |          0 |          0 |          1 |          3 |          0 |

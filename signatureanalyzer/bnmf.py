@@ -35,7 +35,7 @@ def ardnmf(
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,
     verbose: bool = True,
-    tag: str = ""
+    tag: str = "",
     ) -> dict:
     """
     Wrapper for ARD-NMF. Wraps GPU implementaiton from:
@@ -107,13 +107,13 @@ def ardnmf(
         verbose=verbose, \
         tag=tag
     )
-
+    
     W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
     sig_names = [str(i) for i in range(1,nsig+1)]
 
     W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)
     H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
-
+    
     W,H = select_signatures(W,H)
     markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff, verbose=verbose)
 
@@ -121,7 +121,7 @@ def ardnmf(
     Wraw = Wraw.rename(columns={x:'S'+x for x in Wraw.columns})
     Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
     Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
-
+    
     # Fix log typing
     results[3]['K'] = results[3]['K'].astype(int)
     results[3]['obj'] = results[3]['obj'].astype('float')

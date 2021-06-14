@@ -16,7 +16,6 @@ or
 ##### Git Clone
 
 * `git clone --recursive https://github.com/broadinstitute/getzlab-SignatureAnalyzer.git`
-* `git checkout composite1536`
 * `cd getzlab-SignatureAnalyzer`
 * `pip3 install -e .`
 

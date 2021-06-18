@@ -31,7 +31,6 @@ def ardnmf(
     prior_on_H: str = 'L1',
     report_freq: int = 100,
     active_thresh: float = 1e-2,
-    random_seed: Union[None, int] = None,
     cut_norm: float = 0.5,
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,
@@ -80,9 +79,6 @@ def ardnmf(
         "Unable to use {}; use either L1 or L2 prior on W.".format(prior_on_W)
     assert prior_on_H in ('L1','L2'), \
         "Unable to use {}; use either L1 or L2 prior on H.".format(prior_on_H)
-
-    if random_seed is not None:
-        np.random.seed(int(random_seed))
 
     # ---------------------------------
     # Load data into tensors

@@ -66,7 +66,7 @@ def run_maf(
             will perform decomposition using CPU.
 3    """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed']]
     except:
         pass
 
@@ -91,7 +91,7 @@ def run_maf(
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
-    
+
     print("   * Running ARD-NMF...")
     for n_iter in range(nruns):
         store['X'] = spectra
@@ -198,7 +198,7 @@ def run_spectra(
             will perform decomposition using CPU.
     """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed']]
     except:
         pass
 
@@ -212,7 +212,7 @@ def run_spectra(
 
     # Reference Signatures
     reference_df, reference_index = load_reference_signatures(reference)
-    
+
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
     store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
 
@@ -223,7 +223,7 @@ def run_spectra(
     elif reference in ["pcawg_COMPOSITE96","pcawg_SBS96_ID"]:
         if not spectra.index.isin(context96).any():
             spectra.index = spectra.index.map(lambda x: x[2]+x[4]+x[0]+x[6] if ('>' in x and len(x)==7) else x)
-    
+
     print("   * Running ARD-NMF...")
     for n_iter in range(nruns):
         store['X'] = spectra
@@ -294,7 +294,7 @@ def run_matrix(
     ):
     """
     Args:
-em        * matrix: expression matrix; this should be normalized to accomodate
+        * matrix: expression matrix; this should be normalized to accomodate
             Gaussian noise assumption (log2-norm) (n_features x n_samples)
 
             NOTE: recommended to filter out lowly expressed genes for RNA:
@@ -309,7 +309,6 @@ em        * matrix: expression matrix; this should be normalized to accomodate
                 this (~ 2000 - 7500 genes)
 
         * outdir: output directory to save files
-        * cosmic: cosmic signature set to use
         * nruns: number of iterations for ARD-NMF
         * verbose: bool
 
@@ -336,7 +335,7 @@ em        * matrix: expression matrix; this should be normalized to accomodate
             will perform decomposition using CPU.
     """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'cosmic']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'reference', 'random_seed']]
     except:
         pass
 

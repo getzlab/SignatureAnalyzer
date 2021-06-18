@@ -183,6 +183,10 @@ def main():
     if args.cuda_int == 'None':
         args.cuda_int = None
 
+    if args.random_seed is not None:
+        import numpy as np
+        np.random.seed(int(args.random_seed))
+
     print("---------------------------------------------------------")
     print("---------- S I G N A T U R E  A N A L Y Z E R  ----------")
     print("---------------------------------------------------------")

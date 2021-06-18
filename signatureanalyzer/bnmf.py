@@ -31,6 +31,7 @@ def ardnmf(
     prior_on_H: str = 'L1',
     report_freq: int = 100,
     active_thresh: float = 1e-2,
+    random_seed: Union[None, int] = None,
     cut_norm: float = 0.5,
     cut_diff: float = 1.0,
     cuda_int: Union[int, None] = 0,
@@ -80,6 +81,9 @@ def ardnmf(
     assert prior_on_H in ('L1','L2'), \
         "Unable to use {}; use either L1 or L2 prior on H.".format(prior_on_H)
 
+    if random_seed is not None:
+        np.random.seed(int(random_seed))
+
     # ---------------------------------
     # Load data into tensors
     # ---------------------------------
@@ -107,13 +111,13 @@ def ardnmf(
         verbose=verbose, \
         tag=tag
     )
-    
+
     W, H, nsig, nonzero_idx = transfer_weights(results[0], results[1], active_thresh=active_thresh)
     sig_names = [str(i) for i in range(1,nsig+1)]
 
     W = pd.DataFrame(data=W, index=channel_names, columns=sig_names)
     H = pd.DataFrame(data=H, index=sig_names, columns=sample_names)
-    
+
     W,H = select_signatures(W,H)
     markers, signatures = select_markers(X, W, H, cut_norm=cut_norm, cut_diff=cut_diff, verbose=verbose)
 
@@ -121,7 +125,7 @@ def ardnmf(
     Wraw = Wraw.rename(columns={x:'S'+x for x in Wraw.columns})
     Hraw = pd.DataFrame(data=results[1][nonzero_idx,:],  index=sig_names, columns=sample_names)
     Hraw = Hraw.rename(index={x:'S'+x for x in Hraw.index})
-    
+
     # Fix log typing
     results[3]['K'] = results[3]['K'].astype(int)
     results[3]['obj'] = results[3]['obj'].astype('float')

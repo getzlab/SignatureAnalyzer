@@ -157,6 +157,11 @@ def main():
         default=0.01,
         type=float
     )
+    parser.add_argument(
+        '--random_seed',
+        help="Random seed for decomposition",
+        default=None,
+    )
 
     # -----------------------------------------
     # NMF Post-processing Arguments

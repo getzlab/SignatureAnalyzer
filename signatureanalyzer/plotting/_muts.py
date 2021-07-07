@@ -480,10 +480,10 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                 if col == 5:
                     if n_sigs == 1:
                         for axis in axes[:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
                              
             # For DBS portion
@@ -505,10 +505,10 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                 if col == 15:
                     if n_sigs == 1:
                         for axis in axes[6:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,6:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
                              
             # For ID portion
@@ -545,10 +545,10 @@ def signature_barplot_composite(W: pd.DataFrame, contributions: Union[int, pd.Se
                 if col == 33:
                     if n_sigs == 1:
                         for axis in axes[16:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,16:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
 
             if col not in [0,7,18]:
@@ -662,10 +662,10 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
                 if col == 5:
                     if n_sigs == 1:
                         for axis in axes[:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
                              
             # For ID portion
@@ -702,10 +702,10 @@ def signature_barplot_sbs_id(W: pd.DataFrame, contributions: Union[int, pd.Serie
                 if col == 22:
                     if n_sigs == 1:
                         for axis in axes[6:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,6:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
 
             if col not in [0,7]:
@@ -793,10 +793,10 @@ def signature_barplot_polymerase(W: pd.DataFrame, contributions: Union[int, pd.S
                 if col == 5:
                     if n_sigs == 1:
                         for axis in axes[:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     else:
                         for axis in axes[row,:col+1]:
-                            axis.set_ylim(0,max_height + 0.1*max_height)
+                            axis.set_ylim(0,max_height + 0.1*max_height+1)
                     max_height = 0
             # For ID portion
             else:

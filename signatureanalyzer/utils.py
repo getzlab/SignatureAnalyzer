@@ -708,7 +708,7 @@ def get96_from_1536(W1536):
         
     # For each context in 96 SNV, sum all corresponding 1536 context rows
     for context in context96:
-        context96_df.loc[context] = W1536[W1536.index.map(convert) == context].sum()
+        context96_df.loc[context] = W1536[W1536.index.map(convert) == context].astype(np.float64).sum()
     return context96_df
 
 def get_pole_pold_muts(maf: pd.DataFrame):

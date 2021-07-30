@@ -500,7 +500,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         cosmic_df_96, cosmic_idx_96 = load_reference_signatures("cosmic3", verbose=False)
         # Collapse 1536 to 96 if pentanucleotide context SBS
         if ref_type in ['pcawg_SBS','pcawg_COMPOSITE','pcawg_SBS_ID']: #['pcawg_SBS96_ID','pcawg_COMPOSITE96']:
-            res["Wraw96"] = get96_from_1536(res["Wraw"][res["Wraw"].index.isin(context1536)])
+            res["Wraw96"] = get96_from_1536(res["Wraw"].drop(columns=['mut'])[res["Wraw"].index.isin(context1536)])
             res["Wraw96"]["mut"] = _map_sbs_sigs(res["Wraw96"], cosmic_df_96, 'cosmic3_exome').values
         else:
             res["Wraw96"] = res["Wraw"][res["Wraw"].index.isin(context96)].copy()

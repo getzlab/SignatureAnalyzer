@@ -36,7 +36,6 @@ setup(
         "tqdm>=4.33.0",
         "h5py>=2.9.0",
         "tables>=3.6.1",
-        "gprofiler",
         "numpy",
         "matplotlib",
         "scipy"

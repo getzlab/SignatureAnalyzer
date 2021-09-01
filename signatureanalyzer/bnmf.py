@@ -36,6 +36,7 @@ def ardnmf(
     cuda_int: Union[int, None] = 0,
     verbose: bool = True,
     tag: str = "",
+    use_val_set: bool = False,
     ) -> dict:
     """
     Wrapper for ARD-NMF. Wraps GPU implementaiton from:
@@ -101,6 +102,7 @@ def ardnmf(
         K0, \
         tolerance, \
         max_iter, \
+        use_val_set=use_val_set, \
         report_freq=report_freq, \
         active_thresh=active_thresh, \
         cuda_int=cuda_int, \

@@ -153,7 +153,7 @@ def main():
     )
     parser.add_argument(
         '--active_thresh',
-        help="Active threshold for consdiering a threshold relevant (default: 0.01)",
+        help="Active threshold for considering a threshold relevant (default: 0.01)",
         default=0.01,
         type=float
     )
@@ -177,6 +177,12 @@ def main():
         help="Difference between mean selected signature and mean unselected signatures for marker selection (matrix). (default: 1.0)",
         default=1.0,
         type=float
+    )
+    parser.add_argument (
+        '--use_val_set',
+        help="Execute cross-validation",
+        default=False,
+        type=bool
     )
 
     args = parser.parse_args()

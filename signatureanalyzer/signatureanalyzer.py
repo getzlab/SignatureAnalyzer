@@ -333,6 +333,7 @@ def run_matrix(
             (used in post-processing)
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
+        * use_val_set: boolean to execute cross-validation
     """
     try:
         [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'reference', 'random_seed']]

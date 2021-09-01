@@ -182,7 +182,7 @@ def main():
         '--use_val_set',
         help="Execute cross-validation",
         default=False,
-        type=bool
+        action="store_true"
     )
 
     args = parser.parse_args()

@@ -1,7 +1,6 @@
 # SignatureAnalyzer
 
 Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expression data. Designed for scalability using Pytorch to run using GPUs if available.
-* See `docs` for a more in-depth description of how to use method.
 
 _Requires Python 3.6.0 or higher._
 

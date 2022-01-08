@@ -26,19 +26,20 @@ setup(
         'signatureanalyzer.signatureanalyzer_gpu'
     ],
     install_requires = [
-        "twobitreader>=3.1.7",
-        "torch>=1.2.0",
-        "seaborn>=0.9.0",
+        "gprofiler",
+        "h5py>=2.9.0",
+        "matplotlib",
+        "numpy",
         "pandas>=0.25.0",
         "pyarrow>=0.14.1",
-        "scikit-learn>=0.21.3",
         "scikit-image>=0.15.0",
-        "tqdm>=4.33.0",
-        "h5py>=2.9.0",
+        "scikit-learn>=0.21.3",
+        "scipy",
+        "seaborn>=0.9.0",
         "tables>=3.6.1",
-        "numpy",
-        "matplotlib",
-        "scipy"
+        "torch>=1.2.0",
+        "tqdm>=4.33.0",
+        "twobitreader>=3.1.7",
     ],
     package_data = {
     "":[

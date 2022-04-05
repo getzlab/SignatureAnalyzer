@@ -346,7 +346,7 @@ def _map_dbs_sigs(
         if x in ref:
             return x
         else:
-            return compl(x)
+            return compl(x[:2], reverse=True) + '>' + compl(x[3:], reverse=True)
 
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name
@@ -376,13 +376,13 @@ def _map_sbs_sigs(
             if x[3:-3] in ref:
                 return x
             else:
-                return compl(x)
+                return compl(x[7:], reverse=True) + '[' + compl(x[3]) + '>' + compl(x[5]) + ']' + compl(x[:2], reverse=True)
     else:
         def _check_to_flip(x, ref):
             if x[2:-2] in ref:
                 return x
             else:
-                return compl(x)
+                return compl(x[6]) + '[' + compl(x[2]) + '>' + compl(x[4]) + ']' + compl(x[0])
             
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name
@@ -456,10 +456,12 @@ def _map_polymerase96_id(
         if x[2:-2] in ref:
             return x
         else:
-            return compl(x)
+            return compl(x[6]) + '[' + compl(x[2]) + '>' + compl(x[4]) + ']' + compl(x[0])
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name
+    # Convert to arrow format. pole_msi96 starts with word format in spectra
     context_s = df.reset_index()[df_idx].map(lambda x: x if ('INS' in x or 'DEL' in x) else sbs_annotation_converter(x))
+    # Reverse complement wherever necessary
     return context_s.apply(lambda x: _check_to_flip(x, set(ref_df[sub_index])) if '>' in x else x)
     
 def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: str):

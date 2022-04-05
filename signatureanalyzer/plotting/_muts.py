@@ -147,34 +147,45 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
     W = W.copy()
     W.index = _map_sbs_sigs_back(W)
 
+    # Fill in any missing contexts
     for c in context96:
         if c not in W.index:
             W.loc[c] = 0
 
+    # Sort contexts
     W.sort_index(inplace=True)
 
+    # Extract columns corresponding to signatures
     sig_columns = [c for c in W if c.startswith('S')]
 
+    # Calculate total number of mutations at each context for every signature
     if isinstance(contributions, pd.Series):
         W = W[sig_columns] * contributions[sig_columns]
     else:
         W = W[sig_columns] * contributions
 
+    # Determine number of signatures
     n_sigs = len(sig_columns)
 
+    # Initialize SBS C>N and T>N mutations and their contexts
+    # For each context, iterate through C>N and T>N mutations, and take reverse complement
+    # of context for A>N mutations
     context_label = []
     change_map = {'CA': [], 'CG': [], 'CT': [], 'TA': [], 'TC': [], 'TG': []}
     for p in itertools.product('ACGT', 'ACGT'):
         context = ''.join(p)
+        # Reverse complement of context
         compl_context = compl(context, reverse=True)
         context_label.append('-'.join(context))
         for key in change_map:
             if key.startswith('C'):
                 change_map[key].append(key + context)
             else:
+                # Complement of mutation + reverse complement of context
                 change_map[key].append(compl(key) + compl_context)
     color_map = {'CA': 'cyan', 'CG': 'red', 'CT': 'yellow', 'TA': 'purple', 'TC': 'green', 'TG': 'blue'}
 
+    # Plot contributions
     x_coords = range(16)
     fig, axes = plt.subplots(nrows=n_sigs, ncols=6, figsize=(20, 2.5 * n_sigs), sharex='col', sharey='row')
     for row, sig in enumerate(sig_columns):

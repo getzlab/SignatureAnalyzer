@@ -86,7 +86,7 @@ def _map_sbs_sigs_back(df: pd.DataFrame) -> pd.Series:
         if x in ref:
             return x
         else:
-            return compl(x)
+            return compl(x[:2]) + compl(x[3]) + compl(test_x[2])
 
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name

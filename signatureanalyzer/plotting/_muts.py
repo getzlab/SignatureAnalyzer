@@ -86,7 +86,7 @@ def _map_sbs_sigs_back(df: pd.DataFrame) -> pd.Series:
         if x in ref:
             return x
         else:
-            return compl(x[:2]) + compl(x[3]) + compl(test_x[2])
+            return compl(x[:2]) + compl(x[3]) + compl(x[2])
 
     if df.index.name is None: df.index.name = 'index'
     df_idx = df.index.name
@@ -175,8 +175,7 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
     for p in itertools.product('ACGT', 'ACGT'):
         context = ''.join(p)
         # Reverse complement of context
-        # compl_context = compl(context, reverse=True)
-        compl_context = compl(context[:2]) + compl(context[3]) + compl(context[2])
+        compl_context = compl(context, reverse=True)
         context_label.append('-'.join(context))
         for key in change_map:
             if key.startswith('C'):

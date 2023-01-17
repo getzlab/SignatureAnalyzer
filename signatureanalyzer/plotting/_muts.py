@@ -175,7 +175,8 @@ def signature_barplot(W: pd.DataFrame, contributions: Union[int, pd.Series] = 1)
     for p in itertools.product('ACGT', 'ACGT'):
         context = ''.join(p)
         # Reverse complement of context
-        compl_context = compl(context, reverse=True)
+        # compl_context = compl(context, reverse=True)
+        compl_context = compl(context[:2]) + compl(context[3]) + compl(context[2])
         context_label.append('-'.join(context))
         for key in change_map:
             if key.startswith('C'):

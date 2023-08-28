@@ -114,7 +114,7 @@ def get_spectra_from_maf(
         for c in context_use:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context_use]   
+        spectra = spectra.loc[context_use.keys()]   
             
     elif reference == 'cosmic3_DBS':
         # Subset to DNPs
@@ -149,7 +149,7 @@ def get_spectra_from_maf(
         for c in context78:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context78]     
+        spectra = spectra.loc[context78.keys()]     
 
     elif reference == 'cosmic3_ID':
 
@@ -257,7 +257,7 @@ def get_spectra_from_maf(
         for c in context83:
             if c not in spectra.index:
                 spectra.loc[c] = 0
-        spectra = spectra.loc[context83]
+        spectra = spectra.loc[context83.keys()]
 
         stdout.write("\n")
     

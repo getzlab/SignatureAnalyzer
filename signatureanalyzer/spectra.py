@@ -102,7 +102,11 @@ def get_spectra_from_maf(
             contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:m+3] if r in 'TC' \
                                 else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:m+3]) \
                                 for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
-            
+        # Common bug: MAF has mutations with malformed sequence contexts. Rather than throwing an error, just print warning
+        exclude_l = [c for c in contig if c not in context_use]
+        print(f"WARNING: Dropping {len(exclude_l)} / {maf.shape[0]} contexts that are not included in the reference. Ensure proper formating of MAF")
+        contig = contig[contig.isin(context_use)]
+        maf = maf.loc[contig.index]
         try:
             maf[context_num] = contig.apply(context_use.__getitem__)
         except KeyError as e:

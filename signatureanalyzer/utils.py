@@ -220,40 +220,40 @@ def load_reference_signatures(ref: str, verbose=True):
     Pre-processed Reference Mutational Signatures.
     """
     if ref == 'cosmic2':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(axis=1)
         reference_index = "Somatic Mutation Type"
     elif ref == 'cosmic3':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(axis=1)
         reference_index = "Somatic Mutation Type"
     elif ref == 'cosmic3_exome':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(axis=1)
         reference_index = "Somatic Mutation Type"
     elif ref == 'cosmic3_DBS':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(axis=1)
         reference_index = "Somatic Mutation Type"
     elif ref == 'cosmic3_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(axis=1)
         reference_index = "Mutation Type"
     elif ref == 'pcawg_SBS':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'pcawg_COMPOSITE':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'pcawg_COMPOSITE96':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite96.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite96.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'pcawg_SBS_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs_id.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs_id.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'pcawg_SBS96_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'polymerase_msi':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_1536SBS_ID.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_1536SBS_ID.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     elif ref == 'polymerase_msi96':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv'), sep='\t').dropna(1)
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(ref))
@@ -522,13 +522,13 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         ref_cols_96 = list(cosmic_df_96.columns[cosmic_df_96.dtypes == 'float64'])
     
     # Create cosine similarity matrix
-    X = res["Wraw"].set_index("mut").join(ref.set_index(ref_index)).dropna(1).loc[:,nmf_cols+ref_cols]
+    X = res["Wraw"].set_index("mut").join(ref.set_index(ref_index)).dropna(axis=1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
     # For PCAWG references, compute cosine similarity for COSMIC SBS as well
     if "pcawg" in ref_type:
         # Evaluate COSMIC cosine similarity
-        X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(1).loc[:,nmf_cols+ref_cols_96]
+        X96 = res["Wraw96"].set_index("mut").join(cosmic_df_96.set_index(cosmic_idx_96)).dropna(axis=1).loc[:,nmf_cols+ref_cols_96]
         res["cosine_cosmic"] = pd.DataFrame(cosine_similarity(X96.T), index=X96.columns, columns=X96.columns).loc[ref_cols_96,nmf_cols]
 
         # Generate W96 matrix
@@ -602,7 +602,7 @@ def get_nlogs_from_output(file: str) -> pd.DataFrame:
         * pd.DataFrame of reporting statistics for each run
     """
     n_runs = get_nruns_from_output(file)
-    df = pd.concat([pd.read_hdf(file,"run{}/log".format(i)).reset_index().iloc[-1] for i in range(n_runs)],1).T
+    df = pd.concat([pd.read_hdf(file,"run{}/log".format(i)).reset_index().iloc[-1] for i in range(n_runs)],axis=1).T
     df.index = np.arange(n_runs)
     return df
 

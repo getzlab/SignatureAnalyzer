@@ -423,7 +423,7 @@ def _map_composite_sigs(
         context_dbs_s = _map_dbs_sigs(df[df.index.isin(context78)], ref_df.iloc[96:174])    
     
     context_id_s = df[df.index.isin(context83)].index.to_series()
-    return context_sbs_s.append(context_dbs_s).append(context_id_s)
+    return pd.concat([context_sbs_s, context_dbs_s, context_id_s])
     
 
 def _map_sbs_id_sigs(

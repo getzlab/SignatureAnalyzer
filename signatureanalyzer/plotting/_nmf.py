@@ -123,7 +123,7 @@ def consensus_matrix(
     # -------------
     cluster = AgglomerativeClustering(
         n_clusters=n_clusters,
-        affinity=metric,
+        metric=metric,
         linkage=method
     )
 

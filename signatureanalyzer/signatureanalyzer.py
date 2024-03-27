@@ -90,38 +90,36 @@ def run_maf(
     )
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w') as store:
 
-    print("   * Running ARD-NMF...")
-    for n_iter in range(nruns):
-        store['X'] = spectra
+        print("   * Running ARD-NMF...")
+        for n_iter in range(nruns):
+            store['X'] = spectra
 
-        res = ardnmf(
-            spectra,
-            tag="\t{}/{}: ".format(n_iter,nruns-1),
-            verbose=verbose,
-            **nmf_kwargs
-        )
+            res = ardnmf(
+                spectra,
+                tag="\t{}/{}: ".format(n_iter,nruns-1),
+                verbose=verbose,
+                **nmf_kwargs
+            )
 
-        postprocess_msigs(res, reference_df, reference_index, reference)
-        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
-        lam.index.name = "K0"
+            postprocess_msigs(res, reference_df, reference_index, reference)
+            lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+            lam.index.name = "K0"
 
-        store["run{}/H".format(n_iter)] = res["H"]
-        store["run{}/W".format(n_iter)] = res["W"]
-        store["run{}/lam".format(n_iter)] = lam
-        store["run{}/Hraw".format(n_iter)] = res["Hraw"]
-        store["run{}/Wraw".format(n_iter)] = res["Wraw"]
-        store["run{}/markers".format(n_iter)] = res["markers"]
-        store["run{}/signatures".format(n_iter)] = res["signatures"]
-        store["run{}/log".format(n_iter)] = res["log"]
-        store["run{}/cosine".format(n_iter)] = res["cosine"]
-        if "pcawg" in reference:
-            store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]
-            store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
-            store["run{}/W96".format(n_iter)] = res["W96"]
-
-    store.close()
+            store["run{}/H".format(n_iter)] = res["H"]
+            store["run{}/W".format(n_iter)] = res["W"]
+            store["run{}/lam".format(n_iter)] = lam
+            store["run{}/Hraw".format(n_iter)] = res["Hraw"]
+            store["run{}/Wraw".format(n_iter)] = res["Wraw"]
+            store["run{}/markers".format(n_iter)] = res["markers"]
+            store["run{}/signatures".format(n_iter)] = res["signatures"]
+            store["run{}/log".format(n_iter)] = res["log"]
+            store["run{}/cosine".format(n_iter)] = res["cosine"]
+            if "pcawg" in reference:
+                store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]
+                store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
+                store["run{}/W96".format(n_iter)] = res["W96"]
 
     # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
@@ -130,22 +128,21 @@ def run_maf(
     best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
     print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
-    store["H"] = store["run{}/H".format(best_run)]
-    store["W"] = store["run{}/W".format(best_run)]
-    store["lam"] = store["run{}/lam".format(best_run)]
-    store["Hraw"] = store["run{}/Hraw".format(best_run)]
-    store["Wraw"] = store["run{}/Wraw".format(best_run)]
-    store["markers"] = store["run{}/markers".format(best_run)]
-    store["signatures"] = store["run{}/signatures".format(best_run)]
-    store["log"] = store["run{}/log".format(best_run)]
-    store["cosine"] = store["run{}/cosine".format(best_run)]
-    store["aggr"] = aggr
-    if "pcawg" in reference:
-        store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
-        store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
-        store["W96"] = store["run{}/W96".format(best_run)]
-    store.close()
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a') as store:
+        store["H"] = store["run{}/H".format(best_run)]
+        store["W"] = store["run{}/W".format(best_run)]
+        store["lam"] = store["run{}/lam".format(best_run)]
+        store["Hraw"] = store["run{}/Hraw".format(best_run)]
+        store["Wraw"] = store["run{}/Wraw".format(best_run)]
+        store["markers"] = store["run{}/markers".format(best_run)]
+        store["signatures"] = store["run{}/signatures".format(best_run)]
+        store["log"] = store["run{}/log".format(best_run)]
+        store["cosine"] = store["run{}/cosine".format(best_run)]
+        store["aggr"] = aggr
+        if "pcawg" in reference:
+            store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
+            store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
+            store["W96"] = store["run{}/W96".format(best_run)]
 
     H = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "H")
     W = pd.read_hdf(os.path.join(outdir, 'nmf_output.h5'), "W")
@@ -214,47 +211,45 @@ def run_spectra(
     reference_df, reference_index = load_reference_signatures(reference)
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w') as store:
 
-    # Transform SBS form for composite signatures ahead of analysis
-    if reference in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
-        if spectra.index.isin(context1536_word).any():
-            spectra.index = spectra.index.map(lambda x: sbs1536_annotation_converter(x) if x in context1536_word else x)
-    elif reference in ["pcawg_COMPOSITE96","pcawg_SBS96_ID"]:
-        if not spectra.index.isin(context96).any():
-            spectra.index = spectra.index.map(lambda x: x[2]+x[4]+x[0]+x[6] if ('>' in x and len(x)==7) else x)
+        # Transform SBS form for composite signatures ahead of analysis
+        if reference in ["pcawg_SBS","pcawg_COMPOSITE","pcawg_SBS_ID"]:
+            if spectra.index.isin(context1536_word).any():
+                spectra.index = spectra.index.map(lambda x: sbs1536_annotation_converter(x) if x in context1536_word else x)
+        elif reference in ["pcawg_COMPOSITE96","pcawg_SBS96_ID"]:
+            if not spectra.index.isin(context96).any():
+                spectra.index = spectra.index.map(lambda x: x[2]+x[4]+x[0]+x[6] if ('>' in x and len(x)==7) else x)
 
-    print("   * Running ARD-NMF...")
-    for n_iter in range(nruns):
-        store['X'] = spectra
+        print("   * Running ARD-NMF...")
+        for n_iter in range(nruns):
+            store['X'] = spectra
 
-        res = ardnmf(
-            spectra,
-            tag="\t{}/{}: ".format(n_iter,nruns-1),
-            verbose=verbose,
-            **nmf_kwargs
-        )
+            res = ardnmf(
+                spectra,
+                tag="\t{}/{}: ".format(n_iter,nruns-1),
+                verbose=verbose,
+                **nmf_kwargs
+            )
 
-        # Process W, H, and Cosine similarity matrices
-        postprocess_msigs(res, reference_df, reference_index, reference)
-        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
-        lam.index.name = "K0"
+            # Process W, H, and Cosine similarity matrices
+            postprocess_msigs(res, reference_df, reference_index, reference)
+            lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+            lam.index.name = "K0"
 
-        store["run{}/H".format(n_iter)] = res["H"]
-        store["run{}/W".format(n_iter)] = res["W"]
-        store["run{}/lam".format(n_iter)] = lam
-        store["run{}/Hraw".format(n_iter)] = res["Hraw"]
-        store["run{}/Wraw".format(n_iter)] = res["Wraw"]
-        store["run{}/markers".format(n_iter)] = res["markers"]
-        store["run{}/signatures".format(n_iter)] = res["signatures"]
-        store["run{}/log".format(n_iter)] = res["log"]
-        store["run{}/cosine".format(n_iter)] = res["cosine"]
-        if 'pcawg' in reference:
-            store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]
-            store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
-            store["run{}/W96".format(n_iter)] = res["W96"]
-
-    store.close()
+            store["run{}/H".format(n_iter)] = res["H"]
+            store["run{}/W".format(n_iter)] = res["W"]
+            store["run{}/lam".format(n_iter)] = lam
+            store["run{}/Hraw".format(n_iter)] = res["Hraw"]
+            store["run{}/Wraw".format(n_iter)] = res["Wraw"]
+            store["run{}/markers".format(n_iter)] = res["markers"]
+            store["run{}/signatures".format(n_iter)] = res["signatures"]
+            store["run{}/log".format(n_iter)] = res["log"]
+            store["run{}/cosine".format(n_iter)] = res["cosine"]
+            if 'pcawg' in reference:
+                store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]
+                store["run{}/Wraw96".format(n_iter)] = res["Wraw96"]
+                store["run{}/W96".format(n_iter)] = res["W96"]
 
     # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
@@ -263,22 +258,21 @@ def run_spectra(
     best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
     print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
-    store["H"] = store["run{}/H".format(best_run)]
-    store["W"] = store["run{}/W".format(best_run)]
-    store["lam"] = store["run{}/lam".format(best_run)]
-    store["Hraw"] = store["run{}/Hraw".format(best_run)]
-    store["Wraw"] = store["run{}/Wraw".format(best_run)]
-    store["markers"] = store["run{}/markers".format(best_run)]
-    store["signatures"] = store["run{}/signatures".format(best_run)]
-    store["log"] = store["run{}/log".format(best_run)]
-    store["cosine"] = store["run{}/cosine".format(best_run)]
-    store["aggr"] = aggr
-    if 'pcawg' in reference:
-        store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
-        store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
-        store["W96"] = store["run{}/W96".format(best_run)]
-    store.close()
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a') as store:
+        store["H"] = store["run{}/H".format(best_run)]
+        store["W"] = store["run{}/W".format(best_run)]
+        store["lam"] = store["run{}/lam".format(best_run)]
+        store["Hraw"] = store["run{}/Hraw".format(best_run)]
+        store["Wraw"] = store["run{}/Wraw".format(best_run)]
+        store["markers"] = store["run{}/markers".format(best_run)]
+        store["signatures"] = store["run{}/signatures".format(best_run)]
+        store["log"] = store["run{}/log".format(best_run)]
+        store["cosine"] = store["run{}/cosine".format(best_run)]
+        store["aggr"] = aggr
+        if 'pcawg' in reference:
+            store["cosine_cosmic"] = store["run{}/cosine_cosmic".format(best_run)]
+            store["Wraw96"] = store["run{}/Wraw96".format(best_run)]
+            store["W96"] = store["run{}/W96".format(best_run)]
 
     # Plots
     if plot_results:
@@ -353,32 +347,30 @@ def run_matrix(
         os.makedirs(outdir, exist_ok=True)
 
     print("   * Saving ARD-NMF outputs to {}".format(os.path.join(outdir,'nmf_output.h5')))
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w')
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'w') as store:
 
-    print("   * Running ARD-NMF...")
-    for n_iter in range(nruns):
-        store['X'] = matrix
+        print("   * Running ARD-NMF...")
+        for n_iter in range(nruns):
+            store['X'] = matrix
 
-        res = ardnmf(
-            matrix,
-            tag="\t{}/{}: ".format(n_iter,nruns-1),
-            verbose=verbose,
-            **nmf_kwargs
-        )
+            res = ardnmf(
+                matrix,
+                tag="\t{}/{}: ".format(n_iter,nruns-1),
+                verbose=verbose,
+                **nmf_kwargs
+            )
 
-        lam = pd.DataFrame(data=res["lam"], columns=["lam"])
-        lam.index.name = "K0"
+            lam = pd.DataFrame(data=res["lam"], columns=["lam"])
+            lam.index.name = "K0"
 
-        store["run{}/H".format(n_iter)] = res["H"]
-        store["run{}/W".format(n_iter)] = res["W"]
-        store["run{}/lam".format(n_iter)] = lam
-        store["run{}/Hraw".format(n_iter)] = res["Hraw"]
-        store["run{}/Wraw".format(n_iter)] = res["Wraw"]
-        store["run{}/markers".format(n_iter)] = res["markers"]
-        store["run{}/signatures".format(n_iter)] = res["signatures"]
-        store["run{}/log".format(n_iter)] = res["log"]
-
-    store.close()
+            store["run{}/H".format(n_iter)] = res["H"]
+            store["run{}/W".format(n_iter)] = res["W"]
+            store["run{}/lam".format(n_iter)] = lam
+            store["run{}/Hraw".format(n_iter)] = res["Hraw"]
+            store["run{}/Wraw".format(n_iter)] = res["Wraw"]
+            store["run{}/markers".format(n_iter)] = res["markers"]
+            store["run{}/signatures".format(n_iter)] = res["signatures"]
+            store["run{}/log".format(n_iter)] = res["log"]
 
     # Select Best Result
     aggr = get_nlogs_from_output(os.path.join(outdir,'nmf_output.h5'))
@@ -387,17 +379,16 @@ def run_matrix(
     best_run = int(aggr[aggr['K']==max_k].obj.idxmin())
     print("   * Run {} had lowest objective with mode (n={:g}) K = {:g}.".format(best_run, max_k_iter, aggr.loc[best_run]['K']))
 
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
-    store["H"] = store["run{}/H".format(best_run)]
-    store["W"] = store["run{}/W".format(best_run)]
-    store["lam"] = store["run{}/lam".format(best_run)]
-    store["Hraw"] = store["run{}/Hraw".format(best_run)]
-    store["Wraw"] = store["run{}/Wraw".format(best_run)]
-    store["markers"] = store["run{}/markers".format(best_run)]
-    store["signatures"] = store["run{}/signatures".format(best_run)]
-    store["log"] = store["run{}/log".format(best_run)]
-    store["aggr"] = aggr
-    store.close()
+    with pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a') as store:
+        store["H"] = store["run{}/H".format(best_run)]
+        store["W"] = store["run{}/W".format(best_run)]
+        store["lam"] = store["run{}/lam".format(best_run)]
+        store["Hraw"] = store["run{}/Hraw".format(best_run)]
+        store["Wraw"] = store["run{}/Wraw".format(best_run)]
+        store["markers"] = store["run{}/markers".format(best_run)]
+        store["signatures"] = store["run{}/signatures".format(best_run)]
+        store["log"] = store["run{}/log".format(best_run)]
+        store["aggr"] = aggr
 
 
     # Consensus Clustering

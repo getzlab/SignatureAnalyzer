@@ -27,14 +27,33 @@ def stacked_bar(H: pd.DataFrame, ref_type: str, figsize: tuple = (8,8)):
     """
     H = H.iloc[:,:-3].copy()
     # Map signature etiology
+
     if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS', 'pcawg_SBS96_ID', 'pcawg_SBS_ID']:
-        H.columns = H.columns.map(lambda x: x[x.index('SBS') : x.index('_')]).map(signature_composite)
+        sigtype = 'SBS'
+        etiology_map = signature_composite
     elif ref_type in ['cosmic3', 'cosmic3_exome']:
-        H.columns = H.columns.map(lambda x: x[x.index('SBS'):]).map(signature_cosmic)
+        sigtype = 'SBS'
+        etiology_map = signature_cosmic
     elif ref_type == 'cosmic3_DBS':
-        H.columns = H.columns.map(lambda x: x[x.index('DBS'):]).map(signature_DBS)
+        sigtype = 'DBS'
+        etiology_map = signature_DBS
     elif ref_type == 'cosmic3_ID':
-        H.columns = H.columns.map(lambda x: x[x.index('ID'):]).map(signature_ID)
+        #H.columns[matched_idx] = H.columns[matched_idx].replace(lambda x: x[x.index('ID'):]).map(signature_ID)
+        sigtype = 'ID'
+        etiology_map = signature_ID
+    else:
+        sigtype = None
+        etiology_map={}
+
+    if sigtype is not None:
+        extract_fun = (lambda x: x[x.index(sigtype) : x.index('_')]) if ref_type in ['pcawg_COMPOSITE', 'pcawg_COMPOSITE96', 'pcawg_SBS', 'pcawg_SBS96_ID', 'pcawg_SBS_ID'] \
+            else (lambda x: x[x.index(sigtype):])
+    
+        matched_idx = ~H.columns.str.contains('Unmatched')
+        etiology_to_rename = dict(zip(H.columns[matched_idx],
+                                  H.columns[matched_idx].map(extract_fun).map(etiology_map)))
+    
+        H = H.rename(columns=etiology_to_rename)
 
     # Sort H matrix by mutation burden for relevant mutation type
     H['sum'] = H.sum(1)

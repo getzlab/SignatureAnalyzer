@@ -464,7 +464,7 @@ def _map_polymerase96_id(
     # Reverse complement wherever necessary
     return context_s.apply(lambda x: _check_to_flip(x, set(ref_df[sub_index])) if '>' in x else x)
     
-def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: str):
+def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: str, minimum_similarity: float = 0.85):
     """
     Post process ARD-NMF on mutational signatures.
     ------------------------
@@ -474,6 +474,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         * ref_index: feature index column in reference
             ** ex. in cosmic_v2, "Somatic Mutation Type" columns map to
                 A[C>A]A, A[C>A]C, etc.
+        * minimum_similarity: the minimum cosine similarity for mapping signature to reference name
 
     Returns:
         * None, edits res dictionary directly
@@ -525,6 +526,12 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
     X = res["Wraw"].set_index("mut").join(ref.set_index(ref_index)).dropna(axis=1).loc[:,nmf_cols+ref_cols]
     res["cosine"] = pd.DataFrame(cosine_similarity(X.T), index=X.columns, columns=X.columns).loc[ref_cols,nmf_cols]
 
+    def map_sig_names(similarity_matrix,minimum_similarity):
+        s_assign = dict(similarity_matrix.idxmax())
+        s_max = dict(similarity_matrix.max())
+        s_assign = {key:key+"-" + s_assign[key] if s_max[key] >= minimum_similarity else key+"-Unmatched" for key in s_assign}
+        return(s_assign)
+
     # For PCAWG references, compute cosine similarity for COSMIC SBS as well
     if "pcawg" in ref_type:
         # Evaluate COSMIC cosine similarity
@@ -537,16 +544,14 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         res["W96"].columns = ['S' + str(x) for x in range(1,res["W96"].shape[1]+1)]
         
         # Get corresponding COSMIC signature name and rename
-        s_assign96 = dict(res["cosine_cosmic"].idxmax())
-        s_assign96 = {key:key+"-" + s_assign96[key] for key in s_assign96}
+        s_assign96 = map_sig_names(res["cosine_cosmic"],minimum_similarity)
         res["cosine_cosmic"] = res["cosine_cosmic"].rename(columns=s_assign96)
         res["Wraw96"] = res["Wraw96"].rename(columns=s_assign96)
         res["W96"] = res["W96"].rename(columns=s_assign96)
         
             
     # Add assignments
-    s_assign = dict(res["cosine"].idxmax())
-    s_assign = {key:key+"-" + s_assign[key] for key in s_assign}
+    s_assign = map_sig_names(res["cosine"],minimum_similarity)
 
     # Update column names
     res["W"] = res["W"].rename(columns=s_assign)

@@ -12,4 +12,4 @@ from .signatureanalyzer import run_spectra
 from .signatureanalyzer import run_matrix
 from .supervised_bnmf import supervised_ardnmf
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'

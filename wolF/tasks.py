@@ -3,10 +3,10 @@ from wolf import Task
 class SignatureAnalyzer(Task):
     inputs = {
       "maf" : None,
-      "reps" : 10,
+      "hg_build" : None,
       "type" : "maf",
+      "reps" : 10,
       "reference" : "",
-      "hg_build" : "",
       "objective" : ""
     }
     script = """
@@ -15,14 +15,10 @@ if [! -z "$reference"]
 then
     FLAGS=" --referenc ${reference}"
 fi
-if [! -z "$hg_build"]
-then
-    FLAGS+=" --hg_build ${hg_build}"
-fi
 if [! -z "$objective"]
     FLAGS+=" --objective ${objective}"
 fi
-signatureanalyzer ${maf} -n ${reps} -t ${type} $FLAGS
+signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
     """
     output_patterns = {
         "cosine_plot" : "cosine_similarity_plot.pdf",

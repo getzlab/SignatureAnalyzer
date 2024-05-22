@@ -28,6 +28,6 @@ signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
         "stacked_bar" : "signature_stacked_barplot.pdf",
         "weighted_maf" : "signature_weighted_maf.tsv"
         }
-    docker = "gcr.io/broad-getzlab-workflows/signatureanalyzer_kprasad:v9"
+    docker = "gcr.io/broad-getzlab-workflows/signature_analyzer:latest"
     resources = { "mem" : "4G" }
 

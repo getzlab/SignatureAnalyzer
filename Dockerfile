@@ -7,4 +7,4 @@ RUN python3 -m pip install --upgrade setuptools
 
 WORKDIR /app
 COPY . ./signatureanalyzer
-#RUN pip install "signatureanalyzer==0.0.9"
+RUN pip install ./signatureanalyzer

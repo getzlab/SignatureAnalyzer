@@ -7,15 +7,17 @@ class SignatureAnalyzer(Task):
       "type" : "maf",
       "reps" : 10,
       "reference" : "",
-      "objective" : ""
+      "objective" : "",
+      "use_GPU" : False
     }
     script = """
 FLAGS=""
-if [! -z "$reference"]
+if [ ! -z "$reference" ]
 then
     FLAGS=" --referenc ${reference}"
 fi
-if [! -z "$objective"]
+if [ ! -z "$objective" ]
+then
     FLAGS+=" --objective ${objective}"
 fi
 signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
@@ -28,6 +30,6 @@ signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
         "stacked_bar" : "signature_stacked_barplot.pdf",
         "weighted_maf" : "signature_weighted_maf.tsv"
         }
-    docker = "gcr.io/broad-getzlab-workflows/signatureanalyzer_kprasad:v9"
+    docker = "gcr.io/broad-cga-sanand-gtex/signatureanalyzer:latest" if inputs["use_GPU"] else "gcr.io/broad-getzlab-workflows/signature_analyzer:v279"
     resources = { "mem" : "4G" }
 

@@ -11,11 +11,12 @@ class SignatureAnalyzer(Task):
     }
     script = """
 FLAGS=""
-if [! -z "$reference"]
+if [ ! -z "$reference" ]
 then
     FLAGS=" --referenc ${reference}"
 fi
-if [! -z "$objective"]
+if [ ! -z "$objective" ]
+then
     FLAGS+=" --objective ${objective}"
 fi
 signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
@@ -28,6 +29,6 @@ signatureanalyzer ${maf} --hg_build ${hg_build} -n ${reps} -t ${type} $FLAGS
         "stacked_bar" : "signature_stacked_barplot.pdf",
         "weighted_maf" : "signature_weighted_maf.tsv"
         }
-    docker = "gcr.io/broad-getzlab-workflows/signature_analyzer:latest"
+    docker = "gcr.io/broad-getzlab-workflows/signature_analyzer:v279"
     resources = { "mem" : "4G" }
 

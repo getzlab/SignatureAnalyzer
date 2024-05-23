@@ -14,7 +14,7 @@ class SignatureAnalyzer(Task):
 FLAGS=""
 if [ ! -z "$reference" ]
 then
-    FLAGS=" --referenc ${reference}"
+    FLAGS=" --reference ${reference}"
 fi
 if [ ! -z "$objective" ]
 then

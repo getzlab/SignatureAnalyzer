@@ -15,7 +15,7 @@ or
 
 ##### Git Clone
 
-* `git clone --recursive https://github.com/broadinstitute/getzlab-SignatureAnalyzer.git`
+* `git clone --recursive https://github.com/getzlab/SignatureAnalyzer.git`
 * `cd getzlab-SignatureAnalyzer`
 * `pip3 install -e .`
 
@@ -24,6 +24,7 @@ Note `--recurisve` flag is required to clone submodules.
 ##### Docker
 
 Link: `http://gcr.io/broad-cga-sanand-gtex/signatureanalyzer`
+or wolF-friendly: `http://gcr.io/broad-getzlab-workflows/signature_analyzer:v279`
 
 * `docker pull gcr.io/broad-cga-sanand-gtex/signatureanalyzer:latest`
 * `docker run -it --rm gcr.io/broad-cga-sanand-gtex/signatureanalyzer`

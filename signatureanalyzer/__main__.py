@@ -183,6 +183,12 @@ def main():
         default=1.0,
         type=float
     )
+    parser.add_argument(
+        '--consensus_clustering',
+        help="Whether to run consensus clustering after NMF. Only applies when `--type` is 'matrix'. (default: False)\nWarning: consumes N^2 memory. Not recommended for large datasets.",
+        default=False,
+        type=bool
+    )
 
     args = parser.parse_args()
     if args.cuda_int == 'None':

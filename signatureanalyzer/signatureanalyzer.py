@@ -66,7 +66,7 @@ def run_maf(
             will perform decomposition using CPU.
 3    """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed', 'consensus_max_samples']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed', 'consensus_clustering']]
     except:
         pass
 
@@ -195,7 +195,7 @@ def run_spectra(
             will perform decomposition using CPU.
     """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed', 'consensus_max_samples']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed', 'consensus_clustering']]
     except:
         pass
 
@@ -284,7 +284,7 @@ def run_matrix(
     nruns: int = 20,
     verbose: bool = False,
     plot_results: bool = True,
-    consensus_max_samples: int = 1000,
+    consensus_clustering: bool = False,
     **nmf_kwargs
     ):
     """
@@ -330,6 +330,10 @@ def run_matrix(
             (used in post-processing)
         * cuda_int: GPU to use. Defaults to 0. If "None" or if no GPU available,
             will perform decomposition using CPU.
+        * consensus_clustering: Whether to run consensus clustering after NMF.
+                                Default=False.
+                                WARNING: consumes N^2 memory. Not recommended
+                                for large datasets. 
     """
     try:
         [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'reference', 'random_seed']]
@@ -393,22 +397,20 @@ def run_matrix(
         store["log"] = store["run{}/log".format(best_run)]
         store["aggr"] = aggr
 
-
     # Consensus Clustering
-    print("   * Computing consensus matrix")
-    cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'),
-                                   max_samples=consensus_max_samples)
-    f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter, 
-                           max_samples=consensus_max_samples)
+    if consensus_clustering:
+        print("   * Computing consensus matrix")
+        cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
+        f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter) 
 
-    cmatrix.to_csv(os.path.join(outdir, 'consensus_matrix.tsv'), sep='\t')
-    d.to_csv(os.path.join(outdir, 'consensus_assign.tsv'), sep='\t')
+        cmatrix.to_csv(os.path.join(outdir, 'consensus_matrix.tsv'), sep='\t')
+        d.to_csv(os.path.join(outdir, 'consensus_assign.tsv'), sep='\t')
 
-    if plot_results: plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
+        if plot_results: plt.savefig(os.path.join(outdir, 'consensus_matrix.pdf'), dpi=100, bbox_inches='tight')
 
-    store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
-    store['consensus'] = d
-    store.close()
+        store = pd.HDFStore(os.path.join(outdir,'nmf_output.h5'),'a')
+        store['consensus'] = d
+        store.close()
 
     # Plots
     if plot_results:

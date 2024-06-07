@@ -66,7 +66,7 @@ def run_maf(
             will perform decomposition using CPU.
 3    """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed', 'consensus_max_samples']]
     except:
         pass
 
@@ -195,7 +195,7 @@ def run_spectra(
             will perform decomposition using CPU.
     """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed', 'consensus_max_samples']]
     except:
         pass
 
@@ -284,6 +284,7 @@ def run_matrix(
     nruns: int = 20,
     verbose: bool = False,
     plot_results: bool = True,
+    consensus_max_samples: int = 1000,
     **nmf_kwargs
     ):
     """
@@ -305,6 +306,8 @@ def run_matrix(
         * outdir: output directory to save files
         * nruns: number of iterations for ARD-NMF
         * verbose: bool
+        * consensus_max_samples: maximum number of samples to include in 
+                                 consensus clustering after factorization
 
     NMF_kwargs:
         * K0: starting number of latent components
@@ -393,8 +396,10 @@ def run_matrix(
 
     # Consensus Clustering
     print("   * Computing consensus matrix")
-    cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'))
-    f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter)
+    cmatrix, _ = consensus_cluster(os.path.join(outdir, 'nmf_output.h5'),
+                                   max_samples=consensus_max_samples)
+    f,d = consensus_matrix(cmatrix, n_clusters=max_k_iter, 
+                           max_samples=consensus_max_samples)
 
     cmatrix.to_csv(os.path.join(outdir, 'consensus_matrix.tsv'), sep='\t')
     d.to_csv(os.path.join(outdir, 'consensus_assign.tsv'), sep='\t')

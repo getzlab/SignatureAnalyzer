@@ -5,12 +5,17 @@ import os
 import matplotlib.pyplot as plt
 from .utils import get_nruns_from_output
 
-def consensus_cluster(filepath: str):
+def consensus_cluster(filepath: str, max_samples=1000):
     """
     Consensus clustering of ard-nmf results.
     -----------------------
     Args:
         * filepath: path to the output .5 file of ARD-NMF runs
+
+    Kwargs:
+        * max_samples: maximum number of cells to include in the
+                       consensus matrix. If the size of H exceeds max_samples,
+                       then downsample to max_samples randomly.
 
     Returns:
         * pd.DataFrame: consensus matrix from results

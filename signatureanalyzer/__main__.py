@@ -162,6 +162,11 @@ def main():
         help="Random seed for decomposition",
         default=None,
     )
+    parser.add_argument(
+        '--consensus_max_samples',
+        help="Maximum number of samples to include in consensus matrix after NMF (only applies when type='matrix')",
+        default=1000,
+    )
 
     # -----------------------------------------
     # NMF Post-processing Arguments

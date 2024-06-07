@@ -47,6 +47,7 @@ def consensus_matrix(
     color_thresh_scale: float = 0.3,
     figsize: tuple = (8,8),
     p: int = 30,
+    max_samples=1000,
     metas: Union[list, None] = None,
     vmax: Union[float, None] = None,
     vmin: Union[float, None] = None,
@@ -66,6 +67,8 @@ def consensus_matrix(
         * color_thresh_scale: asthetic scale for coloring of dendrogram
         * figsize: figsize
         * p: parameter for dendrogram
+        * max_samples: the maximum number of samples the consensus matrix could
+                       have included
         * meta: list of pd.Series that includes a variable of interest to plot
             to left of plot; must be categorical in nature
 
@@ -238,6 +241,9 @@ def consensus_matrix(
     for _, spine in ax.spines.items():
         spine.set_visible(True)
 
-    ax.set_xlabel("Samples", fontsize=14)
+    xlabel = "Samples"
+    if cmatrix.shape[0] == max_samples:
+        xlabel = f"Samples (downsampled to n={max_samples})"
+    ax.set_xlabel(xlabel, fontsize=14)
 
     return fig, rs

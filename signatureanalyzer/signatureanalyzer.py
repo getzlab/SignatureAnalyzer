@@ -66,7 +66,7 @@ def run_maf(
             will perform decomposition using CPU.
 3    """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'random_seed', 'consensus_max_samples']]
     except:
         pass
 
@@ -195,7 +195,7 @@ def run_spectra(
             will perform decomposition using CPU.
     """
     try:
-        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed']]
+        [nmf_kwargs.pop(key) for key in ['input', 'type', 'hg_build', 'random_seed', 'consensus_max_samples']]
     except:
         pass
 

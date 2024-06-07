@@ -24,7 +24,9 @@ def consensus_cluster(filepath: str, max_samples=1000):
     """
     niter = get_nruns_from_output(filepath)
     H_selected = pd.read_hdf(filepath, "H")
-    H_selected = H_selected.sample(max_samples, replace=True)
+    
+    if H_selected.shape[0] > max_samples:
+        H_selected = H_selected.sample(max_samples, replace=True)
 
     x = np.vstack([pd.read_hdf(filepath, "run{}/H".format(i)).loc[H_selected.index,'max_id'].values for i in range(niter)])
     consensus_matrix = np.vstack([(x[:,[y]] == x[:]).sum(0) for y in range(x.shape[1])])

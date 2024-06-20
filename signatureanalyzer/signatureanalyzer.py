@@ -306,8 +306,6 @@ def run_matrix(
         * outdir: output directory to save files
         * nruns: number of iterations for ARD-NMF
         * verbose: bool
-        * consensus_max_samples: maximum number of samples to include in 
-                                 consensus clustering after factorization
 
     NMF_kwargs:
         * K0: starting number of latent components

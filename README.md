@@ -19,7 +19,7 @@ or
 * `cd getzlab-SignatureAnalyzer`
 * `pip3 install -e .`
 
-Note `--recurisve` flag is required to clone submodules.
+Note `--recursive` flag is required to clone submodules.
 
 ##### Docker
 

@@ -30,7 +30,7 @@ def k_dist(X: np.ndarray, figsize: tuple = (8,8)):
     """
     fig,ax = plt.subplots(figsize=figsize)
 
-    sns.countplot(X, ax=ax, linewidth=2, edgecolor='k', rasterized=True)
+    sns.countplot(x=X, ax=ax, linewidth=2, edgecolor='k', rasterized=True)
     ax.set_ylim(0,ax.get_ylim()[1]+int(ax.get_ylim()[1]*0.1))
 
     ax.set_title("Aggregate of ARD-NMF (n={})".format(len(X)), fontsize=20)

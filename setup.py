@@ -30,7 +30,7 @@ setup(
         "h5py>=2.9.0",
         "matplotlib",
         "numpy<1.24.0",
-        "pandas>=0.25.0",
+        "pandas<=1.5.0",
         "pyarrow>=0.14.1",
         "scikit-image>=0.15.0",
         "scikit-learn>=0.21.3",

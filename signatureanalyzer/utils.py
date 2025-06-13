@@ -255,6 +255,9 @@ def load_reference_signatures(ref: str, verbose=True):
     elif ref == 'polymerase_msi96':
         reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv'), sep='\t').dropna(axis=1)
         reference_index = 'Somatic Mutation Type'
+    elif ref == 'mm10':
+        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/mm10/COSMIC_v3.4_SBS_mm10_sa.txt'), sep='\t').dropna(axis=1)
+        reference_index = 'Somatic Mutation Type'
     else:
         raise Exception("Not yet implemented for {}".format(ref))
     if verbose:
@@ -480,7 +483,7 @@ def postprocess_msigs(res: dict, ref: pd.DataFrame, ref_index: str, ref_type: st
         * None, edits res dictionary directly
     """
     # Annotate raw W matrix with mutation indices
-    if ref_type in ['cosmic2','cosmic3','cosmic3_exome']:
+    if ref_type in ['cosmic2','cosmic3','cosmic3_exome', 'mm10']:
         res["Wraw"]["mut"] = _map_sbs_sigs(res["Wraw"], ref, ref_type).values
     elif ref_type == 'cosmic3_DBS':
         res["Wraw"]["mut"] = _map_dbs_sigs(res["Wraw"], ref).values

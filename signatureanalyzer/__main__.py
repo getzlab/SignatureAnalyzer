@@ -55,7 +55,8 @@ def main():
             'pcawg_SBS_ID',
             'pcawg_SBS96_ID',
             'polymerase_msi',
-            'polymerase_msi96'
+            'polymerase_msi96',
+            'mm10'
             ]
     )
     parser.add_argument(

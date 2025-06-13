@@ -330,6 +330,95 @@ def get_spectra_from_maf(
         
         spectra = pd.concat([sbs_df, id_df]).fillna(0)
         spectra.index.name = "context.polymerase"
+
+    elif reference in ['mm10']:
+        # Context type
+        context_num, context_form, context_use = 'context96.num', 'context96.word', context96
+        # else: context_num, context_form, context_use = 'context1536.num', 'context1536.arrow', context1536
+        
+        # Subset to SNPs
+        if 'Variant_Type' in maf.columns:
+            maf = maf.loc[maf['Variant_Type'] == 'SNP']
+        else:
+            maf = maf.loc[maf['Reference_Allele'].apply(lambda k: len(k) == 1 and k != '-') & \
+            maf['Tumor_Seq_Allele2'].apply(lambda k: len(k) == 1 and k != '-')]
+        if not real_snps:
+            # Filter out adjacent SNPs
+            maf = get_true_snps_from_maf(maf)
+
+        ref = maf['Reference_Allele'].str.upper()
+        alt = maf['Tumor_Seq_Allele2'].str.upper()
+
+        if 'ref_context' in list(maf):
+            context = maf['ref_context'].str.upper()
+        else:
+            assert hgfile is not None, 'Please provide genome build file.'
+
+            try:
+                hg = TwoBitFile(hgfile)
+            except:
+                raise Exception("{} not a valid 2bit file.".format(hgfile))
+
+            chr_contig = all('chr{}'.format(i) in hg for i in list(range(1, 23)) + ['X', 'Y'])
+
+            # Map contexts
+            _contexts = list()
+            maf_size = maf.shape[0]
+            for idx,(pos,chromosome) in enumerate(zip(maf["Start_position"].astype(int), maf["Chromosome"].astype(str))):
+                stdout.write("\r      * Mapping contexts: {} / {}".format(idx, maf_size))
+
+                # Double check version
+                if chromosome == '23':
+                    chromosome = 'X'
+                elif chromosome == '24':
+                    chromosome = 'Y'
+                elif chromosome == 'MT':
+                    chromosome = 'M'
+                if chr_contig and not chromosome.startswith('chr'):
+                    chromosome = 'chr' + chromosome
+                # if not chr_contig and chromosome.startswith('chr'):
+                #     chromosome = chromosome[3:]
+
+                # 96 context, get reference [pos-1, pos, pos+1]
+                if reference != 'pcawg_SBS':
+                    _contexts.append(hg[chromosome][pos-2:pos+1].lower())
+                # 1536 context, get refernece [pos-2, pos-1, pos, pos+1, pos+2]
+                else:
+                    _contexts.append(hg[chromosome][pos-3:pos+2].lower())
+
+            maf['ref_context'] = _contexts
+            stdout.write("\n")
+            context = maf['ref_context'].str.upper()
+
+        n_context = context.str.len()
+        mid = n_context // 2
+
+        if reference != 'pcawg_SBS':
+            contig = pd.Series([r + a + c[m - 1] + c[m + 1] if r in 'AC' \
+                                else compl(r + a + c[m + 1] + c[m - 1]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+        else:
+            contig = pd.Series([c[m-2:m] + "[" + r + ">" + a + "]" + c[m+1:m+3] if r in 'TC' \
+                                else compl(c[::-1][m-2:m] + "[" + r + ">" + a + "]" + c[::-1][m+1:m+3]) \
+                                for r, a, c, m in zip(ref, alt, context, mid)], index=maf.index)
+        # Common bug: MAF has mutations with malformed sequence contexts. Rather than throwing an error, just print warning
+        exclude_l = [c for c in contig if c not in context_use]
+        print(f"WARNING: Dropping {len(exclude_l)} / {maf.shape[0]} contexts that are not included in the reference. Ensure proper formating of MAF")
+        contig = contig[contig.isin(context_use)]
+        maf = maf.loc[contig.index]
+        try:
+            maf[context_num] = contig.apply(context_use.__getitem__)
+        except KeyError as e:
+            raise KeyError('Unusual context: ' + str(e))
+
+        
+        maf[context_form] = contig
+        spectra = maf.groupby([context_form, 'sample']).size().unstack().fillna(0).astype(int)
+        for c in context_use:
+            if c not in spectra.index:
+                spectra.loc[c] = 0
+        spectra = spectra.loc[context_use.keys()]
+        
     else:
         raise NotImplementedError()
     return maf, spectra

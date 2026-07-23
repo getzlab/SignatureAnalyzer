@@ -2,7 +2,7 @@
 
 Automatic Relevance Determination (ARD) - NMF of mutational signature &amp; expression data. Designed for scalability using Pytorch to run using GPUs if available.
 
-_Requires Python 3.6.0 or higher._
+_Requires Python 3.9 or newer, including Python 3.14._
 
 Please visit our [wiki](https://github.com/broadinstitute/getzlab-SignatureAnalyzer/wiki) for full documentation.
 ## Installation
@@ -10,6 +10,10 @@ Please visit our [wiki](https://github.com/broadinstitute/getzlab-SignatureAnaly
 ##### PIP
 
 `pip3 install signatureanalyzer`
+
+For GPU support, install the optional dependency set:
+
+`pip3 install "signatureanalyzer[gpu]"`
 
 or
 

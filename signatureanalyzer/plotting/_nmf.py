@@ -35,6 +35,8 @@ def k_dist(X: np.ndarray, figsize: tuple = (8,8)):
 
     ax.set_title("Aggregate of ARD-NMF (n={})".format(len(X)), fontsize=20)
     ax.set_ylabel("Number of Iterations", fontsize=18)
+    if len(ax.get_xticks()) > 0:
+        ax.set_xticks(ax.get_xticks())
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=18)
 
     return fig

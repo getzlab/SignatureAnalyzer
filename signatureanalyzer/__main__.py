@@ -1,15 +1,13 @@
 """
 For argument parsing and CLI interface
 """
-import sys
 import argparse
-import os
-import pkg_resources
 from argparse import RawTextHelpFormatter
 
-from .signatureanalyzer import run_maf
-from .signatureanalyzer import run_spectra
-from .signatureanalyzer import run_matrix
+
+def _load_runtime_functions():
+    from .signatureanalyzer import run_maf, run_spectra, run_matrix
+    return run_maf, run_spectra, run_matrix
 
 def main():
     parser = argparse.ArgumentParser(description='Signature Analyzer GPU.', formatter_class=RawTextHelpFormatter)
@@ -196,6 +194,8 @@ def main():
     print("---------------------------------------------------------")
     print("---------- S I G N A T U R E  A N A L Y Z E R  ----------")
     print("---------------------------------------------------------")
+
+    run_maf, run_spectra, run_matrix = _load_runtime_functions()
 
     if args.type == 'maf':
         run_maf(

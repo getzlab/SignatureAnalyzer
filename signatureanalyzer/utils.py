@@ -4,7 +4,7 @@ import sys
 from tqdm import tqdm
 import h5py
 from sklearn.metrics.pairwise import cosine_similarity
-import pkg_resources
+from importlib import resources
 import re
 import itertools
 import os
@@ -219,44 +219,33 @@ def load_reference_signatures(ref: str, verbose=True):
     -------------------------
     Pre-processed Reference Mutational Signatures.
     """
-    if ref == 'cosmic2':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v2/sa_cosmic2.tsv'), sep='\t').dropna(axis=1)
-        reference_index = "Somatic Mutation Type"
-    elif ref == 'cosmic3':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs.tsv'), sep='\t').dropna(axis=1)
-        reference_index = "Somatic Mutation Type"
-    elif ref == 'cosmic3_exome':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv'), sep='\t').dropna(axis=1)
-        reference_index = "Somatic Mutation Type"
-    elif ref == 'cosmic3_DBS':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_dbs.tsv'), sep='\t').dropna(axis=1)
-        reference_index = "Somatic Mutation Type"
-    elif ref == 'cosmic3_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/cosmic_v3/sa_cosmic3_id.tsv'), sep='\t').dropna(axis=1)
-        reference_index = "Mutation Type"
-    elif ref == 'pcawg_SBS':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'pcawg_COMPOSITE':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'pcawg_COMPOSITE96':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_composite96.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'pcawg_SBS_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs_id.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'pcawg_SBS96_ID':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'polymerase_msi':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_1536SBS_ID.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    elif ref == 'polymerase_msi96':
-        reference = pd.read_csv(pkg_resources.resource_filename('signatureanalyzer', 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv'), sep='\t').dropna(axis=1)
-        reference_index = 'Somatic Mutation Type'
-    else:
+    resource_map = {
+        'cosmic2': 'ref/cosmic_v2/sa_cosmic2.tsv',
+        'cosmic3': 'ref/cosmic_v3/sa_cosmic3_sbs.tsv',
+        'cosmic3_exome': 'ref/cosmic_v3/sa_cosmic3_sbs_exome.tsv',
+        'cosmic3_DBS': 'ref/cosmic_v3/sa_cosmic3_dbs.tsv',
+        'cosmic3_ID': 'ref/cosmic_v3/sa_cosmic3_id.tsv',
+        'pcawg_SBS': 'ref/PCAWG/sa_PCAWG_sbs.tsv',
+        'pcawg_COMPOSITE': 'ref/PCAWG/sa_PCAWG_composite.tsv',
+        'pcawg_COMPOSITE96': 'ref/PCAWG/sa_PCAWG_composite96.tsv',
+        'pcawg_SBS_ID': 'ref/PCAWG/sa_PCAWG_sbs_id.tsv',
+        'pcawg_SBS96_ID': 'ref/PCAWG/sa_PCAWG_sbs96_id.tsv',
+        'polymerase_msi': 'ref/POLE_MSI/POLE_MSI_1536SBS_ID.tsv',
+        'polymerase_msi96': 'ref/POLE_MSI/POLE_MSI_SBS96_ID.tsv',
+    }
+    if ref not in resource_map:
         raise Exception("Not yet implemented for {}".format(ref))
+
+    resource_name = resource_map[ref]
+    package_name = 'signatureanalyzer'
+
+    with resources.files(package_name).joinpath(resource_name).open('r', encoding='utf-8') as handle:
+        reference = pd.read_csv(handle, sep='\t').dropna(axis=1)
+
+    reference_index = "Somatic Mutation Type"
+    if ref == 'cosmic3_ID':
+        reference_index = "Mutation Type"
+
     if verbose:
         print("   * Using {} signatures".format(ref))
     return reference, reference_index

@@ -1,63 +1,76 @@
-from setuptools import setup
+from pathlib import Path
 import re
-import os
 import sys
 
-ver_info = sys.version_info
-if ver_info < (3,6,0):
-    raise RuntimeError("signatureanalyzer requires at least python 3.6.0")
+from setuptools import find_packages, setup
 
-with open(os.path.join(os.path.dirname(__file__), 'signatureanalyzer', '__init__.py')) as r:
-    version = re.search(r'__version__ = \'(\d+\.\d+\.\d+[-_a-zA-Z0-9]*)\'', r.read()).group(1)
+ROOT = Path(__file__).parent
+
+ver_info = sys.version_info
+if ver_info < (3, 9, 0):
+    raise RuntimeError("signatureanalyzer requires Python 3.9 or newer")
+
+init_path = ROOT / "signatureanalyzer" / "__init__.py"
+version_match = re.search(r"__version__\s*=\s*'([^']+)'", init_path.read_text(encoding="utf-8"))
+if version_match is None:
+    raise RuntimeError("Unable to determine package version")
+version = version_match.group(1)
+
+readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
 setup(
-    name = 'signatureanalyzer',
-    version = version,
-    author = 'Shankara Anand & Justin Cha - Broad Institute - Cancer Genome Computational Analysis',
-    author_email = 'sanand@broadinstitute.org',
-    url = 'https://github.com/broadinstitute/getzlab-SignatureAnalyzer',
-    long_description = open("README.md", encoding="utf-8").read(),
-    long_description_content_type = 'text/markdown',
-    description = 'Bayesian NMF methods for mutational signature analysis & transcriptomic profiling on GPUs (Getz Lab).',
-    packages = [
-        'signatureanalyzer',
-        'signatureanalyzer.plotting',
-        'signatureanalyzer.pathways',
-        'signatureanalyzer.signatureanalyzer_gpu'
-    ],
-    install_requires = [
-        "gprofiler",
-        "h5py>=2.9.0",
-        "matplotlib",
-        "numpy<1.24.0",
-        "pandas<=1.5.0",
-        "pyarrow>=0.14.1",
-        "scikit-image>=0.15.0",
-        "scikit-learn>=0.21.3",
-        "scipy",
-        "seaborn>=0.9.0",
+    name="signatureanalyzer",
+    version=version,
+    author="Shankara Anand & Justin Cha - Broad Institute - Cancer Genome Computational Analysis",
+    author_email="sanand@broadinstitute.org",
+    url="https://github.com/broadinstitute/getzlab-SignatureAnalyzer",
+    long_description=readme,
+    long_description_content_type="text/markdown",
+    description="Bayesian NMF methods for mutational signature analysis & transcriptomic profiling on GPUs (Getz Lab).",
+    python_requires=">=3.9",
+    packages=find_packages(exclude=("tests", "tests.*")),
+    include_package_data=True,
+    install_requires=[
+        "gprofiler>=0.1.0",
+        "h5py>=3.10.0",
+        "matplotlib>=3.8.0",
+        "numpy>=2.0.0",
+        "pandas>=2.2.0",
+        "pyarrow>=16.0.0",
+        "scikit-image>=0.24.0",
+        "scikit-learn>=1.4.0",
+        "scipy>=1.13.0",
+        "seaborn>=0.13.0",
         "tables>=3.6.1",
-        "torch>=1.2.0",
         "tqdm>=4.33.0",
         "twobitreader>=3.1.7",
     ],
-    package_data = {
-    "":[
-        "ref/cosmic_v2/sa*",
-        "ref/cosmic_v3/sa*"
-    ]
+    extras_require={
+        "gpu": ["torch>=2.3.0"],
     },
-    entry_points = {
-        'console_scripts': [
-            'signatureanalyzer = signatureanalyzer.__main__:main'
+    package_data={
+        "signatureanalyzer": [
+            "ref/cosmic_v2/sa*",
+            "ref/cosmic_v3/sa*",
         ]
     },
-    classifiers = [
+    entry_points={
+        "console_scripts": [
+            "signatureanalyzer = signatureanalyzer.__main__:main"
+        ]
+    },
+    classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
     ],
-    license="MIT"
+    license="MIT",
 )

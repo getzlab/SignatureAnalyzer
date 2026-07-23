@@ -1,7 +1,6 @@
 import sys
 import argparse
 import os
-import pkg_resources
 import pandas as pd
 from typing import Union
 import numpy as np
@@ -107,6 +106,15 @@ def run_maf(
             lam = pd.DataFrame(data=res["lam"], columns=["lam"])
             lam.index.name = "K0"
 
+            log_df = res["log"].copy()
+            if hasattr(log_df, "select_dtypes"):
+                for col in log_df.columns:
+                    if log_df[col].dtype == object:
+                        try:
+                            log_df[col] = pd.to_numeric(log_df[col], errors="coerce")
+                        except Exception:
+                            pass
+
             store["run{}/H".format(n_iter)] = res["H"]
             store["run{}/W".format(n_iter)] = res["W"]
             store["run{}/lam".format(n_iter)] = lam
@@ -114,7 +122,7 @@ def run_maf(
             store["run{}/Wraw".format(n_iter)] = res["Wraw"]
             store["run{}/markers".format(n_iter)] = res["markers"]
             store["run{}/signatures".format(n_iter)] = res["signatures"]
-            store["run{}/log".format(n_iter)] = res["log"]
+            store["run{}/log".format(n_iter)] = log_df
             store["run{}/cosine".format(n_iter)] = res["cosine"]
             if "pcawg" in reference:
                 store["run{}/cosine_cosmic".format(n_iter)] = res["cosine_cosmic"]

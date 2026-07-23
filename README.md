@@ -11,10 +11,6 @@ Please visit our [wiki](https://github.com/broadinstitute/getzlab-SignatureAnaly
 
 `pip3 install signatureanalyzer`
 
-For GPU support, install the optional dependency set:
-
-`pip3 install "signatureanalyzer[gpu]"`
-
 or
 
 ##### Git Clone

@@ -42,12 +42,10 @@ setup(
         "scipy>=1.13.0",
         "seaborn>=0.13.0",
         "tables>=3.6.1",
+        "torch>=2.3.0",
         "tqdm>=4.33.0",
         "twobitreader>=3.1.7",
     ],
-    extras_require={
-        "gpu": ["torch>=2.3.0"],
-    },
     package_data={
         "signatureanalyzer": [
             "ref/cosmic_v2/sa*",

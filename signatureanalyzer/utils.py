@@ -686,7 +686,7 @@ def get96_from_1536(W1536):
     Returns:
         * pd.Dataframe of 96 context matrix
     """
-    context96_df = pd.DataFrame(0, index=context96 , columns=W1536.columns)
+    context96_df = pd.DataFrame(0.0, index=context96 , columns=W1536.columns)
     
     # Define conversion function based on format
     if ">" in W1536.index[0]:

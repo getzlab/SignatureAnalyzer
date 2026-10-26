@@ -330,7 +330,7 @@ def signature_barplot_ID(W, contributions):
     for c in context83:
         if c not in W.index:
             W.loc[c] = 0
-    W = W.loc[context83]
+    W = W.loc[list(context83)]
     sig_columns = [c for c in W if c.startswith('S')]
     if isinstance(contributions, pd.Series):
         W = W[sig_columns] * contributions[sig_columns]
